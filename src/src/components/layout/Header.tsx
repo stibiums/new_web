@@ -7,20 +7,21 @@ import { useLocale, useTranslations } from "next-intl";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Menu, X, Search } from "lucide-react";
 
-const navItems = [
-  { href: "/", labelKey: "nav.home" },
-  { href: "/blog", labelKey: "nav.blog" },
-  { href: "/notes", labelKey: "nav.notes" },
-  { href: "/projects", labelKey: "nav.projects" },
-  { href: "/publications", labelKey: "nav.publications" },
-  { href: "/resume", labelKey: "nav.resume" },
-];
-
 export function Header() {
   const t = useTranslations();
   const pathname = usePathname();
   const locale = useLocale();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Navigation items with locale prefix
+  const navItems = [
+    { href: `/${locale}`, labelKey: "nav.home" },
+    { href: `/${locale}/blog`, labelKey: "nav.blog" },
+    { href: `/${locale}/notes`, labelKey: "nav.notes" },
+    { href: `/${locale}/projects`, labelKey: "nav.projects" },
+    { href: `/${locale}/publications`, labelKey: "nav.publications" },
+    { href: `/${locale}/resume`, labelKey: "nav.resume" },
+  ];
 
   const toggleLanguage = () => {
     const newLocale = locale === "zh" ? "en" : "zh";
@@ -35,7 +36,7 @@ export function Header() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-8">
         {/* Logo */}
         <Link
-          href="/"
+          href={`/${locale}`}
           className="flex items-center gap-2 text-xl font-bold text-primary hover:text-primary-hover transition-colors"
         >
           <span className="font-mono">Stibiums</span>

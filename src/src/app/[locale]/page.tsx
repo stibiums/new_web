@@ -1,10 +1,85 @@
-import { useTranslations } from 'next-intl';
-import Link from 'next/link';
-import { ArrowRight, Github, Mail, ExternalLink, Calendar } from 'lucide-react';
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { ArrowRight, Github, Mail, ExternalLink, Calendar, Eye } from "lucide-react";
+
+interface Post {
+  id: string;
+  slug: string;
+  title: string;
+  titleEn: string | null;
+  excerpt: string | null;
+  excerptEn: string | null;
+  coverImage: string | null;
+  publishedAt: string | null;
+  views: number;
+}
+
+interface Project {
+  id: string;
+  slug: string;
+  title: string;
+  titleEn: string | null;
+  description: string | null;
+  descriptionEn: string | null;
+  coverImage: string | null;
+  techStack: string | null;
+  githubUrl: string | null;
+  demoUrl: string | null;
+}
 
 export default function Home() {
-  const t = useTranslations('home');
-  const tNav = useTranslations('nav');
+  const t = useTranslations("home");
+  const tNav = useTranslations("nav");
+  const params = useParams();
+  const locale = params.locale as string;
+  const [recentPosts, setRecentPosts] = useState<Post[]>([]);
+  const [recentProjects, setRecentProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHomeData = async () => {
+      try {
+        const res = await fetch("/api/home");
+        const data = await res.json();
+        if (res.ok) {
+          setRecentPosts(data.data.recentPosts || []);
+          setRecentProjects(data.data.recentProjects || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch home data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHomeData();
+  }, []);
+
+  const getTitle = (item: Post | Project) => {
+    return locale === "en" && "titleEn" in item && item.titleEn ? item.titleEn : item.title;
+  };
+
+  const getExcerpt = (item: Post) => {
+    const excerpt = locale === "en" ? item.excerptEn : item.excerpt;
+    return excerpt || "";
+  };
+
+  const getDescription = (item: Project) => {
+    const desc = locale === "en" ? item.descriptionEn : item.description;
+    return desc || "";
+  };
+
+  const getTechStack = (project: Project) => {
+    if (!project.techStack) return [];
+    return project.techStack.split(",").map((tech) => tech.trim());
+  };
+
+  // Skills - could also come from settings API in the future
+  const skills = ['TypeScript', 'React', 'Next.js', 'Node.js', 'Python', 'PostgreSQL', 'Docker', 'AWS'];
 
   return (
     <div className="space-y-20 py-12">
@@ -63,7 +138,7 @@ export default function Home() {
       <section className="max-w-4xl mx-auto px-4">
         <h2 className="text-2xl font-bold text-center mb-8">{t('skills')}</h2>
         <div className="flex flex-wrap justify-center gap-3">
-          {['TypeScript', 'React', 'Next.js', 'Node.js', 'Python', 'PostgreSQL', 'Docker', 'AWS'].map((skill) => (
+          {skills.map((skill) => (
             <span
               key={skill}
               className="px-4 py-2 rounded-full bg-muted text-sm font-medium"
@@ -79,7 +154,7 @@ export default function Home() {
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl font-bold">{t('latestPosts')}</h2>
           <Link
-            href="/blog"
+            href={`/${locale}/blog`}
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
           >
             {t('viewAll')}
@@ -87,38 +162,53 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="space-y-4">
-          {/* Placeholder posts - will be replaced with real data */}
-          <article className="p-6 rounded-lg border border-border hover:border-primary/50 transition-colors">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-              <Calendar className="w-4 h-4" />
-              <span>2024-01-15</span>
-            </div>
-            <Link href="/blog/sample-post">
-              <h3 className="text-xl font-semibold mb-2 hover:text-primary transition-colors">
-                示例文章标题
-              </h3>
-            </Link>
-            <p className="text-muted-foreground line-clamp-2">
-              这是一篇示例文章的摘要内容，将会从数据库中读取实际的文章内容进行展示。
-            </p>
-          </article>
-
-          <article className="p-6 rounded-lg border border-border hover:border-primary/50 transition-colors">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-              <Calendar className="w-4 h-4" />
-              <span>2024-01-10</span>
-            </div>
-            <Link href="/blog/another-post">
-              <h3 className="text-xl font-semibold mb-2 hover:text-primary transition-colors">
-                另一篇示例文章
-              </h3>
-            </Link>
-            <p className="text-muted-foreground line-clamp-2">
-              这里是另一篇示例文章的摘要内容，展示了文章列表的样式。
-            </p>
-          </article>
-        </div>
+        {loading ? (
+          <div className="space-y-4">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="p-6 rounded-lg border border-border">
+                <div className="h-6 w-3/4 bg-muted rounded mb-4 animate-pulse" />
+                <div className="h-4 w-full bg-muted rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+        ) : recentPosts.length === 0 ? (
+          <p className="text-muted-foreground">暂无文章</p>
+        ) : (
+          <div className="space-y-4">
+            {recentPosts.map((post) => (
+              <article
+                key={post.id}
+                className="p-6 rounded-lg border border-border hover:border-primary/50 transition-colors"
+              >
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                  {post.publishedAt && (
+                    <>
+                      <Calendar className="w-4 h-4" />
+                      <span>{new Date(post.publishedAt).toLocaleDateString()}</span>
+                    </>
+                  )}
+                  {post.views > 0 && (
+                    <>
+                      <span className="mx-2">·</span>
+                      <Eye className="w-4 h-4" />
+                      <span>{post.views}</span>
+                    </>
+                  )}
+                </div>
+                <Link href={`/${locale}/blog/${post.slug}`}>
+                  <h3 className="text-xl font-semibold mb-2 hover:text-primary transition-colors">
+                    {getTitle(post)}
+                  </h3>
+                </Link>
+                {getExcerpt(post) && (
+                  <p className="text-muted-foreground line-clamp-2">
+                    {getExcerpt(post)}
+                  </p>
+                )}
+              </article>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Latest Projects Section */}
@@ -126,7 +216,7 @@ export default function Home() {
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl font-bold">{t('latestProjects')}</h2>
           <Link
-            href="/projects"
+            href={`/${locale}/projects`}
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
           >
             {t('viewAll')}
@@ -134,62 +224,73 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
-          {/* Placeholder projects */}
-          <div className="p-6 rounded-lg border border-border hover:border-primary/50 transition-colors">
-            <h3 className="text-lg font-semibold mb-2">项目名称</h3>
-            <p className="text-muted-foreground text-sm mb-4">
-              项目描述内容
-            </p>
-            <div className="flex flex-wrap gap-2 mb-4">
-              <span className="px-2 py-1 rounded bg-muted text-xs">Next.js</span>
-              <span className="px-2 py-1 rounded bg-muted text-xs">TypeScript</span>
-            </div>
-            <div className="flex gap-3">
-              <a
-                href="#"
-                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                <Github className="w-4 h-4" />
-                Code
-              </a>
-              <a
-                href="#"
-                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                <ExternalLink className="w-4 h-4" />
-                Demo
-              </a>
-            </div>
+        {loading ? (
+          <div className="grid md:grid-cols-2 gap-4">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="p-6 rounded-lg border border-border">
+                <div className="h-6 w-3/4 bg-muted rounded mb-4 animate-pulse" />
+                <div className="h-4 w-full bg-muted rounded animate-pulse" />
+              </div>
+            ))}
           </div>
+        ) : recentProjects.length === 0 ? (
+          <p className="text-muted-foreground">暂无项目</p>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-4">
+            {recentProjects.map((project) => (
+              <div
+                key={project.id}
+                className="p-6 rounded-lg border border-border hover:border-primary/50 transition-colors flex flex-col"
+              >
+                <h3 className="text-lg font-semibold mb-2">{getTitle(project)}</h3>
 
-          <div className="p-6 rounded-lg border border-border hover:border-primary/50 transition-colors">
-            <h3 className="text-lg font-semibold mb-2">另一个项目</h3>
-            <p className="text-muted-foreground text-sm mb-4">
-              另一个项目的描述内容
-            </p>
-            <div className="flex flex-wrap gap-2 mb-4">
-              <span className="px-2 py-1 rounded bg-muted text-xs">React</span>
-              <span className="px-2 py-1 rounded bg-muted text-xs">Node.js</span>
-            </div>
-            <div className="flex gap-3">
-              <a
-                href="#"
-                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                <Github className="w-4 h-4" />
-                Code
-              </a>
-              <a
-                href="#"
-                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                <ExternalLink className="w-4 h-4" />
-                Demo
-              </a>
-            </div>
+                {getDescription(project) && (
+                  <p className="text-muted-foreground text-sm mb-4 flex-1">
+                    {getDescription(project)}
+                  </p>
+                )}
+
+                {getTechStack(project).length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {getTechStack(project).map((tech) => (
+                      <span
+                        key={tech}
+                        className="px-2 py-1 rounded bg-muted text-xs"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex gap-4 pt-4 border-t border-border">
+                  {project.githubUrl && (
+                    <a
+                      href={project.githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      <Github className="w-4 h-4" />
+                      Code
+                    </a>
+                  )}
+                  {project.demoUrl && (
+                    <a
+                      href={project.demoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Demo
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
+        )}
       </section>
     </div>
   );

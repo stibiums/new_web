@@ -1,11 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Home, ArrowLeft } from "lucide-react";
 
 export default function NotFound() {
   const t = useTranslations("common");
+  const pathname = usePathname();
+
+  // Extract locale from pathname (e.g., /zh/blog -> zh)
+  const locale = pathname.split("/")[1] || "zh";
 
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 text-center">
@@ -17,7 +22,7 @@ export default function NotFound() {
 
       <div className="flex gap-4">
         <Link
-          href="/"
+          href={`/${locale}`}
           className="flex items-center gap-2 px-6 py-3 rounded-lg bg-primary text-white hover:bg-primary-hover transition-colors"
         >
           <Home className="w-5 h-5" />

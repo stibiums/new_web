@@ -68,7 +68,7 @@ export default function NotePage() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12">
         <Link
-          href="/notes"
+          href={`/${locale}/notes`}
           className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -143,7 +143,7 @@ export default function NotePage() {
                   {note.links.map((link) => (
                     <Link
                       key={link.target.slug}
-                      href={`/notes/${link.target.slug}`}
+                      href={`/${locale}/notes/${link.target.slug}`}
                       className="flex items-center gap-2 p-2 rounded hover:bg-muted transition-colors"
                     >
                       <ArrowRight className="w-4 h-4" />
@@ -162,7 +162,7 @@ export default function NotePage() {
                   {note.backlinks.map((link) => (
                     <Link
                       key={link.source.slug}
-                      href={`/notes/${link.source.slug}`}
+                      href={`/${locale}/notes/${link.source.slug}`}
                       className="flex items-center gap-2 p-2 rounded hover:bg-muted transition-colors"
                     >
                       <ArrowRight className="w-4 h-4" />

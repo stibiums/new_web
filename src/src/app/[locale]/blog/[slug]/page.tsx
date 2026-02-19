@@ -88,7 +88,7 @@ export default function BlogPostPage() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12">
         <Link
-          href="/blog"
+          href={`/${locale}/blog`}
           className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
