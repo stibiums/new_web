@@ -7,7 +7,8 @@
     "projects": "项目",
     "publications": "出版物",
     "resume": "简历",
-    "about": "关于"
+    "about": "关于",
+    "admin": "后台"
   },
   "home": {
     "title": "你好，我是 Stibiums",
@@ -86,7 +87,9 @@
     "back": "返回",
     "viewAll": "查看全部",
     "notFound": "页面未找到",
-    "serverError": "服务器错误"
+    "serverError": "服务器错误",
+    "login": "登录",
+    "logout": "退出"
   },
   "admin": {
     "title": "管理后台",

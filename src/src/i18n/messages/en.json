@@ -7,7 +7,8 @@
     "projects": "Projects",
     "publications": "Publications",
     "resume": "Resume",
-    "about": "About"
+    "about": "About",
+    "admin": "Admin"
   },
   "home": {
     "title": "Hi, I'm Stibiums",
@@ -86,7 +87,9 @@
     "back": "Back",
     "viewAll": "View All",
     "notFound": "Page Not Found",
-    "serverError": "Server Error"
+    "serverError": "Server Error",
+    "login": "Login",
+    "logout": "Logout"
   },
   "admin": {
     "title": "Admin Dashboard",

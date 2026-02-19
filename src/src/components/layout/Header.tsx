@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { AuthButton } from "@/components/layout/AuthButton";
 import { Menu, X, Search } from "lucide-react";
 
 export function Header() {
@@ -78,6 +79,9 @@ export function Header() {
           >
             {locale === "zh" ? "EN" : "中"}
           </button>
+
+          {/* Auth Button */}
+          <AuthButton />
 
           {/* Theme Toggle */}
           <ThemeToggle />
