@@ -145,6 +145,7 @@ common.search, common.loading, common.error
 - 提交粒度：一个功能点/步骤 = 一次提交
 - 使用 conventional commits 格式：`type(scope): 描述`
 - 添加文件时使用 `git add <具体文件>` 而非 `git add .`
+- **每次 git 提交完成后，必须清空上下文 (/compact)**
 - 示例：
   - `feat(init): 初始化 Next.js 项目`
   - `feat(i18n): 配置 next-intl 国际化`
