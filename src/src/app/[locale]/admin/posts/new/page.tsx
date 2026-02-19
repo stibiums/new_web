@@ -1,20 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { TiptapEditor } from "@/components/editor";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { toast } from "sonner";
 
-export default function NewPostPage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
+export default function NewPostPage() {
   const router = useRouter();
-  const [locale, setLocale] = useState<string>("");
+  const params = useParams();
+  const locale = params.locale as string;
   const [loading, setLoading] = useState(false);
 
   const [title, setTitle] = useState("");
@@ -23,11 +20,6 @@ export default function NewPostPage({
   const [contentEn, setContentEn] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [excerptEn, setExcerptEn] = useState("");
-
-  // 动态获取 locale
-  if (!locale) {
-    params.then((p) => setLocale(p.locale));
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
