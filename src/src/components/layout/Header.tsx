@@ -63,6 +63,7 @@ export function Header() {
         <div className="flex items-center gap-2">
           {/* Search Button */}
           <button
+            onClick={() => document.dispatchEvent(new CustomEvent("open-search"))}
             className="p-2 rounded-lg hover:bg-muted transition-colors"
             aria-label="Search"
           >

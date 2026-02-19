@@ -4,6 +4,7 @@ import { routing } from '@/i18n/routing';
 import { notFound } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { SearchProvider } from '@/components/search/SearchProvider';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({locale}));
@@ -32,6 +33,7 @@ export default async function LocaleLayout({
           {children}
         </main>
         <Footer />
+        <SearchProvider />
       </div>
     </NextIntlClientProvider>
   );
