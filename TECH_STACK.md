@@ -4,7 +4,7 @@
 
 | 技术 | 版本 | 用途 |
 |------|------|------|
-| Next.js (App Router) | ^15.x | 全栈 React 框架 |
+| Next.js (App Router) | ^16.x | 全栈 React 框架 |
 | TypeScript | ^5.x | 类型安全 |
 | React | ^19.x | UI 库 |
 | Node.js | ^20.x | 运行时 |
