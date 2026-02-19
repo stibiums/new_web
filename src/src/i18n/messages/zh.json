@@ -3,6 +3,7 @@
     "home": "首页",
     "blog": "博客",
     "notes": "笔记",
+    "graph": "图谱",
     "projects": "项目",
     "publications": "出版物",
     "resume": "简历",
@@ -39,6 +40,12 @@
     "noResults": "暂无笔记",
     "allNotes": "全部笔记",
     "categories": "分类"
+  },
+  "graph": {
+    "title": "知识图谱",
+    "description": "探索笔记之间的关联关系",
+    "note": "笔记",
+    "blog": "博客"
   },
   "projects": {
     "title": "项目",

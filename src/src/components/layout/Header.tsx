@@ -18,6 +18,7 @@ export function Header() {
     { href: `/${locale}`, labelKey: "nav.home" },
     { href: `/${locale}/blog`, labelKey: "nav.blog" },
     { href: `/${locale}/notes`, labelKey: "nav.notes" },
+    { href: `/${locale}/graph`, labelKey: "nav.graph" },
     { href: `/${locale}/projects`, labelKey: "nav.projects" },
     { href: `/${locale}/publications`, labelKey: "nav.publications" },
     { href: `/${locale}/resume`, labelKey: "nav.resume" },

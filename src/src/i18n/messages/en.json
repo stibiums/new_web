@@ -3,6 +3,7 @@
     "home": "Home",
     "blog": "Blog",
     "notes": "Notes",
+    "graph": "Graph",
     "projects": "Projects",
     "publications": "Publications",
     "resume": "Resume",
@@ -39,6 +40,12 @@
     "noResults": "No notes yet",
     "allNotes": "All Notes",
     "categories": "Categories"
+  },
+  "graph": {
+    "title": "Knowledge Graph",
+    "description": "Explore the connections between notes",
+    "note": "Note",
+    "blog": "Blog"
   },
   "projects": {
     "title": "Projects",
