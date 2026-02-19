@@ -17,6 +17,7 @@
     "@prisma/client": "^6.19.2",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.3.1",
+    "lucide-react": "^0.574.0",
     "next": "16.1.6",
     "next-auth": "5.0.0-beta.30",
     "next-intl": "^4.8.3",
@@ -35,5 +36,10 @@
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "typescript": "^5"
+  },
+  "pnpm": {
+    "overrides": {
+      "@auth/core": "0.41.1"
+    }
   }
 }
