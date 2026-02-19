@@ -1,14 +1,134 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Prisma Schema for stibiums.top
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "mysql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  role      Role     @default(ADMIN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Post {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  titleEn     String?
+  content     String    @db.LongText
+  contentEn   String?   @db.LongText
+  excerpt     String?   @db.Text
+  excerptEn   String?   @db.Text
+  type        PostType
+  category    String?
+  tags        String?
+  coverImage  String?
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  views       Int       @default(0)
+  likes       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  reactions   Reaction[]
+  links       PostLink[] @relation("source")
+  backlinks   PostLink[] @relation("target")
+
+  @@index([type])
+  @@index([category])
+  @@index([published])
+  @@index([publishedAt])
+}
+
+model PostLink {
+  id       String @id @default(cuid())
+  sourceId String
+  targetId String
+  source   Post   @relation("source", fields: [sourceId], references: [id], onDelete: Cascade)
+  target   Post   @relation("target", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, targetId])
+  @@index([sourceId])
+  @@index([targetId])
+}
+
+model Project {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  title         String
+  titleEn       String?
+  description   String?  @db.Text
+  descriptionEn String?  @db.Text
+  content       String?  @db.LongText
+  contentEn     String?  @db.LongText
+  techStack     String?
+  githubUrl     String?
+  demoUrl       String?
+  coverImage    String?
+  published     Boolean  @default(false)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Publication {
+  id        String   @id @default(cuid())
+  title     String
+  authors   String
+  venue     String?
+  year      Int?
+  doi       String?
+  url       String?
+  bibtex    String?  @db.Text
+  abstract  String?  @db.Text
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Reaction {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  type      String
+  ip        String
+  createdAt DateTime @default(now())
+
+  @@unique([postId, ip, type])
+  @@index([postId])
+}
+
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  ip        String?
+  userAgent String?  @db.Text
+  referer   String?  @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([path])
+  @@index([createdAt])
+}
+
+model SiteConfig {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String @db.Text
+}
+
+enum PostType {
+  BLOG
+  NOTE
+}
+
+enum Role {
+  ADMIN
 }
