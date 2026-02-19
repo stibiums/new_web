@@ -88,7 +88,7 @@ export default function NotePage() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12 text-center">
         <h1 className="text-2xl font-bold mb-4">笔记不存在</h1>
-        <Link href="/notes" className="text-primary hover:underline">
+        <Link href={`/${locale}/notes`} className="text-primary hover:underline">
           返回笔记列表
         </Link>
       </div>
@@ -99,11 +99,11 @@ export default function NotePage() {
     <article className="max-w-4xl mx-auto px-4 py-12">
       {/* Back link */}
       <Link
-        href="/notes"
+        href={`/${locale}/notes`}
         className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary mb-8"
       >
         <ArrowLeft className="w-4 h-4" />
-        {t("back")}
+        {tCommon("back")}
       </Link>
 
       {/* Breadcrumb */}

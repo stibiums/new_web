@@ -111,7 +111,7 @@ export default function BlogPostPage() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12 text-center">
         <h1 className="text-2xl font-bold mb-4">文章不存在</h1>
-        <Link href="/blog" className="text-primary hover:underline">
+        <Link href={`/${locale}/blog`} className="text-primary hover:underline">
           返回博客列表
         </Link>
       </div>
@@ -122,11 +122,11 @@ export default function BlogPostPage() {
     <article className="max-w-4xl mx-auto px-4 py-12">
       {/* Back link */}
       <Link
-        href="/blog"
+        href={`/${locale}/blog`}
         className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary mb-8"
       >
         <ArrowLeft className="w-4 h-4" />
-        {t("back")}
+        {tCommon("back")}
       </Link>
 
       {/* Header */}
