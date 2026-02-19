@@ -13,31 +13,71 @@
     "subtitle": "Computer Science Graduate Student | Full Stack Developer",
     "skills": "Skills",
     "latestPosts": "Latest Posts",
-    "latestNotes": "Latest Notes"
+    "latestNotes": "Latest Notes",
+    "latestProjects": "Latest Projects",
+    "about": "About Me",
+    "viewAll": "View All",
+    "welcome": "Welcome to my personal website"
   },
   "blog": {
     "title": "Blog",
     "noResults": "No posts yet",
-    "readMore": "Read More"
+    "readMore": "Read More",
+    "allPosts": "All Posts",
+    "categories": "Categories",
+    "tags": "Tags",
+    "views": "Views",
+    "likes": "Likes",
+    "publishedAt": "Published",
+    "prevPost": "Previous",
+    "nextPost": "Next",
+    "tableOfContents": "Table of Contents",
+    "relatedPosts": "Related Posts"
   },
   "notes": {
     "title": "Notes",
-    "noResults": "No notes yet"
+    "noResults": "No notes yet",
+    "allNotes": "All Notes",
+    "categories": "Categories"
   },
   "projects": {
     "title": "Projects",
-    "noResults": "No projects yet"
+    "noResults": "No projects yet",
+    "allProjects": "All Projects",
+    "techStack": "Tech Stack",
+    "github": "GitHub",
+    "demo": "Demo",
+    "viewProject": "View Project"
   },
   "publications": {
     "title": "Publications",
-    "noResults": "No publications yet"
+    "noResults": "No publications yet",
+    "allPublications": "All Publications",
+    "year": "Year",
+    "venue": "Venue",
+    "authors": "Authors",
+    "abstract": "Abstract",
+    "doi": "DOI",
+    "link": "Link",
+    "copyBibtex": "Copy BibTeX",
+    "bibtexCopied": "Copied"
+  },
+  "resume": {
+    "title": "Resume",
+    "download": "Download PDF",
+    "education": "Education",
+    "experience": "Experience",
+    "skills": "Skills",
+    "contact": "Contact"
   },
   "common": {
     "search": "Search",
     "loading": "Loading...",
     "error": "Something went wrong",
     "back": "Back",
-    "viewAll": "View All"
+    "viewAll": "View All",
+    "notFound": "Page Not Found",
+    "serverError": "Server Error"
   },
   "admin": {
     "title": "Admin Dashboard",

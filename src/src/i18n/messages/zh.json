@@ -13,31 +13,71 @@
     "subtitle": "计算机科学研究生 | 全栈开发者",
     "skills": "技能",
     "latestPosts": "最新文章",
-    "latestNotes": "最新笔记"
+    "latestNotes": "最新笔记",
+    "latestProjects": "最新项目",
+    "about": "关于我",
+    "viewAll": "查看全部",
+    "welcome": "欢迎来到我的个人网站"
   },
   "blog": {
     "title": "博客",
     "noResults": "暂无文章",
-    "readMore": "阅读全文"
+    "readMore": "阅读全文",
+    "allPosts": "全部文章",
+    "categories": "分类",
+    "tags": "标签",
+    "views": "浏览",
+    "likes": "点赞",
+    "publishedAt": "发布于",
+    "prevPost": "上一篇",
+    "nextPost": "下一篇",
+    "tableOfContents": "目录",
+    "relatedPosts": "相关文章"
   },
   "notes": {
     "title": "笔记",
-    "noResults": "暂无笔记"
+    "noResults": "暂无笔记",
+    "allNotes": "全部笔记",
+    "categories": "分类"
   },
   "projects": {
     "title": "项目",
-    "noResults": "暂无项目"
+    "noResults": "暂无项目",
+    "allProjects": "全部项目",
+    "techStack": "技术栈",
+    "github": "GitHub",
+    "demo": "演示",
+    "viewProject": "查看项目"
   },
   "publications": {
     "title": "出版物",
-    "noResults": "暂无出版物"
+    "noResults": "暂无出版物",
+    "allPublications": "全部出版物",
+    "year": "年份",
+    "venue": "发表场所",
+    "authors": "作者",
+    "abstract": "摘要",
+    "doi": "DOI",
+    "link": "链接",
+    "copyBibtex": "复制 BibTeX",
+    "bibtexCopied": "已复制"
+  },
+  "resume": {
+    "title": "简历",
+    "download": "下载 PDF",
+    "education": "教育背景",
+    "experience": "工作经历",
+    "skills": "技能",
+    "contact": "联系方式"
   },
   "common": {
     "search": "搜索",
     "loading": "加载中...",
     "error": "出错了",
     "back": "返回",
-    "viewAll": "查看全部"
+    "viewAll": "查看全部",
+    "notFound": "页面未找到",
+    "serverError": "服务器错误"
   },
   "admin": {
     "title": "管理后台",
