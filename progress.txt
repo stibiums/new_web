@@ -17,9 +17,9 @@
 - [x] 1.1 pnpm create next-app 初始化 (Next.js 16 + TypeScript + Tailwind CSS)
 - [x] 1.2 安装依赖 (已在 create-next-app 时安装)
 - [x] 1.3 Tailwind 主题配置
-- [ ] 1.4 next-intl 配置
+- [x] 1.4 next-intl 配置
 - [ ] 1.5 next-themes 配置
-- [ ] 1.6 根布局和 [locale] 布局
+- [x] 1.6 根布局和 [locale] 布局
 - [ ] 1.7 .gitignore, .env.example
 
 > 📁 项目结构: Next.js 应用源码在 `src/` 目录
@@ -76,4 +76,4 @@
 ---
 
 ## 接下来做什么
-→ 1.4 next-intl 配置
+→ 1.5 next-themes 配置
