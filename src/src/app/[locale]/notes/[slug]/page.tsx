@@ -24,6 +24,7 @@ interface Note {
 
 export default function NotePage() {
   const t = useTranslations("notes");
+  const tCommon = useTranslations("common");
   const params = useParams();
   const locale = params.locale as string;
   const slug = params.slug as string;
@@ -72,7 +73,7 @@ export default function NotePage() {
           className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
-          {t("back")}
+          {tCommon("back")}
         </Link>
         <div className="space-y-4">
           <div className="h-10 w-3/4 bg-muted rounded animate-pulse" />
