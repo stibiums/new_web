@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Calendar, Eye, Heart, ArrowLeft, ArrowRight, Share2 } from "lucide-react";
+import { Calendar, Eye, Heart, ArrowLeft, Share2 } from "lucide-react";
 import { TiptapRenderer } from "@/components/content/TiptapRenderer";
 
 interface Post {
@@ -36,6 +36,20 @@ export default function BlogPostPage() {
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [likeLoading, setLikeLoading] = useState(false);
+
+  // Record view on page load
+  useEffect(() => {
+    const recordView = async () => {
+      try {
+        await fetch(`/api/views/${slug}`, { method: "POST" });
+      } catch (err) {
+        console.error("Failed to record view:", err);
+      }
+    };
+    recordView();
+  }, [slug]);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -57,6 +71,29 @@ export default function BlogPostPage() {
 
     fetchPost();
   }, [slug]);
+
+  const handleLike = async () => {
+    if (likeLoading) return;
+    setLikeLoading(true);
+
+    try {
+      const action = liked ? "unlike" : "like";
+      const res = await fetch(`/api/likes/${slug}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const data = await res.json();
+      if (res.ok && post) {
+        setPost({ ...post, likes: data.data.likes });
+        setLiked(data.data.liked);
+      }
+    } catch (err) {
+      console.error("Failed to like:", err);
+    } finally {
+      setLikeLoading(false);
+    }
+  };
 
   const getTitle = (p: Post) => {
     return locale === "en" && p.titleEn ? p.titleEn : p.title;
@@ -147,10 +184,18 @@ export default function BlogPostPage() {
               {post.views}
             </span>
           )}
-          <span className="flex items-center gap-1">
-            <Heart className="w-4 h-4" />
+          <button
+            onClick={handleLike}
+            disabled={likeLoading}
+            className={`flex items-center gap-1 hover:text-red-500 transition-colors ${
+              liked ? "text-red-500" : ""
+            }`}
+          >
+            <Heart
+              className={`w-4 h-4 ${liked ? "fill-current animate-pulse" : ""}`}
+            />
             {post.likes}
-          </span>
+          </button>
         </div>
 
         {getTags(post).length > 0 && (
