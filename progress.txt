@@ -1,0 +1,76 @@
+# 进度追踪
+
+## ⚠️ 重要规则：每完成一个小任务后必须进行 git 提交！
+
+- 每个步骤完成后立即 `git add` 相关文件 + `git commit`
+- 提交信息遵循 conventional commits 格式
+- 不要积攒多个任务再一起提交
+- 提交粒度：一个功能点 = 一次提交
+
+## 当前状态: 阶段 1 - 项目初始化
+
+---
+
+## 阶段 1：项目初始化
+- [x] 创建项目规范文档 (PRD, APP_FLOW, TECH_STACK, FRONTEND_GUIDELINES, BACKEND_STRUCTURE, IMPLEMENTATION_PLAN, CLAUDE.md, progress.txt)
+- [ ] 1.1 pnpm create next-app 初始化
+- [ ] 1.2 安装依赖
+- [ ] 1.3 Tailwind 主题配置
+- [ ] 1.4 next-intl 配置
+- [ ] 1.5 next-themes 配置
+- [ ] 1.6 根布局和 [locale] 布局
+- [ ] 1.7 .gitignore, .env.example
+
+## 阶段 2：数据库与认证
+- [ ] 2.1 docker-compose.yml (MySQL)
+- [ ] 2.2 Prisma 初始化
+- [ ] 2.3 Prisma Schema
+- [ ] 2.4 Prisma 迁移
+- [ ] 2.5 Prisma Client 单例
+- [ ] 2.6 NextAuth 配置
+- [ ] 2.7 管理员 seed 脚本
+
+## 阶段 3：基础组件
+- [ ] 3.1-3.2 Header (桌面 + 移动端)
+- [ ] 3.3 Footer
+- [ ] 3.4-3.8 通用 UI 组件
+
+## 阶段 4：管理后台
+- [ ] 4.1 Admin 布局
+- [ ] 4.2-4.7 Tiptap 编辑器
+- [ ] 4.8 图片上传 API
+- [ ] 4.9-4.12 文章管理 CRUD
+- [ ] 4.13 笔记管理
+- [ ] 4.14 项目管理
+- [ ] 4.15 出版物管理
+- [ ] 4.16 统计仪表盘
+- [ ] 4.17 站点设置
+
+## 阶段 5：前台页面
+- [ ] 5.1-5.4 首页
+- [ ] 5.5-5.7 博客
+- [ ] 5.8-5.10 笔记
+- [ ] 5.11 项目
+- [ ] 5.12 出版物
+- [ ] 5.13 简历
+- [ ] 5.14-5.15 404 + loading
+
+## 阶段 6：新功能
+- [ ] 6.1-6.2 浏览量 + 点赞
+- [ ] 6.3-6.5 全文搜索
+- [ ] 6.6-6.8 知识图谱
+- [ ] 6.9 Giscus 评论
+- [ ] 6.10-6.11 RSS + Sitemap
+
+## 阶段 7：部署
+- [ ] 7.1-7.2 Dockerfile + docker-compose
+- [ ] 7.3 .env.example
+- [ ] 7.4 Gitea Actions workflow
+- [ ] 7.5 GitHub 镜像
+- [ ] 7.6 CasaOS 部署
+- [ ] 7.7 初始提交推送
+
+---
+
+## 接下来做什么
+→ 1.1 初始化 Next.js 项目
