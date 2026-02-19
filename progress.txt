@@ -29,9 +29,9 @@
 - [x] 2.2 Prisma 初始化
 - [x] 2.3 Prisma Schema
 - [x] 2.4 Prisma 迁移
-- [ ] 2.5 Prisma Client 单例
-- [ ] 2.6 NextAuth 配置
-- [ ] 2.7 管理员 seed 脚本
+- [x] 2.5 Prisma Client 单例
+- [x] 2.6 NextAuth 配置
+- [x] 2.7 管理员 seed 脚本
 
 ## 阶段 3：基础组件
 - [ ] 3.1-3.2 Header (桌面 + 移动端)
@@ -76,4 +76,4 @@
 ---
 
 ## 接下来做什么
-→ 2.5 Prisma Client 单例
+→ 3.1-3.2 Header (桌面 + 移动端)
