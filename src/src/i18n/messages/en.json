@@ -33,7 +33,9 @@
     "prevPost": "Previous",
     "nextPost": "Next",
     "tableOfContents": "Table of Contents",
-    "relatedPosts": "Related Posts"
+    "relatedPosts": "Related Posts",
+    "comments": "Comments",
+    "commentsNotConfigured": "Comments are not configured yet. Please set Giscus configuration in environment variables."
   },
   "notes": {
     "title": "Notes",

@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Calendar, Eye, Heart, ArrowLeft, Share2 } from "lucide-react";
 import { TiptapRenderer } from "@/components/content/TiptapRenderer";
+import { Giscus } from "@/components/ui/Giscus";
 
 interface Post {
   id: string;
@@ -236,6 +237,9 @@ export default function BlogPostPage() {
           分享
         </button>
       </div>
+
+      {/* Giscus Comments */}
+      <Giscus />
     </article>
   );
 }

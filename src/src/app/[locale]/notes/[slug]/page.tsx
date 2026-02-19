@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Calendar, ArrowLeft, ArrowRight } from "lucide-react";
 import { TiptapRenderer } from "@/components/content/TiptapRenderer";
+import { Giscus } from "@/components/ui/Giscus";
 
 interface Note {
   id: string;
@@ -177,6 +178,9 @@ export default function NotePage() {
           </div>
         </div>
       )}
+
+      {/* Giscus Comments */}
+      <Giscus />
     </article>
   );
 }

@@ -33,7 +33,9 @@
     "prevPost": "上一篇",
     "nextPost": "下一篇",
     "tableOfContents": "目录",
-    "relatedPosts": "相关文章"
+    "relatedPosts": "相关文章",
+    "comments": "评论",
+    "commentsNotConfigured": "评论功能尚未配置，请在环境变量中设置 Giscus 相关配置。"
   },
   "notes": {
     "title": "笔记",
