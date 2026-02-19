@@ -36,6 +36,14 @@
 | @tiptap/extension-placeholder | ^2.x | 占位符 |
 | @tiptap/extension-heading | ^2.x | 标题扩展 |
 | @tiptap/extension-mathematics | ^2.x | KaTeX 数学公式 |
+| @tiptap/extension-task-list | ^2.x | 待办事项列表 |
+| @tiptap/extension-task-item | ^2.x | 待办事项项 |
+| @tiptap/extension-bubble-menu | ^2.x | 气泡菜单（选中文字时） |
+| @tiptap/extension-floating-menu | ^2.x | 悬浮菜单（空行时） |
+| @tiptap/suggestion | ^2.x | 建议引擎（Slash 命令） |
+| @tiptap/extension-callout | ^2.x | Callout 块（提示框） |
+| @tiptap/extension-toggle | ^2.x | Toggle 折叠块 |
+| tippy.js | latest | 菜单定位库 |
 | lowlight | latest | 代码语法高亮引擎 |
 | katex | latest | 数学公式渲染 |
 

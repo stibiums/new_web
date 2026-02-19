@@ -34,13 +34,8 @@
 ## 阶段 4：管理后台
 
 - [ ] 4.1 Admin 布局 (侧边栏导航, 认证保护, 响应式)
-- [ ] 4.2 Tiptap 编辑器核心组件 (基础工具栏: 粗体/斜体/标题/列表)
-- [ ] 4.3 Tiptap 扩展: 数学公式 (KaTeX)
-- [ ] 4.4 Tiptap 扩展: 代码块 (lowlight 语法高亮)
-- [ ] 4.5 Tiptap 扩展: 图片上传
-- [ ] 4.6 Tiptap 扩展: 表格
-- [ ] 4.7 Tiptap 扩展: 链接
-- [ ] 4.8 图片上传 API (/api/admin/upload)
+- [x] 4.2-4.7 Tiptap 编辑器 (基础版本)
+- [x] 4.8 图片上传 API (/api/admin/upload)
 - [ ] 4.9 文章管理: 列表页 (搜索、筛选、分页)
 - [ ] 4.10 文章管理: 新建页 (Tiptap 编辑器 + 中英双语标签)
 - [ ] 4.11 文章管理: 编辑页 (加载已有内容)
@@ -50,6 +45,16 @@
 - [ ] 4.15 出版物管理: CRUD
 - [ ] 4.16 统计仪表盘 (总浏览量、总点赞、文章数、最近访问趋势)
 - [ ] 4.17 站点设置页
+
+## 阶段 4'：Notion 风格编辑器
+
+- [ ] 4'.1 安装 Notion 风格编辑器所需扩展 (@tiptap/extension-task-list, @tiptap/extension-task-item, @tiptap/extension-bubble-menu, @tiptap/extension-floating-menu, @tiptap/extension-callout, @tiptap/extension-toggle, @tiptap/suggestion, tippy.js)
+- [ ] 4'.2 实现 Slash 命令菜单组件
+- [ ] 4'.3 实现悬浮气泡菜单组件 (Bubble Menu)
+- [ ] 4'.4 添加 Task List、Callout、Toggle 等块类型支持
+- [ ] 4'.5 适配现有图片上传和表格功能
+- [ ] 4'.6 移除旧的顶部 Toolbar（保留撤销/重做）
+- [ ] 4'.7 测试和验证编辑器功能
 
 ## 阶段 5：前台页面
 
