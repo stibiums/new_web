@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Calendar, ArrowLeft, ArrowRight } from "lucide-react";
+import { TiptapRenderer } from "@/components/content/TiptapRenderer";
 
 interface Note {
   id: string;
@@ -127,7 +128,7 @@ export default function NotePage() {
 
       {/* Content */}
       <div className="prose prose-lg dark:prose-invert max-w-none mb-12">
-        <div className="whitespace-pre-wrap">{getContent(note)}</div>
+        <TiptapRenderer content={getContent(note)} />
       </div>
 
       {/* Related Notes - 5.10 */}

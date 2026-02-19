@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Calendar, Eye, Heart, ArrowLeft, ArrowRight, Share2 } from "lucide-react";
+import { TiptapRenderer } from "@/components/content/TiptapRenderer";
 
 interface Post {
   id: string;
@@ -177,7 +178,7 @@ export default function BlogPostPage() {
       {/* Content */}
       <div className="prose prose-lg dark:prose-invert max-w-none">
         {/* Render Tiptap JSON content - placeholder for now */}
-        <div className="whitespace-pre-wrap">{getContent(post)}</div>
+        <TiptapRenderer content={getContent(post)} />
       </div>
 
       {/* Share */}
