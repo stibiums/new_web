@@ -1,0 +1,52 @@
+{
+  "nav": {
+    "home": "Home",
+    "blog": "Blog",
+    "notes": "Notes",
+    "projects": "Projects",
+    "publications": "Publications",
+    "resume": "Resume",
+    "about": "About"
+  },
+  "home": {
+    "title": "Hi, I'm Stibiums",
+    "subtitle": "Computer Science Graduate Student | Full Stack Developer",
+    "skills": "Skills",
+    "latestPosts": "Latest Posts",
+    "latestNotes": "Latest Notes"
+  },
+  "blog": {
+    "title": "Blog",
+    "noResults": "No posts yet",
+    "readMore": "Read More"
+  },
+  "notes": {
+    "title": "Notes",
+    "noResults": "No notes yet"
+  },
+  "projects": {
+    "title": "Projects",
+    "noResults": "No projects yet"
+  },
+  "publications": {
+    "title": "Publications",
+    "noResults": "No publications yet"
+  },
+  "common": {
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "back": "Back",
+    "viewAll": "View All"
+  },
+  "admin": {
+    "title": "Admin Dashboard",
+    "dashboard": "Dashboard",
+    "posts": "Posts",
+    "notes": "Notes",
+    "projects": "Projects",
+    "publications": "Publications",
+    "settings": "Settings",
+    "logout": "Logout"
+  }
+}

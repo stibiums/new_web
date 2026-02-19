@@ -1,0 +1,52 @@
+{
+  "nav": {
+    "home": "首页",
+    "blog": "博客",
+    "notes": "笔记",
+    "projects": "项目",
+    "publications": "出版物",
+    "resume": "简历",
+    "about": "关于"
+  },
+  "home": {
+    "title": "你好，我是 Stibiums",
+    "subtitle": "计算机科学研究生 | 全栈开发者",
+    "skills": "技能",
+    "latestPosts": "最新文章",
+    "latestNotes": "最新笔记"
+  },
+  "blog": {
+    "title": "博客",
+    "noResults": "暂无文章",
+    "readMore": "阅读全文"
+  },
+  "notes": {
+    "title": "笔记",
+    "noResults": "暂无笔记"
+  },
+  "projects": {
+    "title": "项目",
+    "noResults": "暂无项目"
+  },
+  "publications": {
+    "title": "出版物",
+    "noResults": "暂无出版物"
+  },
+  "common": {
+    "search": "搜索",
+    "loading": "加载中...",
+    "error": "出错了",
+    "back": "返回",
+    "viewAll": "查看全部"
+  },
+  "admin": {
+    "title": "管理后台",
+    "dashboard": "仪表盘",
+    "posts": "文章管理",
+    "notes": "笔记管理",
+    "projects": "项目管理",
+    "publications": "出版物管理",
+    "settings": "站点设置",
+    "logout": "退出登录"
+  }
+}
