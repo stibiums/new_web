@@ -20,7 +20,7 @@
 - [x] 1.4 next-intl 配置
 - [x] 1.5 next-themes 配置
 - [x] 1.6 根布局和 [locale] 布局
-- [ ] 1.7 .gitignore, .env.example
+- [x] 1.7 .gitignore, .env.example
 
 > 📁 项目结构: Next.js 应用源码在 `src/` 目录
 
@@ -76,4 +76,4 @@
 ---
 
 ## 接下来做什么
-→ 1.7 .gitignore, .env.example
+→ 2.1 docker-compose.yml (MySQL)
