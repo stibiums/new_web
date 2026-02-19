@@ -105,7 +105,7 @@ export default function BlogPage() {
                 )}
               </div>
 
-              <Link href={`/blog/${post.slug}`}>
+              <Link href={`/${locale}/blog/${post.slug}`}>
                 <h2 className="text-xl font-semibold mb-3 hover:text-primary transition-colors">
                   {getTitle(post)}
                 </h2>

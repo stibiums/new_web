@@ -92,7 +92,7 @@ export default function NotesPage() {
                 {groupedNotes[category].map((note) => (
                   <Link
                     key={note.id}
-                    href={`/notes/${note.slug}`}
+                    href={`/${locale}/notes/${note.slug}`}
                     className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors group"
                   >
                     <div className="flex items-center gap-3">
