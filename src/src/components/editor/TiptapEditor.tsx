@@ -27,6 +27,7 @@ export function TiptapEditor({
   placeholder = "开始输入内容...",
 }: TiptapEditorProps) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         codeBlock: false,
