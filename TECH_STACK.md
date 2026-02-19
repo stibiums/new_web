@@ -51,6 +51,7 @@
 | 技术 | 版本 | 用途 |
 |------|------|------|
 | NextAuth.js (Auth.js) | ^5.x | 认证框架 |
+| @auth/prisma-adapter | ^2.x | Prisma 适配器 |
 | bcryptjs | latest | 密码哈希 |
 
 ## 国际化
