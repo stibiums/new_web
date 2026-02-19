@@ -45,7 +45,7 @@ async function buildSearchIndex() {
     document: {
       id: "id",
       index: ["title", "titleEn", "excerpt", "excerptEn", "content", "contentEn", "tags"],
-      store: ["slug", "title", "titleEn", "excerpt", "excerptEn", "type"],
+      store: ["id", "slug", "title", "titleEn", "excerpt", "excerptEn", "type"],
     },
     tokenize: "forward",
     context: true,
