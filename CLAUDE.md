@@ -1,8 +1,27 @@
 # CLAUDE.md - 项目操作手册
 
+## 项目结构
+
+```
+new_web/                     # 项目根目录
+├── src/                     # Next.js 应用源码 (create-next-app 初始化)
+├── .claude/                 # Claude Code 配置
+├── .git/                    # Git 仓库
+├── PRD.md                   # 产品需求文档
+├── APP_FLOW.md              # 用户流程
+├── TECH_STACK.md            # 技术栈
+├── FRONTEND_GUIDELINES.md   # 设计系统
+├── BACKEND_STRUCTURE.md     # 后端结构
+├── IMPLEMENTATION_PLAN.md   # 实施计划
+├── CLAUDE.md                # 本文件
+└── progress.txt             # 进度追踪
+```
+
+---
+
 ## 项目概述
 
-个人学术网站 (stibiums.top) 的全栈重构项目，基于 Next.js 15 + TypeScript + Tailwind CSS。
+个人学术网站 (stibiums.top) 的全栈重构项目，基于 Next.js 16 + TypeScript + Tailwind CSS。
 
 - **内容管理**: 数据库存储 (MySQL + Prisma)，后台 Tiptap 富文本编辑器
 - **前台展示**: 首页、博客、笔记、项目、出版物、简历、知识图谱
@@ -13,7 +32,7 @@
 
 ## 技术栈速查
 
-- **框架**: Next.js 15 (App Router) + TypeScript
+- **框架**: Next.js 16 (App Router) + TypeScript
 - **样式**: Tailwind CSS 4 + CSS 变量主题
 - **数据库**: MySQL 8 + Prisma 6
 - **认证**: NextAuth.js v5 (Credentials)
@@ -157,13 +176,15 @@ common.search, common.loading, common.error
 ## 常用命令
 
 ```bash
-# 开发
+# 开发 (在 src 目录下执行)
+cd src
 pnpm dev                    # 启动开发服务器
 pnpm build                  # 生产构建
 pnpm lint                   # 代码检查
 pnpm format                 # 代码格式化
 
-# 数据库
+# 数据库 (在 src 目录下执行)
+cd src
 pnpm prisma migrate dev     # 开发迁移
 pnpm prisma migrate deploy  # 生产迁移
 pnpm prisma studio          # 数据库 GUI
