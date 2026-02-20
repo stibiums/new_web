@@ -5,7 +5,15 @@ import { useRouter, useParams } from "next/navigation";
 import { TiptapEditor } from "@/components/editor";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/Dialog";
 import { toast } from "sonner";
 
 export default function NewPostPage() {
@@ -14,14 +22,18 @@ export default function NewPostPage() {
   const locale = params.locale as string;
   const [loading, setLoading] = useState(false);
 
+  // 元信息状态
+  const [metaOpen, setMetaOpen] = useState(false);
   const [slug, setSlug] = useState("");
-  const [title, setTitle] = useState("");
-  const [titleEn, setTitleEn] = useState("");
-  const [content, setContent] = useState("");
-  const [contentEn, setContentEn] = useState("");
   const [excerpt, setExcerpt] = useState("");
-  const [excerptEn, setExcerptEn] = useState("");
+  const [category, setCategory] = useState("");
+  const [tags, setTags] = useState("");
+  const [coverImage, setCoverImage] = useState("");
   const [published, setPublished] = useState(false);
+
+  // 内容和标题状态
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,11 +46,11 @@ export default function NewPostPage() {
         body: JSON.stringify({
           slug,
           title,
-          titleEn,
           content,
-          contentEn,
           excerpt,
-          excerptEn,
+          category,
+          tags,
+          coverImage,
           published,
         }),
       });
@@ -57,59 +69,116 @@ export default function NewPostPage() {
     }
   };
 
-  return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">
-          创建新文章
-        </h1>
-        <p className="text-sm text-[var(--color-muted-foreground)]">
-          创建一篇新的博客文章
-        </p>
-      </div>
+  const handleMetaSave = () => {
+    setMetaOpen(false);
+  };
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>基本设置</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+  return (
+    <div className="min-h-screen bg-[var(--color-background)]">
+      {/* 顶部导航栏 */}
+      <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-background)]/80 backdrop-blur-sm">
+        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            返回
+          </button>
+          <Button variant="ghost" size="sm" onClick={() => setMetaOpen(true)}>
+            <svg
+              className="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+            </svg>
+            属性
+          </Button>
+        </div>
+      </header>
+
+      {/* 主内容区 */}
+      <main className="max-w-4xl mx-auto px-6 py-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* 标题输入 */}
+          <div>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="无标题"
+              className="w-full text-4xl font-bold bg-transparent border-none outline-none text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)]/50"
+              required
+            />
+          </div>
+
+          {/* Tiptap 编辑器 */}
+          <div className="min-h-[400px]">
+            <TiptapEditor
+              content={content}
+              onChange={setContent}
+              placeholder="开始编写..."
+            />
+          </div>
+
+          {/* 底部操作栏 */}
+          <div className="flex justify-end gap-3 pt-6 border-t border-[var(--color-border)]">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+            >
+              取消
+            </Button>
+            <Button type="submit" loading={loading}>
+              创建
+            </Button>
+          </div>
+        </form>
+      </main>
+
+      {/* 属性设置弹窗 */}
+      <Dialog open={metaOpen} onOpenChange={setMetaOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>属性设置</DialogTitle>
+            <DialogDescription>
+              设置文章的元信息
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
             <div>
               <label className="block text-sm font-medium mb-2">Slug</label>
               <Input
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 placeholder="post-slug"
-                required
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="published"
-                checked={published}
-                onChange={(e) => setPublished(e.target.checked)}
-                className="w-4 h-4"
-              />
-              <label htmlFor="published" className="text-sm font-medium">
-                发布文章
-              </label>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>中文内容</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">标题</label>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="输入文章标题"
-                required
               />
             </div>
             <div>
@@ -121,61 +190,51 @@ export default function NewPostPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">内容</label>
-              <TiptapEditor
-                content={content}
-                onChange={setContent}
-                placeholder="开始编写文章内容..."
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>English Content</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Title</label>
+              <label className="block text-sm font-medium mb-2">分类</label>
               <Input
-                value={titleEn}
-                onChange={(e) => setTitleEn(e.target.value)}
-                placeholder="Enter post title"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="输入分类"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Excerpt</label>
+              <label className="block text-sm font-medium mb-2">标签</label>
               <Input
-                value={excerptEn}
-                onChange={(e) => setExcerptEn(e.target.value)}
-                placeholder="Enter post excerpt"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                placeholder="标签，用逗号分隔"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Content</label>
-              <TiptapEditor
-                content={contentEn}
-                onChange={setContentEn}
-                placeholder="Start writing content..."
+              <label className="block text-sm font-medium mb-2">封面图</label>
+              <Input
+                value={coverImage}
+                onChange={(e) => setCoverImage(e.target.value)}
+                placeholder="封面图 URL"
               />
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="published"
+                checked={published}
+                onChange={(e) => setPublished(e.target.checked)}
+                className="w-4 h-4 rounded border-[var(--color-border)]"
+              />
+              <label htmlFor="published" className="text-sm font-medium">
+                发布文章
+              </label>
+            </div>
+          </div>
 
-        <div className="flex justify-end gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-          >
-            取消
-          </Button>
-          <Button type="submit" loading={loading}>
-            创建文章
-          </Button>
-        </div>
-      </form>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">取消</Button>
+            </DialogClose>
+            <Button onClick={handleMetaSave}>保存</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
