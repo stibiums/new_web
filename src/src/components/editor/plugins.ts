@@ -3,7 +3,7 @@ import Headings from "@yoopta/headings";
 import Lists from "@yoopta/lists";
 import Blockquote from "@yoopta/blockquote";
 import Callout from "@yoopta/callout";
-import Code from "@yoopta/code";
+import CodePlugins from "@yoopta/code";
 import Image from "@yoopta/image";
 import Video from "@yoopta/video";
 import Embed from "@yoopta/embed";
@@ -67,7 +67,7 @@ const RAW_PLUGINS = [
   Lists.TodoList,
   Blockquote,
   Callout,
-  Code,
+  CodePlugins.Code,
   ImageWithUpload,
   Video,
   Embed,
