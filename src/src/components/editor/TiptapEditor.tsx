@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditor, EditorContent, BubbleMenu } from "@tiptap/react";
+import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Link from "@tiptap/extension-link";
@@ -13,14 +13,12 @@ import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import { common, createLowlight } from "lowlight";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
-import BubbleMenuExtension from "@tiptap/extension-bubble-menu";
-import FloatingMenu from "@tiptap/extension-floating-menu";
+import { Extension } from "@tiptap/core";
 import Suggestion from "@tiptap/suggestion";
-import { slashCommand, getSuggestionItems, CommandItem } from "./slash-command";
 import { Toolbar } from "./Toolbar";
 import { BubbleMenuWrapper } from "./BubbleMenu";
 import { FloatingMenuWrapper } from "./FloatingMenu";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import tippy from "tippy.js";
 
 const lowlight = createLowlight(common);
@@ -30,6 +28,127 @@ export interface TiptapEditorProps {
   onChange?: (content: string) => void;
   placeholder?: string;
 }
+
+// 命令项类型
+interface CommandItem {
+  title: string;
+  description?: string;
+  icon: string;
+  searchTerms?: string[];
+  command: (props: { editor: any; range: any }) => void;
+}
+
+// 获取可用命令
+function getSuggestionItems(): CommandItem[] {
+  return [
+    {
+      title: "标题 1",
+      description: "大标题",
+      icon: "H1",
+      searchTerms: ["title", "heading", "h1"],
+      command: ({ editor, range }: { editor: any; range: any }) => {
+        editor.chain().focus().deleteRange(range).setNode("heading", { level: 1 }).run();
+      },
+    },
+    {
+      title: "标题 2",
+      description: "中标题",
+      icon: "H2",
+      searchTerms: ["title", "heading", "h2"],
+      command: ({ editor, range }: { editor: any; range: any }) => {
+        editor.chain().focus().deleteRange(range).setNode("heading", { level: 2 }).run();
+      },
+    },
+    {
+      title: "标题 3",
+      description: "小标题",
+      icon: "H3",
+      searchTerms: ["title", "heading", "h3"],
+      command: ({ editor, range }: { editor: any; range: any }) => {
+        editor.chain().focus().deleteRange(range).setNode("heading", { level: 3 }).run();
+      },
+    },
+    {
+      title: "无序列表",
+      description: "创建无序列表",
+      icon: "List",
+      searchTerms: ["bullet", "list", "unordered"],
+      command: ({ editor, range }: { editor: any; range: any }) => {
+        editor.chain().focus().deleteRange(range).toggleBulletList().run();
+      },
+    },
+    {
+      title: "有序列表",
+      description: "创建有序列表",
+      icon: "ListOrdered",
+      searchTerms: ["number", "list", "ordered"],
+      command: ({ editor, range }: { editor: any; range: any }) => {
+        editor.chain().focus().deleteRange(range).toggleOrderedList().run();
+      },
+    },
+    {
+      title: "任务列表",
+      description: "创建待办事项列表",
+      icon: "CheckSquare",
+      searchTerms: ["todo", "task", "check"],
+      command: ({ editor, range }: { editor: any; range: any }) => {
+        editor.chain().focus().deleteRange(range).toggleTaskList().run();
+      },
+    },
+    {
+      title: "引用",
+      description: "创建引用块",
+      icon: "Quote",
+      searchTerms: ["quote", "blockquote"],
+      command: ({ editor, range }: { editor: any; range: any }) => {
+        editor.chain().focus().deleteRange(range).toggleBlockquote().run();
+      },
+    },
+    {
+      title: "代码块",
+      description: "插入代码块",
+      icon: "Code",
+      searchTerms: ["code", "pre", "codeblock"],
+      command: ({ editor, range }: { editor: any; range: any }) => {
+        editor.chain().focus().deleteRange(range).toggleCodeBlock().run();
+      },
+    },
+    {
+      title: "分割线",
+      description: "插入水平分割线",
+      icon: "Minus",
+      searchTerms: ["hr", "divider", "horizontal"],
+      command: ({ editor, range }: { editor: any; range: any }) => {
+        editor.chain().focus().deleteRange(range).setHorizontalRule().run();
+      },
+    },
+  ];
+}
+
+// 创建 Slash 命令扩展
+const SlashCommand = Extension.create({
+  name: "slashCommand",
+
+  addOptions() {
+    return {
+      suggestion: {
+        char: "/",
+        command: ({ editor, range, props }: any) => {
+          props.command({ editor, range });
+        },
+      },
+    };
+  },
+
+  addProseMirrorPlugins() {
+    return [
+      Suggestion({
+        editor: this.editor,
+        ...this.options.suggestion,
+      }),
+    ];
+  },
+});
 
 export function TiptapEditor({
   content = "",
@@ -47,9 +166,7 @@ export function TiptapEditor({
     extensions: [
       StarterKit.configure({
         codeBlock: false,
-        // 禁用默认 taskList，用自定义扩展
         taskList: false,
-        // 禁用默认 taskItem，用自定义扩展
         taskItem: false,
       }),
       Placeholder.configure({
@@ -90,30 +207,21 @@ export function TiptapEditor({
           class: "bg-[var(--color-muted)] rounded-lg p-4 font-mono text-sm overflow-x-auto",
         },
       }),
-      // Task List 扩展
       TaskList.configure({
         HTMLAttributes: {
-          class: "task-list",
+          class: "task-list pl-0",
         },
       }),
       TaskItem.configure({
         nested: true,
         HTMLAttributes: {
-          class: "task-item",
+          class: "task-item flex items-start gap-2",
         },
       }),
-      // Bubble Menu - 选中文字时显示
-      BubbleMenuExtension.configure({
-        element: document.createElement("div"),
-      }),
-      // Floating Menu - 空行时显示
-      FloatingMenu.configure({
-        element: document.createElement("div"),
-      }),
-      // Slash 命令
-      Suggestion.configure({
-        char: "/",
+      // Slash 命令扩展
+      SlashCommand.configure({
         suggestion: {
+          char: "/",
           items: ({ query }: { query: string }) => {
             return getSuggestionItems().filter((item) =>
               item.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -126,19 +234,8 @@ export function TiptapEditor({
 
             return {
               onStart: (props: any) => {
-                const { editor, clientRect } = props;
+                const { clientRect } = props;
 
-                component = {
-                  element: document.createElement("div"),
-                  props: {
-                    items: props.items,
-                    command: props.command,
-                  },
-                  // 渲染列表的简单实现
-                  destroy: () => {},
-                };
-
-                // 创建建议列表的 DOM
                 const list = document.createElement("div");
                 list.className = "suggestion-list";
                 list.style.cssText = `
@@ -161,7 +258,7 @@ export function TiptapEditor({
                   header.style.cssText = "padding: 8px 12px; font-size: 12px; color: var(--color-muted-foreground); border-bottom: 1px solid var(--color-border);";
                   list.appendChild(header);
 
-                  items.forEach((item, index) => {
+                  items.forEach((item) => {
                     const button = document.createElement("button");
                     button.className = "suggestion-item";
                     button.style.cssText = "width: 100%; display: flex; align-items: center; gap: 12px; padding: 8px 12px; text-align: left; border: none; background: transparent; cursor: pointer;";
@@ -169,6 +266,12 @@ export function TiptapEditor({
                       <span style="font-size: 14px; font-weight: 500;">${item.title}</span>
                       <span style="font-size: 12px; color: var(--color-muted-foreground);">${item.description || ""}</span>
                     `;
+                    button.onmouseenter = () => {
+                      button.style.background = "var(--color-muted)";
+                    };
+                    button.onmouseleave = () => {
+                      button.style.background = "transparent";
+                    };
                     button.onclick = () => {
                       props.command(item);
                     };
@@ -178,7 +281,7 @@ export function TiptapEditor({
 
                 renderItems(props.items);
 
-                component.element = list;
+                component = list;
 
                 popup = tippy("body", {
                   getReferenceClientRect: clientRect,
@@ -190,9 +293,10 @@ export function TiptapEditor({
                   placement: "bottom-start",
                 });
               },
+
               onUpdate: (props: any) => {
-                const { items } = props;
-                const list = component.element;
+                const { items, clientRect } = props;
+                const list = component;
                 list.innerHTML = "";
                 const header = document.createElement("div");
                 header.className = "suggestion-header";
@@ -208,6 +312,12 @@ export function TiptapEditor({
                     <span style="font-size: 14px; font-weight: 500;">${item.title}</span>
                     <span style="font-size: 12px; color: var(--color-muted-foreground);">${item.description || ""}</span>
                   `;
+                  button.onmouseenter = () => {
+                    button.style.background = "var(--color-muted)";
+                  };
+                  button.onmouseleave = () => {
+                    button.style.background = "transparent";
+                  };
                   button.onclick = () => {
                     props.command(item);
                   };
@@ -218,6 +328,7 @@ export function TiptapEditor({
                   getReferenceClientRect: clientRect,
                 });
               },
+
               onKeyDown: (props: { event: KeyboardEvent }) => {
                 if (props.event.key === "Escape") {
                   popup[0].hide();
@@ -225,12 +336,13 @@ export function TiptapEditor({
                 }
                 return false;
               },
+
               onExit: () => {
                 if (popup && popup[0]) {
                   popup[0].destroy();
                 }
-                if (component && component.element) {
-                  component.element.remove();
+                if (component) {
+                  component.remove();
                 }
               },
             };
