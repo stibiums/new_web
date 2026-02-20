@@ -16,8 +16,6 @@ import TaskItem from "@tiptap/extension-task-item";
 import { Extension } from "@tiptap/core";
 import Suggestion from "@tiptap/suggestion";
 import { Toolbar } from "./Toolbar";
-import { BubbleMenuWrapper } from "./BubbleMenu";
-import { FloatingMenuWrapper } from "./FloatingMenu";
 import { useEffect, useState } from "react";
 import tippy from "tippy.js";
 
@@ -367,13 +365,7 @@ export function TiptapEditor({
 
   return (
     <div className="border border-[var(--color-border)] rounded-lg overflow-hidden bg-[var(--color-background)]">
-      {/* Bubble Menu - 选中文字时显示 */}
-      <BubbleMenuWrapper editor={editor!} />
-
-      {/* Floating Menu - 空行时显示 */}
-      <FloatingMenuWrapper editor={editor!} />
-
-      {/* 简化版工具栏 - 仅保留撤销/重做 */}
+      {/* 简化版工具栏 - 保留常用功能 */}
       <Toolbar editor={editor} />
 
       <EditorContent editor={editor} />
