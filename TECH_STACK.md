@@ -24,28 +24,33 @@
 
 | 技术 | 版本 | 用途 |
 |------|------|------|
-| @tiptap/react | ^2.x | 富文本编辑器核心 |
-| @tiptap/starter-kit | ^2.x | 基础扩展包 |
-| @tiptap/extension-link | ^2.x | 链接扩展 |
-| @tiptap/extension-image | ^2.x | 图片扩展 |
-| @tiptap/extension-code-block-lowlight | ^2.x | 代码块扩展 |
-| @tiptap/extension-table | ^2.x | 表格扩展 |
-| @tiptap/extension-table-row | ^2.x | 表格行 |
-| @tiptap/extension-table-cell | ^2.x | 表格单元格 |
-| @tiptap/extension-table-header | ^2.x | 表格表头 |
-| @tiptap/extension-placeholder | ^2.x | 占位符 |
-| @tiptap/extension-heading | ^2.x | 标题扩展 |
-| @tiptap/extension-mathematics | ^2.x | KaTeX 数学公式 |
-| @tiptap/extension-task-list | ^2.x | 待办事项列表 |
-| @tiptap/extension-task-item | ^2.x | 待办事项项 |
-| @tiptap/extension-bubble-menu | ^2.x | 气泡菜单（选中文字时） |
-| @tiptap/extension-floating-menu | ^2.x | 悬浮菜单（空行时） |
-| @tiptap/suggestion | ^2.x | 建议引擎（Slash 命令） |
-| @tiptap/extension-callout | ^2.x | Callout 块（提示框） |
-| @tiptap/extension-toggle | ^2.x | Toggle 折叠块 |
-| tippy.js | latest | 菜单定位库 |
-| lowlight | latest | 代码语法高亮引擎 |
-| katex | latest | 数学公式渲染 |
+| @yoopta/editor | ^6.0.0-beta | Yoopta 富文本编辑器核心 |
+| @yoopta/paragraph | ^6.0.0-beta | 段落插件 |
+| @yoopta/headings | ^6.0.0-beta | 标题插件 (H1-H3) |
+| @yoopta/lists | ^6.0.0-beta | 列表插件 (有序/无序/待办) |
+| @yoopta/blockquote | ^6.0.0-beta | 引用块 |
+| @yoopta/callout | ^6.0.0-beta | 提示框 |
+| @yoopta/code | ^6.0.0-beta | 代码块 |
+| @yoopta/image | ^6.0.0-beta | 图片 (自定义上传) |
+| @yoopta/video | ^6.0.0-beta | 视频嵌入 |
+| @yoopta/embed | ^6.0.0-beta | 通用嵌入 |
+| @yoopta/file | ^6.0.0-beta | 文件附件 |
+| @yoopta/table | ^6.0.0-beta | 表格 |
+| @yoopta/accordion | ^6.0.0-beta | 手风琴/折叠 |
+| @yoopta/tabs | ^6.0.0-beta | 选项卡 |
+| @yoopta/steps | ^6.0.0-beta | 步骤 |
+| @yoopta/divider | ^6.0.0-beta | 分隔线 |
+| @yoopta/link | ^6.0.0-beta | 链接插件 |
+| @yoopta/mention | ^6.0.0-beta | @提及 |
+| @yoopta/emoji | ^6.0.0-beta | 表情符号 |
+| @yoopta/carousel | ^6.0.0-beta | 图片轮播 |
+| @yoopta/table-of-contents | ^6.0.0-beta | 目录 |
+| @yoopta/marks | ^6.0.0-beta | 文本标记 (粗体/斜体/下划线/删除线/代码/高亮) |
+| @yoopta/themes-shadcn | ^6.0.0-beta | shadcn 风格主题 |
+| @yoopta/ui | ^6.0.0-beta | UI 组件 (浮动工具栏/斜杠菜单等) |
+| slate | ^0.123.0 | 编辑器底层引擎 |
+| slate-react | ^0.123.0 | React 绑定 |
+| slate-dom | ^0.123.0 | DOM 绑定 |
 
 ## 数据库与 ORM
 

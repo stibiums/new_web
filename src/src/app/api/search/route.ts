@@ -15,6 +15,48 @@ interface SearchablePost {
   type: string;
 }
 
+/**
+ * Extract plain text from Yoopta JSON content (or raw HTML/text).
+ * Yoopta content is Record<string, YooptaBlockData>, each block has a `value` array of Slate nodes.
+ */
+function extractPlainText(raw: string): string {
+  if (!raw) return "";
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object") {
+      const texts: string[] = [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const extractFromNode = (node: any) => {
+        if (typeof node === "string") {
+          texts.push(node);
+        } else if (node && typeof node === "object") {
+          if (node.text && typeof node.text === "string") {
+            texts.push(node.text);
+          }
+          if (Array.isArray(node.children)) {
+            for (const child of node.children) {
+              extractFromNode(child);
+            }
+          }
+        }
+      };
+      // Iterate over each block
+      for (const key of Object.keys(parsed)) {
+        const block = parsed[key];
+        if (block && Array.isArray(block.value)) {
+          for (const node of block.value) {
+            extractFromNode(node);
+          }
+        }
+      }
+      return texts.join(" ");
+    }
+  } catch {
+    // Not JSON — return raw content (might be old HTML or plain text)
+  }
+  return raw.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
 // In-memory search index (rebuilds on server start)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let searchIndex: Document | null = null;
@@ -51,13 +93,14 @@ async function buildSearchIndex() {
     context: true,
   });
 
-  // Add documents to index
+  // Add documents to index — extract plain text from Yoopta JSON
   for (const post of posts) {
     searchIndex.add({
       ...post,
+      content: extractPlainText(post.content),
+      contentEn: extractPlainText(post.contentEn || ""),
       titleEn: post.titleEn || "",
       excerptEn: post.excerptEn || "",
-      contentEn: post.contentEn || "",
     });
   }
 }

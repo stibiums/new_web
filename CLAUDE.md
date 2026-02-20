@@ -36,7 +36,7 @@ new_web/                     # 项目根目录
 - **样式**: Tailwind CSS 4 + CSS 变量主题
 - **数据库**: MySQL 8 + Prisma 6
 - **认证**: NextAuth.js v5 (Credentials)
-- **编辑器**: Tiptap 2
+- **编辑器**: Yoopta Editor v6 (beta) + Slate.js
 - **国际化**: next-intl
 - **搜索**: FlexSearch
 - **图谱**: D3.js
@@ -79,8 +79,8 @@ src/
 ├── components/            # React 组件
 │   ├── layout/            # Header, Footer, AdminSidebar
 │   ├── ui/                # 通用 UI (Button, Card, Tag, Input...)
-│   ├── editor/            # Tiptap 编辑器相关
-│   ├── content/           # 内容渲染 (TiptapRenderer, TOC...)
+│   ├── editor/            # Yoopta 编辑器相关
+│   ├── content/           # 内容渲染 (TiptapRenderer/Yoopta readOnly)
 │   ├── search/            # 搜索组件
 │   └── graph/             # 知识图谱
 ├── lib/                   # 工具函数
@@ -101,14 +101,18 @@ src/
 
 ## 内容格式
 
-### Tiptap JSON
+### Yoopta JSON
 
-所有富文本内容以 Tiptap JSON 格式存储在数据库 `content` 字段中。
+所有富文本内容以 Yoopta JSON 格式 (`Record<string, YooptaBlockData>`) 存储在数据库 `content` 字段中。
 
 前台渲染方式:
-1. 从数据库读取 JSON
-2. 使用 `generateHTML()` (from @tiptap/html) 转换为 HTML
-3. 或使用 TiptapRenderer 组件直接渲染
+1. 从数据库读取 JSON 字符串
+2. 使用 `createYooptaEditor({ readOnly: true })` 创建只读编辑器实例
+3. 通过 TiptapRenderer 组件（已重写为 Yoopta 渲染）直接渲染
+
+编辑器组件:
+- `plugins.ts` - 插件配置 (20+ 插件 + applyTheme)
+- `YooptaEditorWrapper.tsx` - 编辑器主组件 (含浮动工具栏、斜杠菜单等)
 
 ### 双语内容
 

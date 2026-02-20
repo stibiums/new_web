@@ -1,5 +1,3 @@
-export { Toolbar } from "./Toolbar";
-export { TiptapEditor } from "./TiptapEditor";
-export type { TiptapEditorProps } from "./TiptapEditor";
-export { BubbleMenuWrapper } from "./BubbleMenu";
-export { FloatingMenuWrapper } from "./FloatingMenu";
+export { YooptaEditorWrapper } from "./YooptaEditorWrapper";
+export type { YooptaEditorWrapperProps } from "./YooptaEditorWrapper";
+export { PLUGINS, MARKS } from "./plugins";

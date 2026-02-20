@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { TiptapEditor } from "@/components/editor";
+import { YooptaEditorWrapper } from "@/components/editor";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import {
@@ -139,7 +139,7 @@ export default function NewPostPage() {
 
           {/* Tiptap 编辑器 */}
           <div className="min-h-[400px]">
-            <TiptapEditor
+            <YooptaEditorWrapper
               content={content}
               onChange={setContent}
               placeholder="开始编写..."
@@ -228,7 +228,7 @@ export default function NewPostPage() {
           </div>
 
           <DialogFooter>
-            <DialogClose asChild>
+            <DialogClose>
               <Button variant="outline">取消</Button>
             </DialogClose>
             <Button onClick={handleMetaSave}>保存</Button>

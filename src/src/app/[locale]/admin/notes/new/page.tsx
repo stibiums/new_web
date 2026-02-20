@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { TiptapEditor } from "@/components/editor";
+import { YooptaEditorWrapper } from "@/components/editor";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -123,7 +123,7 @@ export default function NewNotePage() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">内容</label>
-              <TiptapEditor
+              <YooptaEditorWrapper
                 content={content}
                 onChange={setContent}
                 placeholder="开始编写笔记内容..."
@@ -155,7 +155,7 @@ export default function NewNotePage() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Content</label>
-              <TiptapEditor
+              <YooptaEditorWrapper
                 content={contentEn}
                 onChange={setContentEn}
                 placeholder="Start writing content..."

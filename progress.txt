@@ -50,13 +50,20 @@
 - [x] 4.17 站点设置
 
 ## 阶段 4'：Notion 风格编辑器
-- [x] 4'.1 安装 Notion 风格编辑器所需扩展
-- [x] 4'.2 实现 Slash 命令菜单组件
-- [x] 4'.3 实现悬浮气泡菜单组件
-- [x] 4'.4 添加 Task List、Callout、Toggle 等块类型
-- [x] 4'.5 适配现有图片上传和表格功能
-- [x] 4'.6 移除旧的顶部 Toolbar
-- [ ] 4'.7 测试和验证编辑器功能
+- [x] ~~4'.1 安装 Notion 风格编辑器所需扩展 (Tiptap)~~ → 已替换为 Yoopta Editor
+- [x] ~~4'.2 实现 Slash 命令菜单组件~~ → Yoopta v6 内置
+- [x] ~~4'.3 实现悬浮气泡菜单组件~~ → Yoopta v6 内置
+- [x] ~~4'.4 添加 Task List、Callout、Toggle 等块类型~~ → Yoopta v6 插件
+- [x] ~~4'.5 适配现有图片上传和表格功能~~ → Yoopta v6 Image.extend()
+- [x] ~~4'.6 移除旧的顶部 Toolbar~~ → 已删除
+- [x] 4'.7 **编辑器替换为 Yoopta Editor v6** (beta.22)
+  - 安装 20+ Yoopta 插件 + Slate 依赖
+  - 创建 plugins.ts 配置模块和 YooptaEditorWrapper.tsx
+  - 删除旧 Tiptap 编辑器组件 (TiptapEditor, Toolbar, BubbleMenu, FloatingMenu)
+  - 重写 TiptapRenderer.tsx 为 Yoopta readOnly 模式渲染
+  - 更新所有 Admin 页面 (Posts/Notes/Projects) 使用新编辑器
+  - 更新搜索索引支持 Yoopta JSON 纯文本提取
+  - 构建验证通过
 
 ## 阶段 5：前台页面
 - [x] 5.1-5.4 首页
@@ -85,4 +92,4 @@
 ---
 
 ## 接下来做什么
-→ 阶段 4' Notion 风格编辑器：4'.7 测试和验证编辑器功能
+→ 阶段 7：部署 (Dockerfile, docker-compose, Gitea Actions, CasaOS)
