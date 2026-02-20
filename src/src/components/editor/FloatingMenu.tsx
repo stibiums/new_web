@@ -1,7 +1,7 @@
 "use client";
 
 import { Editor } from "@tiptap/react";
-import { FloatingMenu as TiptapFloatingMenu } from "@tiptap/extension-floating-menu";
+import { FloatingMenu as TiptapFloatingMenu } from "@tiptap/react";
 import {
   Heading1,
   Heading2,

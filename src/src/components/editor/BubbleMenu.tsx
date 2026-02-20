@@ -1,7 +1,7 @@
 "use client";
 
 import { Editor } from "@tiptap/react";
-import { BubbleMenu as TiptapBubbleMenu } from "@tiptap/extension-bubble-menu";
+import { BubbleMenu as TiptapBubbleMenu } from "@tiptap/react";
 import { useEffect, useRef } from "react";
 import {
   Bold,
