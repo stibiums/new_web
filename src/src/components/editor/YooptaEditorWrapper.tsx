@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useEffect, useCallback, useState, useRef } from "react";
+import { useEffect, useCallback, useState, useRef } from "react";
 import YooptaEditor, {
   createYooptaEditor,
   type YooptaContentValue,
@@ -227,40 +227,38 @@ export function YooptaEditorWrapper({
   readOnly = false,
   className = "",
 }: YooptaEditorWrapperProps) {
-  const [isMounted, setIsMounted] = useState(false);
+  // Defer editor creation to client-side only to avoid SSR issues with Slate
+  const [editor, setEditor] = useState<YooEditor | null>(null);
+  const hasSetInitial = useRef(false);
 
-  // Parse initial value
-  const initialValue = useMemo(() => {
-    if (!content) return undefined;
-    try {
-      const parsed = JSON.parse(content);
-      if (parsed && typeof parsed === "object") {
-        return parsed as YooptaContentValue;
-      }
-    } catch {
-      // Not valid JSON
-    }
-    return undefined;
-  }, []);
-
-  const editor = useMemo(
-    () =>
-      createYooptaEditor({
-        plugins: PLUGINS,
-        marks: MARKS,
-        value: initialValue,
-        readOnly,
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
-
+  // Create editor only on client mount
   useEffect(() => {
-    setIsMounted(true);
+    let initialValue: YooptaContentValue | undefined;
+    if (content) {
+      try {
+        const parsed = JSON.parse(content);
+        if (parsed && typeof parsed === "object") {
+          initialValue = parsed as YooptaContentValue;
+        }
+      } catch {
+        // Not valid JSON
+      }
+    }
+
+    const ed = createYooptaEditor({
+      plugins: PLUGINS,
+      marks: MARKS,
+      value: initialValue,
+      readOnly,
+    });
+    setEditor(ed);
+    if (initialValue && Object.keys(initialValue).length > 0) {
+      hasSetInitial.current = true;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Set editor value when content prop changes (for edit pages loading data)
-  const hasSetInitial = useRef(false);
   useEffect(() => {
     if (!content || !editor) return;
     // Only set value once after initial load to avoid infinite loops
@@ -286,7 +284,7 @@ export function YooptaEditorWrapper({
     [onChange]
   );
 
-  if (!isMounted) {
+  if (!editor) {
     return (
       <div
         className={`min-h-[300px] rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] p-4 ${className}`}
