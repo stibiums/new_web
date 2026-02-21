@@ -171,6 +171,9 @@ export default function EditPostPage() {
             onChange={setContent}
             onSave={async (value) => {
               setContent(value);
+              // Ctrl+S 触发保存
+              const form = document.getElementById("edit-form") as HTMLFormElement | null;
+              if (form) form.requestSubmit();
             }}
             filePath={filePath}
             currentCommit={gitCommit}
@@ -178,7 +181,7 @@ export default function EditPostPage() {
         </div>
 
         {/* 隐藏的表单，用于提交保存 */}
-        <form id="edit-form" onSubmit={handleSubmit} className="hidden" />
+        <form id="edit-form" onSubmit={handleSubmit} style={{ display: 'none' }} />
       </main>
 
       {/* 属性设置弹窗 */}
