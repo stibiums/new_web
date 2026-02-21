@@ -1,10 +1,13 @@
+![Screenshot from 2026-01-31 19-38-29.png](/assets/img/1771687253902-Screenshot-from-2026-01-31-19-38-29.png)
 ---
 title: 测试文章
 titleEn: Test Article
 excerpt: 这是一篇测试文章
 category: 测试
-tags: ''
-published: 'true'
+tags:
+  - 测试
+  - Monaco
+published: true
 ---
 
 # Hello World
