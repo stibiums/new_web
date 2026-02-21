@@ -52,10 +52,10 @@
 - [x] 4.2.4 运行迁移
 
 ### 4.3 Markdown 文件工具
-- [ ] 4.3.1 readMarkdownFile() 读取文件
-- [ ] 4.3.2 writeMarkdownFile() 写入文件
-- [ ] 4.3.3 parseFrontMatter() 解析 Front Matter
-- [ ] 4.3.4 buildFrontMatter() 生成 Front Matter
+- [x] 4.3.1 readMarkdownFile() 读取文件
+- [x] 4.3.2 writeMarkdownFile() 写入文件
+- [x] 4.3.3 parseFrontMatter() 解析 Front Matter
+- [x] 4.3.4 buildFrontMatter() 生成 Front Matter
 
 ### 4.4 Git 版本管理工具
 - [ ] 4.4.1 gitAdd() git add
@@ -132,4 +132,4 @@
 ---
 
 ## 接下来做什么
-→ 阶段 4.3：Markdown 文件工具 (readMarkdownFile, writeMarkdownFile, parseFrontMatter, buildFrontMatter)
+→ 阶段 4.4：Git 版本管理工具 (gitAdd, gitCommit, gitPush, gitPull, autoCommit)
