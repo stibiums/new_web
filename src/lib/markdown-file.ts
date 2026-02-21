@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 
-// 内容根目录
+// 内容根目录 - src/ 是 Git 仓库根目录，content 在 src/content/
 const CONTENT_DIR = path.join(process.cwd(), 'content');
 
 export interface FrontMatter {

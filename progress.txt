@@ -132,4 +132,4 @@
 ---
 
 ## 接下来做什么
-→ 阶段 4.6：Monaco Editor 组件 (MonacoMarkdownEditor, Ctrl+S 保存)
+→ 阶段 4.7：Markdown 渲染组件 (MarkdownRenderer, MarkdownViewer)

@@ -3,6 +3,7 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { auth } from "@/lib/auth";
 import { randomUUID } from "crypto";
+import { autoCommit } from "@/lib/git";
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -33,10 +34,13 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Generate unique filename
+    // Generate unique filename (keep original name for readability)
     const ext = path.extname(file.name);
-    const filename = `${randomUUID()}${ext}`;
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    const baseName = path.basename(file.name, ext).replace(/[^a-zA-Z0-9_-]/g, '-');
+    const filename = `${Date.now()}-${baseName}${ext}`;
+
+    // Upload to public/assets/img/ (will be in Git version control)
+    const uploadDir = path.join(process.cwd(), "public", "assets", "img");
 
     // Ensure upload directory exists
     await mkdir(uploadDir, { recursive: true });
@@ -45,8 +49,17 @@ export async function POST(request: NextRequest) {
     const filePath = path.join(uploadDir, filename);
     await writeFile(filePath, buffer);
 
-    // Return the URL
-    const url = `/uploads/${filename}`;
+    // Return the URL for Markdown
+    const url = `/assets/img/${filename}`;
+
+    // Auto commit to Git (optional - can be disabled if needed)
+    try {
+      const gitFilePath = `src/public/assets/img/${filename}`;
+      await autoCommit(gitFilePath, `feat(asset): 上传图片 - ${filename}`);
+    } catch (gitError) {
+      console.error("Git auto commit failed:", gitError);
+      // Don't fail the upload if git commit fails
+    }
 
     return NextResponse.json({ url });
   } catch (error) {

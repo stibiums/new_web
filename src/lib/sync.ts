@@ -16,6 +16,15 @@ export async function syncPostToDatabase(slug: string, commit = true): Promise<a
   const { frontMatter, content } = file;
   const publishedAt = getPublishedAt(frontMatter);
 
+  // 确保 published 是布尔类型
+  let publishedValue = frontMatter.published;
+  if (typeof publishedValue === 'string') {
+    publishedValue = publishedValue === 'true';
+  }
+  if (typeof publishedValue !== 'boolean') {
+    publishedValue = false;
+  }
+
   // 构建数据对象
   const data: any = {
     slug,
@@ -29,7 +38,7 @@ export async function syncPostToDatabase(slug: string, commit = true): Promise<a
     category: frontMatter.category || null,
     tags: frontMatter.tags ? JSON.stringify(frontMatter.tags) : null,
     coverImage: frontMatter.coverImage || null,
-    published: frontMatter.published || false,
+    published: publishedValue,
     publishedAt: publishedAt,
     filePath: `content/posts/${slug}.md`,
   };
