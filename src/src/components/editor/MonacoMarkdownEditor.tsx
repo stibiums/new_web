@@ -95,33 +95,6 @@ export function MonacoMarkdownEditor({
       monaco.languages.setLanguageConfiguration("markdown", {
         wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\-\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g,
       });
-
-      // 图片拖拽上传
-      editor.onDidDropObservable((event: any) => {
-        const files = event?.event?.dataTransfer?.files;
-        if (files && files.length > 0) {
-          const file = files[0];
-          if (file.type.startsWith("image/")) {
-            handleImageUpload(file, editor);
-          }
-        }
-      });
-
-      // 粘贴上传图片
-      editor.getDomNode()?.addEventListener("paste", (e: ClipboardEvent) => {
-        const items = e.clipboardData?.items;
-        if (items) {
-          for (let i = 0; i < items.length; i++) {
-            if (items[i].type.startsWith("image/")) {
-              const file = items[i].getAsFile();
-              if (file) {
-                handleImageUpload(file, editor);
-              }
-              break;
-            }
-          }
-        }
-      });
     },
     [onChange, onSave]
   );
