@@ -31,30 +31,110 @@
 - [ ] 3.7 通用 UI 组件: Skeleton (加载骨架屏)
 - [ ] 3.8 通用 UI 组件: Toast (通知提示)
 
-## 阶段 4：管理后台
+## 阶段 4：Monaco Editor + Git + 数据库双写
 
-- [ ] 4.1 Admin 布局 (侧边栏导航, 认证保护, 响应式)
-- [x] 4.2-4.7 Tiptap 编辑器 (基础版本)
-- [x] 4.8 图片上传 API (/api/admin/upload)
-- [ ] 4.9 文章管理: 列表页 (搜索、筛选、分页)
-- [ ] 4.10 文章管理: 新建页 (Tiptap 编辑器 + 中英双语标签)
-- [ ] 4.11 文章管理: 编辑页 (加载已有内容)
-- [ ] 4.12 文章管理: 删除确认
-- [ ] 4.13 笔记管理: CRUD (同文章 + 分类选择)
-- [ ] 4.14 项目管理: CRUD
-- [ ] 4.15 出版物管理: CRUD
-- [ ] 4.16 统计仪表盘 (总浏览量、总点赞、文章数、最近访问趋势)
-- [ ] 4.17 站点设置页
+本阶段实现 Monaco Editor 编辑器、Git 版本管理和文件-数据库双写同步。
 
-## 阶段 4'：Notion 风格编辑器
+### 4.1 环境准备
 
-- [ ] 4'.1 安装 Notion 风格编辑器所需扩展 (@tiptap/extension-task-list, @tiptap/extension-task-item, @tiptap/extension-bubble-menu, @tiptap/extension-floating-menu, @tiptap/extension-callout, @tiptap/extension-toggle, @tiptap/suggestion, tippy.js)
-- [ ] 4'.2 实现 Slash 命令菜单组件
-- [ ] 4'.3 实现悬浮气泡菜单组件 (Bubble Menu)
-- [ ] 4'.4 添加 Task List、Callout、Toggle 等块类型支持
-- [ ] 4'.5 适配现有图片上传和表格功能
-- [ ] 4'.6 移除旧的顶部 Toolbar（保留撤销/重做）
-- [ ] 4'.7 测试和验证编辑器功能
+- [ ] 4.1.1 创建 content/ 目录结构 (posts/, notes/, projects/)
+- [ ] 4.1.2 创建 public/assets/ 目录结构 (img/, jupyter/, video/, pdf/)
+- [ ] 4.1.3 安装依赖: pnpm add @monaco-editor/react react-markdown remark-gfm gray-matter
+
+### 4.2 数据库 Schema 调整
+
+- [ ] 4.2.1 修改 prisma/schema.prisma: Post 模型添加 filePath 字段 (String, 非空)
+- [ ] 4.2.2 修改 prisma/schema.prisma: Post 模型添加 gitCommit 字段 (String, 可空)
+- [ ] 4.2.3 修改 prisma/schema.prisma: Project 模型添加 filePath, gitCommit 字段
+- [ ] 4.2.4 运行 pnpm prisma migrate dev 创建迁移
+
+### 4.3 Markdown 文件工具
+
+- [ ] 4.3.1 创建 src/lib/markdown-file.ts: readMarkdownFile(filePath) 读取文件
+- [ ] 4.3.2 创建 src/lib/markdown-file.ts: writeMarkdownFile(filePath, content) 写入文件
+- [ ] 4.3.3 创建 src/lib/markdown-file.ts: parseFrontMatter(content) 解析 Front Matter
+- [ ] 4.3.4 创建 src/lib/markdown-file.ts: buildFrontMatter(meta) 生成 Front Matter
+
+### 4.4 Git 版本管理工具
+
+- [ ] 4.4.1 创建 src/lib/git.ts: gitAdd(filePath) git add 单文件
+- [ ] 4.4.2 创建 src/lib/git.ts: gitCommit(message) git commit
+- [ ] 4.4.3 创建 src/lib/git.ts: gitPush() git push
+- [ ] 4.4.4 创建 src/lib/git.ts: gitPull() git pull
+- [ ] 4.4.5 创建 src/lib/git.ts: getCurrentCommit() 获取当前 commit hash
+- [ ] 4.4.6 创建 src/lib/git.ts: autoCommit(filePath) 自动生成提交信息并提交
+
+### 4.5 数据同步服务
+
+- [ ] 4.5.1 创建 src/lib/sync.ts: syncPostToDatabase(filePath) 单文件同步
+  - 读取 Markdown 文件
+  - 解析 Front Matter (title, tags, category, date, published)
+  - 提取正文 content
+  - 更新/创建 Post 数据库记录
+- [ ] 4.5.2 创建 src/lib/sync.ts: syncProjectToDatabase(filePath) 项目同步
+- [ ] 4.5.3 创建 src/lib/sync.ts: syncAllContent() 批量同步所有内容
+- [ ] 4.5.4 创建 src/lib/sync.ts: syncNoteToDatabase(filePath, category) 笔记同步
+
+### 4.6 Monaco Editor 组件
+
+- [ ] 4.6.1 创建 src/components/editor/MonacoMarkdownEditor.tsx
+  - 集成 @monaco-editor/react
+  - 设置 language: markdown
+  - 设置 theme: vs-dark / vs-light (根据主题切换)
+- [ ] 4.6.2 添加 Ctrl+S 保存快捷键处理
+- [ ] 4.6.3 添加自动保存逻辑 (debounce)
+- [ ] 4.6.4 添加文件内容加载逻辑 (props.content)
+
+### 4.7 Markdown 渲染组件
+
+- [ ] 4.7.1 创建 src/components/content/MarkdownRenderer.tsx
+  - 使用 react-markdown 渲染
+  - 添加 remark-gfm 支持 (表格、任务列表等)
+  - 支持代码高亮 (可选: react-syntax-highlighter)
+- [ ] 4.7.2 创建 src/components/content/MarkdownViewer.tsx (只读视图)
+
+### 4.8 管理 API 改造
+
+- [ ] 4.8.1 改造 POST /api/admin/posts: 保存时写入文件 + 同步数据库 + Git 提交
+- [ ] 4.8.2 改造 PUT /api/admin/posts/[id]: 更新文件 + 同步数据库 + Git 提交
+- [ ] 4.8.3 改造 DELETE /api/admin/posts/[id]: 删除文件 + Git 提交
+- [ ] 4.8.4 新增 GET /api/admin/posts/[id]/content: 获取文件内容 (给编辑器用)
+- [ ] 4.8.5 同样改造 notes 和 projects 的 API
+
+### 4.9 后台编辑页面
+
+- [ ] 4.9.1 改造文章编辑页: 用 MonacoMarkdownEditor 替换原有编辑器
+- [ ] 4.9.2 添加保存时的加载状态和成功/错误提示
+- [ ] 4.9.3 同样改造笔记编辑页和项目编辑页
+
+### 4.10 图片/资源上传
+
+- [ ] 4.10.1 保留图片上传 API: POST /api/admin/upload
+- [ ] 4.10.2 上传后的资源存储在 public/uploads/ 目录
+
+### 4.11 文章/笔记/项目管理页面
+
+- [ ] 4.11.1 文章列表页: 搜索、筛选、分页 (从数据库查询)
+- [ ] 4.11.2 文章新建页: 元信息表单 + Monaco Editor
+- [ ] 4.11.3 笔记管理: CRUD + 分类选择
+- [ ] 4.11.4 项目管理: CRUD
+- [ ] 4.11.5 出版物管理: CRUD
+- [ ] 4.11.6 统计仪表盘
+- [ ] 4.11.7 站点设置页
+- [ ] 4.11.8 Admin 布局 (侧边栏导航, 认证保护)
+
+## 阶段 4'：旧内容迁移
+
+- [ ] 4'.1 创建导入脚本 (scripts/import-legacy.ts)
+- [ ] 4'.2 解析旧站 _posts/ 目录，复制到 content/posts/
+- [ ] 4'.3 解析旧站 _notes/ 目录，复制到 content/notes/
+- [ ] 4'.4 解析旧站 _projects/ 目录，复制到 content/projects/
+- [ ] 4'.5 迁移 assets/img/ 到 public/assets/img/
+- [ ] 4'.6 迁移 assets/jupyter/ 到 public/assets/jupyter/
+- [ ] 4'.7 迁移 assets/video/ 到 public/assets/video/
+- [ ] 4'.8 迁移 assets/pdf/ 到 public/assets/pdf/
+- [ ] 4'.9 创建数据库记录 (slug, title, filePath, tags, category)
+- [ ] 4'.10 初始 Git 提交
 
 ## 阶段 5：前台页面
 
@@ -63,7 +143,7 @@
 - [ ] 5.3 首页: 最近动态/时间线
 - [ ] 5.4 首页: 社交链接
 - [ ] 5.5 博客列表页: 文章卡片、标签筛选、分页
-- [ ] 5.6 博客详情页: Tiptap JSON 渲染为 HTML、目录 TOC
+- [ ] 5.6 博客详情页: 读取 Markdown 文件并渲染、目录 TOC
 - [ ] 5.7 博客详情页: 上下篇导航、分享按钮
 - [ ] 5.8 笔记列表页: 按课程分类分组、侧边栏导航
 - [ ] 5.9 笔记详情页: 内容渲染、TOC、面包屑

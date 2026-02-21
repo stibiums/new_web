@@ -35,14 +35,15 @@ model Post {
   slug        String    @unique
   title       String
   titleEn     String?
-  content     String    @db.LongText  // Tiptap JSON
+  content     String?   @db.LongText  // Markdown 内容（可选，用于搜索索引）
   contentEn   String?   @db.LongText
   excerpt     String?   @db.Text
   excerptEn   String?   @db.Text
   type        PostType  // BLOG / NOTE
   category    String?   // 笔记课程分类 (ML, CV, DSA...)
-  tags        String?   // JSON array: ["tag1", "tag2"]
+  tags        String?   // 逗号分隔: "tag1,tag2"
   coverImage  String?
+  filePath    String?   // Markdown 文件相对路径: "posts/2025-01-01-hello-world.md"
   published   Boolean   @default(false)
   publishedAt DateTime?
   views       Int       @default(0)
@@ -78,12 +79,13 @@ model Project {
   titleEn       String?
   description   String?  @db.Text
   descriptionEn String?  @db.Text
-  content       String?  @db.LongText  // Tiptap JSON
+  content       String?  @db.LongText  // Markdown 内容（可选）
   contentEn     String?  @db.LongText
-  techStack     String?  // JSON array
+  techStack     String?  // 逗号分隔: "React,TypeScript"
   githubUrl     String?
   demoUrl       String?
   coverImage    String?
+  filePath      String?  // Markdown 文件相对路径: "projects/wordhub.md"
   published     Boolean  @default(false)
   sortOrder     Int      @default(0)
   createdAt     DateTime @default(now())
@@ -171,14 +173,16 @@ enum Role {
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | /api/admin/posts | 文章列表（含未发布） |
-| POST | /api/admin/posts | 创建文章 |
+| POST | /api/admin/posts | 创建文章（写入 Markdown 文件） |
 | GET | /api/admin/posts/[id] | 获取文章（编辑用） |
-| PUT | /api/admin/posts/[id] | 更新文章 |
-| DELETE | /api/admin/posts/[id] | 删除文章 |
+| PUT | /api/admin/posts/[id] | 更新文章（重写 Markdown 文件） |
+| DELETE | /api/admin/posts/[id] | 删除文章（删除 Markdown 文件） |
+| GET | /api/admin/posts/[id]/download | 下载 Markdown 文件 |
 | GET | /api/admin/projects | 项目列表 |
 | POST | /api/admin/projects | 创建项目 |
 | PUT | /api/admin/projects/[id] | 更新项目 |
 | DELETE | /api/admin/projects/[id] | 删除项目 |
+| GET | /api/admin/projects/[id]/download | 下载 Markdown 文件 |
 | GET | /api/admin/publications | 出版物列表 |
 | POST | /api/admin/publications | 创建出版物 |
 | PUT | /api/admin/publications/[id] | 更新出版物 |
@@ -224,33 +228,106 @@ enum Role {
 
 ---
 
+## Markdown 文件存储
+
+- **内容存储**: 项目根目录 `content/`
+- **资源存储**: `public/assets/` 目录
+  - `assets/img/` - 图片（按课程/章节分类）
+  - `assets/jupyter/` - Jupyter Notebook 文件
+  - `assets/video/` - 视频文件
+  - `assets/pdf/` - PDF 文档
+- **Git 仓库**: 内容单独 Git 仓库或主仓库分支
+- **版本管理**: 每次保存自动 git add → commit → push
+- **资源引用**: 使用标准 Markdown 语法 `![描述](/assets/img/...)`
+
+### 资源引用示例
+
+```markdown
+![图片描述](/assets/img/notes_img/cv-ch02/pinhole-camera.png)
+
+[下载 PDF](/assets/pdf/CV.pdf)
+```
+
+---
+
 ## 内容格式
 
-文章内容以 **Tiptap JSON** 格式存储在数据库中。前台渲染时将 JSON 转换为 HTML。
+### 双写架构：文件系统 + 数据库同步
 
-Tiptap JSON 示例:
-```json
-{
-  "type": "doc",
-  "content": [
-    {
-      "type": "heading",
-      "attrs": { "level": 2 },
-      "content": [{ "type": "text", "text": "标题" }]
-    },
-    {
-      "type": "paragraph",
-      "content": [{ "type": "text", "text": "正文内容" }]
-    },
-    {
-      "type": "mathematics",
-      "attrs": { "latex": "E = mc^2" }
-    },
-    {
-      "type": "codeBlock",
-      "attrs": { "language": "python" },
-      "content": [{ "type": "text", "text": "print('hello')" }]
-    }
-  ]
-}
+采用 Git 为 source of truth，数据库作为缓存的双写架构：
+
+| 存储 | 用途 |
+|------|------|
+| 文件系统 `content/` | Markdown 文件存储，Git 版本管理 |
+| 数据库 `Post.content` | 全文副本，用于搜索和快速查询 |
+
+#### 同步流程
+
 ```
+保存时:
+1. 写入 content/*.md 文件
+2. 解析 Front Matter (title, tags, category...)
+3. 同步到数据库 (元数据 + 全文 content 字段)
+4. git add → commit → push
+5. 记录 gitCommit hash
+
+查询时:
+- 列表页: 直接查数据库 (高性能)
+- 详情页: 数据库查元数据 + 文件读内容渲染
+- 搜索: 数据库 content 字段全文搜索
+```
+
+#### 目录结构
+
+```
+content/                              # Markdown (Git source of truth)
+├── posts/          # 博客文章
+│   ├── 2025-01-01-hello-world.md
+│   └── ...
+├── notes/          # 学习笔记
+│   ├── dsa/
+│   │   └── ch01.md
+│   └── ...
+└── projects/       # 项目展示
+    └── wordhub.md
+```
+
+### Markdown 文件格式
+
+使用 **Front Matter** 定义元数据:
+```markdown
+---
+title: "文章标题"
+titleEn: "Article Title"
+date: 2025-01-01
+tags: [tag1, tag2]
+categories: tech
+excerpt: "文章摘要"
+coverImage: /uploads/cover.jpg
+published: true
+---
+
+## 正文内容
+
+支持 **Markdown** 语法，包括代码块、表格等。
+
+```python
+def hello():
+    print("Hello, World!")
+```
+```
+
+### 元数据字段映射
+
+| Front Matter | 数据库字段 |
+|--------------|-----------|
+| title | title |
+| titleEn | titleEn |
+| date | publishedAt |
+| tags | tags (逗号分隔) |
+| categories | category |
+| excerpt | excerpt |
+| excerptEn | excerptEn |
+| coverImage | coverImage |
+| published | published |
+| --- | filePath |

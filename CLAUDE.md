@@ -23,7 +23,7 @@ new_web/                     # 项目根目录
 
 个人学术网站 (stibiums.top) 的全栈重构项目，基于 Next.js 16 + TypeScript + Tailwind CSS。
 
-- **内容管理**: 数据库存储 (MySQL + Prisma)，后台 Tiptap 富文本编辑器
+- **内容管理**: Monaco Editor (VS Code 内核) + Git 自动版本管理 + Markdown 文件系统
 - **前台展示**: 首页、博客、笔记、项目、出版物、简历、知识图谱
 - **特色功能**: 全文搜索、知识图谱、评论、RSS、点赞统计
 - **部署**: Docker → CasaOS，Gitea Actions 自动部署
@@ -36,7 +36,7 @@ new_web/                     # 项目根目录
 - **样式**: Tailwind CSS 4 + CSS 变量主题
 - **数据库**: MySQL 8 + Prisma 6
 - **认证**: NextAuth.js v5 (Credentials)
-- **编辑器**: Yoopta Editor v6 (beta) + Slate.js
+- **编辑器**: Monaco Editor + Git (自动提交推送)
 - **国际化**: next-intl
 - **搜索**: FlexSearch
 - **图谱**: D3.js
@@ -79,13 +79,16 @@ src/
 ├── components/            # React 组件
 │   ├── layout/            # Header, Footer, AdminSidebar
 │   ├── ui/                # 通用 UI (Button, Card, Tag, Input...)
-│   ├── editor/            # Yoopta 编辑器相关
-│   ├── content/           # 内容渲染 (TiptapRenderer/Yoopta readOnly)
+│   ├── editor/            # Monaco Editor 编辑器组件
+│   ├── content/           # 内容渲染 (MarkdownRenderer)
 │   ├── search/            # 搜索组件
 │   └── graph/             # 知识图谱
 ├── lib/                   # 工具函数
 │   ├── prisma.ts          # Prisma Client 单例
 │   ├── auth.ts            # NextAuth 配置
+│   ├── markdown-file.ts   # Markdown 文件读写 + Front Matter 解析
+│   ├── git.ts             # Git 版本管理
+│   ├── sync.ts            # 文件到数据库同步服务
 │   ├── search.ts          # 搜索索引
 │   └── utils.ts           # 通用工具
 ├── i18n/                  # 国际化
@@ -101,18 +104,38 @@ src/
 
 ## 内容格式
 
-### Yoopta JSON
+### Markdown 文件 + Git 版本管理
 
-所有富文本内容以 Yoopta JSON 格式 (`Record<string, YooptaBlockData>`) 存储在数据库 `content` 字段中。
+所有内容以 Markdown 格式存储在文件系统 `content/` 目录中，每次保存自动提交推送到 Git 仓库。
 
 前台渲染方式:
-1. 从数据库读取 JSON 字符串
-2. 使用 `createYooptaEditor({ readOnly: true })` 创建只读编辑器实例
-3. 通过 TiptapRenderer 组件（已重写为 Yoopta 渲染）直接渲染
+1. 从 `content/` 目录读取 Markdown 文件
+2. 使用 `react-markdown` 组件直接渲染
 
-编辑器组件:
-- `plugins.ts` - 插件配置 (20+ 插件 + applyTheme)
-- `YooptaEditorWrapper.tsx` - 编辑器主组件 (含浮动工具栏、斜杠菜单等)
+编辑器:
+- Monaco Editor (VS Code 内核)
+- Ctrl+S 保存时自动 git add → commit → push
+
+目录结构:
+```
+content/                              # Markdown 内容（独立 Git 仓库）
+├── posts/                            # 博客文章
+├── notes/                            # 学习笔记
+└── projects/                         # 项目展示
+
+public/assets/                       # 静态资源
+├── img/
+│   └── notes_img/                    # 笔记图片（按课程分类）
+├── jupyter/                          # Jupyter Notebook
+├── video/                            # 视频
+└── pdf/                              # PDF 文档
+```
+
+资源引用（标准 Markdown 语法）:
+```markdown
+![图片描述](/assets/img/notes_img/cv-ch02/image.png)
+[下载 PDF](/assets/pdf/CV.pdf)
+```
 
 ### 双语内容
 
@@ -173,7 +196,7 @@ common.search, common.loading, common.error
   - `feat(init): 初始化 Next.js 项目`
   - `feat(i18n): 配置 next-intl 国际化`
   - `feat(db): 添加 Prisma schema 和 MySQL docker-compose`
-  - `feat(admin): 实现 Tiptap 富文本编辑器`
+  - `feat(editor): 集成 Monaco Editor + Git 自动提交功能`
 
 ---
 

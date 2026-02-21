@@ -20,37 +20,22 @@
 | Inter | - | 英文字体 (Google Fonts) |
 | JetBrains Mono | - | 代码字体 (Google Fonts) |
 
-## 内容编辑
+## 内容管理
 
 | 技术 | 版本 | 用途 |
 |------|------|------|
-| @yoopta/editor | ^6.0.0-beta | Yoopta 富文本编辑器核心 |
-| @yoopta/paragraph | ^6.0.0-beta | 段落插件 |
-| @yoopta/headings | ^6.0.0-beta | 标题插件 (H1-H3) |
-| @yoopta/lists | ^6.0.0-beta | 列表插件 (有序/无序/待办) |
-| @yoopta/blockquote | ^6.0.0-beta | 引用块 |
-| @yoopta/callout | ^6.0.0-beta | 提示框 |
-| @yoopta/code | ^6.0.0-beta | 代码块 |
-| @yoopta/image | ^6.0.0-beta | 图片 (自定义上传) |
-| @yoopta/video | ^6.0.0-beta | 视频嵌入 |
-| @yoopta/embed | ^6.0.0-beta | 通用嵌入 |
-| @yoopta/file | ^6.0.0-beta | 文件附件 |
-| @yoopta/table | ^6.0.0-beta | 表格 |
-| @yoopta/accordion | ^6.0.0-beta | 手风琴/折叠 |
-| @yoopta/tabs | ^6.0.0-beta | 选项卡 |
-| @yoopta/steps | ^6.0.0-beta | 步骤 |
-| @yoopta/divider | ^6.0.0-beta | 分隔线 |
-| @yoopta/link | ^6.0.0-beta | 链接插件 |
-| @yoopta/mention | ^6.0.0-beta | @提及 |
-| @yoopta/emoji | ^6.0.0-beta | 表情符号 |
-| @yoopta/carousel | ^6.0.0-beta | 图片轮播 |
-| @yoopta/table-of-contents | ^6.0.0-beta | 目录 |
-| @yoopta/marks | ^6.0.0-beta | 文本标记 (粗体/斜体/下划线/删除线/代码/高亮) |
-| @yoopta/themes-shadcn | ^6.0.0-beta | shadcn 风格主题 |
-| @yoopta/ui | ^6.0.0-beta | UI 组件 (浮动工具栏/斜杠菜单等) |
-| slate | ^0.123.0 | 编辑器底层引擎 |
-| slate-react | ^0.123.0 | React 绑定 |
-| slate-dom | ^0.123.0 | DOM 绑定 |
+| @monaco-editor/react | ^4.x | Monaco Editor (VS Code 内核) |
+| react-markdown | ^6.x | Markdown 渲染组件 |
+| remark-gfm | latest | GitHub Flavored Markdown 支持 |
+| gray-matter | ^4.x | Front Matter 解析 |
+
+## 内容存储
+
+| 技术 | 用途 |
+|------|------|
+| 文件系统 (content/) | Markdown 文件存储目录 |
+| Git | 版本管理（自动提交推送） |
+| public/assets/ | 静态资源（图片、Jupyter、PDF、视频） |
 
 ## 数据库与 ORM
 
@@ -81,7 +66,6 @@
 | D3.js | ^7.x | 知识图谱力导向图可视化 |
 | Giscus | latest | 基于 GitHub Discussions 的评论系统 |
 | feed | ^4.x | RSS Feed 生成 |
-| gray-matter | ^4.x | Frontmatter 解析（兼容性保留） |
 
 ## 开发工具
 

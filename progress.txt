@@ -8,7 +8,7 @@
 - 提交粒度：一个功能点 = 一次提交
 - **每次 git 提交完成后，必须清空上下文 (/compact)**，然后等待指令
 
-## 当前状态: 阶段 6 - 新功能
+## 当前状态: 阶段 4 - Monaco Editor + Git + 数据库双写
 
 ---
 
@@ -38,32 +38,72 @@
 - [x] 3.3 Footer
 - [x] 3.4-3.8 通用 UI 组件
 
-## 阶段 4：管理后台
-- [x] 4.1 Admin 布局
-- [x] 4.2-4.7 Tiptap 编辑器 (基础版本)
-- [x] 4.8 图片上传 API
-- [x] 4.9-4.12 文章管理 CRUD
-- [x] 4.13 笔记管理
-- [x] 4.14 项目管理
-- [x] 4.15 出版物管理
-- [x] 4.16 统计仪表盘
-- [x] 4.17 站点设置
+## 阶段 4：Monaco Editor + Git + 数据库双写 (当前阶段)
 
-## 阶段 4'：Notion 风格编辑器
-- [x] ~~4'.1 安装 Notion 风格编辑器所需扩展 (Tiptap)~~ → 已替换为 Yoopta Editor
-- [x] ~~4'.2 实现 Slash 命令菜单组件~~ → Yoopta v6 内置
-- [x] ~~4'.3 实现悬浮气泡菜单组件~~ → Yoopta v6 内置
-- [x] ~~4'.4 添加 Task List、Callout、Toggle 等块类型~~ → Yoopta v6 插件
-- [x] ~~4'.5 适配现有图片上传和表格功能~~ → Yoopta v6 Image.extend()
-- [x] ~~4'.6 移除旧的顶部 Toolbar~~ → 已删除
-- [x] 4'.7 **编辑器替换为 Yoopta Editor v6** (beta.22)
-  - 安装 20+ Yoopta 插件 + Slate 依赖
-  - 创建 plugins.ts 配置模块和 YooptaEditorWrapper.tsx
-  - 删除旧 Tiptap 编辑器组件 (TiptapEditor, Toolbar, BubbleMenu, FloatingMenu)
-  - 重写 TiptapRenderer.tsx 为 Yoopta readOnly 模式渲染
-  - 更新所有 Admin 页面 (Posts/Notes/Projects) 使用新编辑器
-  - 更新搜索索引支持 Yoopta JSON 纯文本提取
-  - 构建验证通过
+### 4.1 环境准备
+- [ ] 4.1.1 创建 content/ 目录结构 (posts/, notes/, projects/)
+- [ ] 4.1.2 创建 public/assets/ 目录结构 (img/, jupyter/, video/, pdf/)
+- [ ] 4.1.3 安装依赖: @monaco-editor/react, react-markdown, remark-gfm, gray-matter
+
+### 4.2 数据库 Schema 调整
+- [ ] 4.2.1 Post 模型添加 filePath 字段
+- [ ] 4.2.2 Post 模型添加 gitCommit 字段
+- [ ] 4.2.3 Project 模型添加 filePath, gitCommit 字段
+- [ ] 4.2.4 运行迁移
+
+### 4.3 Markdown 文件工具
+- [ ] 4.3.1 readMarkdownFile() 读取文件
+- [ ] 4.3.2 writeMarkdownFile() 写入文件
+- [ ] 4.3.3 parseFrontMatter() 解析 Front Matter
+- [ ] 4.3.4 buildFrontMatter() 生成 Front Matter
+
+### 4.4 Git 版本管理工具
+- [ ] 4.4.1 gitAdd() git add
+- [ ] 4.4.2 gitCommit() git commit
+- [ ] 4.4.3 gitPush() git push
+- [ ] 4.4.4 gitPull() git pull
+- [ ] 4.4.5 getCurrentCommit() 获取 commit hash
+- [ ] 4.4.6 autoCommit() 自动提交
+
+### 4.5 数据同步服务
+- [ ] 4.5.1 syncPostToDatabase() 文章同步
+- [ ] 4.5.2 syncProjectToDatabase() 项目同步
+- [ ] 4.5.3 syncAllContent() 批量同步
+- [ ] 4.5.4 syncNoteToDatabase() 笔记同步
+
+### 4.6 Monaco Editor 组件
+- [ ] 4.6.1 MonacoMarkdownEditor.tsx 基础集成
+- [ ] 4.6.2 Ctrl+S 保存快捷键
+- [ ] 4.6.3 自动保存逻辑
+- [ ] 4.6.4 文件加载逻辑
+
+### 4.7 Markdown 渲染组件
+- [ ] 4.7.1 MarkdownRenderer.tsx (react-markdown)
+- [ ] 4.7.2 MarkdownViewer.tsx (只读视图)
+
+### 4.8 管理 API 改造
+- [ ] 4.8.1 POST /api/admin/posts 改造 (文件+数据库+Git)
+- [ ] 4.8.2 PUT /api/admin/posts/[id] 改造
+- [ ] 4.8.3 DELETE /api/admin/posts/[id] 改造
+- [ ] 4.8.4 GET /api/admin/posts/[id]/content 新增
+- [ ] 4.8.5 同样改造 notes 和 projects API
+
+### 4.9 后台编辑页面
+- [ ] 4.9.1 文章编辑页集成 Monaco Editor
+- [ ] 4.9.2 保存状态提示
+- [ ] 4.9.3 笔记和项目编辑页
+
+### 4.10 图片/资源上传
+- [ ] 4.10.1 保留图片上传 API
+- [ ] 4.10.2 public/uploads/ 目录
+
+### 4.11 CRUD 页面
+- [ ] 4.11.1 文章列表页
+- [ ] 4.11.2 文章新建页
+- [ ] 4.11.3 笔记/项目/出版物管理
+- [ ] 4.11.4 统计仪表盘
+- [ ] 4.11.5 站点设置
+- [ ] 4.11.6 Admin 布局
 
 ## 阶段 5：前台页面
 - [x] 5.1-5.4 首页
@@ -92,4 +132,4 @@
 ---
 
 ## 接下来做什么
-→ 阶段 7：部署 (Dockerfile, docker-compose, Gitea Actions, CasaOS)
+→ 阶段 4.1：环境准备 (创建 content/ 和 public/assets/ 目录，安装依赖)
