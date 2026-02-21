@@ -100,7 +100,6 @@ export default function EditPostPage() {
       }
 
       toast.success("文章更新成功");
-      router.push(`/${locale}/admin/posts`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "更新失败");
     } finally {
