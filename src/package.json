@@ -56,6 +56,7 @@
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
+    "simple-git": "^3.31.1",
     "slate": "^0.123.0",
     "slate-dom": "^0.123.0",
     "slate-react": "^0.123.0",
