@@ -78,15 +78,15 @@
 - [x] 4.6.4 文件加载逻辑
 
 ### 4.7 Markdown 渲染组件
-- [ ] 4.7.1 MarkdownRenderer.tsx (react-markdown)
-- [ ] 4.7.2 MarkdownViewer.tsx (只读视图)
+- [x] 4.7.1 MarkdownRenderer.tsx (react-markdown)
+- [x] 4.7.2 MarkdownViewer.tsx (只读视图)
 
 ### 4.8 管理 API 改造
-- [ ] 4.8.1 POST /api/admin/posts 改造 (文件+数据库+Git)
-- [ ] 4.8.2 PUT /api/admin/posts/[id] 改造
-- [ ] 4.8.3 DELETE /api/admin/posts/[id] 改造
-- [ ] 4.8.4 GET /api/admin/posts/[id]/content 新增
-- [ ] 4.8.5 同样改造 notes 和 projects API
+- [x] 4.8.1 POST /api/admin/posts 改造 (文件+数据库+Git)
+- [x] 4.8.2 PUT /api/admin/posts/[id] 改造
+- [x] 4.8.3 DELETE /api/admin/posts/[id] 改造
+- [x] 4.8.4 GET /api/admin/posts/[id]/content 新增
+- [x] 4.8.5 同样改造 projects API (笔记使用 Post+type)
 
 ### 4.9 后台编辑页面
 - [ ] 4.9.1 文章编辑页集成 Monaco Editor
@@ -132,4 +132,4 @@
 ---
 
 ## 接下来做什么
-→ 阶段 4.7：Markdown 渲染组件 (MarkdownRenderer, MarkdownViewer)
+→ 阶段 4.9：后台编辑页面 (文章编辑页集成 Monaco Editor)

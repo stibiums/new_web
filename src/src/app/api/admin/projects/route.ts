@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { writeMarkdownFile, FrontMatter } from "@/lib/markdown-file";
+import { autoCommit } from "@/lib/git";
 
 // 获取项目列表
 export async function GET(request: NextRequest) {
@@ -48,7 +50,7 @@ export async function GET(request: NextRequest) {
   });
 }
 
-// 创建项目
+// 创建项目 (文件 + 数据库 + Git 三写同步)
 export async function POST(request: NextRequest) {
   const session = await auth();
 
@@ -88,6 +90,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Slug already exists" }, { status: 400 });
     }
 
+    // 1. 写入 Markdown 文件（如果有 content）
+    const filePath = `content/projects/${slug}.md`;
+    let gitCommit: string | null = null;
+
+    if (content) {
+      const frontMatter: FrontMatter = {
+        title,
+        titleEn: titleEn || undefined,
+        description: description || undefined,
+        descriptionEn: descriptionEn || undefined,
+        techStack: techStack || undefined,
+        githubUrl: githubUrl || undefined,
+        demoUrl: demoUrl || undefined,
+        coverImage: coverImage || undefined,
+        published: published || false,
+      };
+
+      writeMarkdownFile("projects", slug, frontMatter, content);
+
+      // 2. Git 自动提交
+      gitCommit = await autoCommit(filePath);
+    }
+
+    // 3. 写入数据库
     const project = await prisma.project.create({
       data: {
         slug,
@@ -103,6 +129,8 @@ export async function POST(request: NextRequest) {
         coverImage: coverImage || null,
         published: published || false,
         sortOrder: sortOrder || 0,
+        filePath: content ? filePath : null,
+        gitCommit,
       },
     });
 

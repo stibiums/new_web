@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { writeMarkdownFile, FrontMatter } from "@/lib/markdown-file";
+import { autoCommit } from "@/lib/git";
 
 // 获取文章列表
 export async function GET(request: NextRequest) {
@@ -53,7 +55,7 @@ export async function GET(request: NextRequest) {
   });
 }
 
-// 创建文章
+// 创建文章 (文件 + 数据库 + Git 三写同步)
 export async function POST(request: NextRequest) {
   const session = await auth();
 
@@ -70,7 +72,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Check if slug already exists
+    // Check if slug already exists in database
     const existing = await prisma.post.findUnique({
       where: { slug },
     });
@@ -79,6 +81,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Slug already exists" }, { status: 400 });
     }
 
+    // 1. 写入 Markdown 文件
+    const postType = type || "BLOG";
+    const contentDir = postType === "NOTE" ? "notes" : "posts";
+    const filePath = `content/${contentDir}/${slug}.md`;
+
+    const frontMatter: FrontMatter = {
+      title,
+      titleEn: titleEn || undefined,
+      excerpt: excerpt || undefined,
+      excerptEn: excerptEn || undefined,
+      category: category || undefined,
+      tags: tags ? (Array.isArray(tags) ? tags : tags.split(",")) : undefined,
+      coverImage: coverImage || undefined,
+      published: published || false,
+    };
+
+    writeMarkdownFile(contentDir as "posts" | "notes" | "projects", slug, frontMatter, content);
+
+    // 2. Git 自动提交
+    const gitCommit = await autoCommit(filePath);
+
+    // 3. 写入数据库
     const post = await prisma.post.create({
       data: {
         slug,
@@ -88,12 +112,14 @@ export async function POST(request: NextRequest) {
         contentEn: contentEn || null,
         excerpt: excerpt || null,
         excerptEn: excerptEn || null,
-        type: type || "BLOG",
+        type: postType,
         category: category || null,
-        tags: tags || null,
+        tags: tags ? (Array.isArray(tags) ? tags.join(",") : tags) : null,
         coverImage: coverImage || null,
         published: published || false,
         publishedAt: published ? new Date() : null,
+        filePath,
+        gitCommit,
       },
     });
 
