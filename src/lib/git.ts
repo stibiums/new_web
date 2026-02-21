@@ -2,9 +2,11 @@ import simpleGit, { SimpleGit } from 'simple-git';
 import path from 'path';
 
 // 项目根目录
-// 开发时: new_web/ 目录
-// 部署时: 通过 GIT_CONTENT_ROOT 环境变量指定（通常是挂载的数据目录）
-const PROJECT_ROOT = process.env.GIT_CONTENT_ROOT || path.resolve(process.cwd(), '..');
+// 开发时: new_web/src/ 目录（Next.js 工作目录）
+// 内容目录: new_web/src/content/
+// Git 仓库: new_web/ (开发仓库) 或独立的 content 仓库
+// 部署时: 通过 GIT_CONTENT_ROOT 环境变量指定
+const PROJECT_ROOT = process.env.GIT_CONTENT_ROOT || process.cwd();
 
 console.log(`[Git] Initializing with PROJECT_ROOT: ${PROJECT_ROOT}`);
 

@@ -30,6 +30,7 @@ pnpm-debug.log*
 # === IDE ===
 .idea/
 .vscode/
+.claude/
 *.swp
 *.swo
 
