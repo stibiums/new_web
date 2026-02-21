@@ -16,7 +16,7 @@ coverImage: ''
 ## 功能测shi shi
 
 - [x] 基础渲染
-- [x] 语法高亮
+- [x] 语法高
 - [x] Ctrl+S 保
 - [x] 自动保存
 
