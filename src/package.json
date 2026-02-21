@@ -55,6 +55,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
+    "react-resizable-panels": "^4.6.5",
     "remark-gfm": "^4.0.1",
     "simple-git": "^3.31.1",
     "slate": "^0.123.0",

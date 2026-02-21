@@ -5,7 +5,13 @@ import { auth } from "@/lib/auth";
 import { autoCommit } from "@/lib/git";
 
 // 资源类型配置
-const ASSET_TYPES = {
+interface AssetConfig {
+  allowedTypes: string[];
+  maxSize: number;
+  subDir: string;
+}
+
+const ASSET_TYPES: Record<string, AssetConfig> = {
   img: {
     allowedTypes: ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"],
     maxSize: 5 * 1024 * 1024, // 5MB
@@ -26,7 +32,7 @@ const ASSET_TYPES = {
     maxSize: 10 * 1024 * 1024, // 10MB
     subDir: "jupyter",
   },
-} as const;
+};
 
 type AssetType = keyof typeof ASSET_TYPES;
 

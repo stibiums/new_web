@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { YooptaEditorWrapper } from "@/components/editor";
+import { SplitEditor } from "@/components/editor";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import {
@@ -37,6 +37,9 @@ export default function EditPostPage() {
   // 内容和标题状态
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  // Git 相关状态
+  const [filePath, setFilePath] = useState("");
+  const [gitCommit, setGitCommit] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -57,6 +60,9 @@ export default function EditPostPage() {
         setTags(post.tags || "");
         setCoverImage(post.coverImage || "");
         setPublished(post.published);
+        // Git 相关
+        setFilePath(post.filePath || "");
+        setGitCommit(post.gitCommit || null);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Failed to fetch post");
         router.push(`/${locale}/admin/posts`);
@@ -108,99 +114,71 @@ export default function EditPostPage() {
 
   if (fetching) {
     return (
-      <div className="min-h-screen bg-[var(--color-background)] flex items-center justify-center">
+      <div className="h-screen flex items-center justify-center bg-[var(--color-background)]">
         <div className="text-[var(--color-muted-foreground)]">加载中...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-background)]">
-      {/* 顶部导航栏 */}
-      <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-background)]/80 backdrop-blur-sm">
-        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            返回
-          </button>
+    <div className="h-screen flex flex-col bg-[var(--color-background)]">
+      {/* 顶部工具栏 */}
+      <div className="shrink-0 border-b border-[var(--color-border)] bg-[var(--color-background)]/80 backdrop-blur-sm px-6 h-14 flex items-center justify-between">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          返回
+        </button>
+        <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => setMetaOpen(true)}>
-            <svg
-              className="w-4 h-4 mr-2"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             属性
           </Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => router.back()}>
+            取消
+          </Button>
+          <Button type="submit" form="edit-form" size="sm" loading={loading}>
+            保存
+          </Button>
         </div>
-      </header>
+      </div>
 
       {/* 主内容区 */}
-      <main className="max-w-4xl mx-auto px-6 py-8">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 标题输入 */}
-          <div>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="无标题"
-              className="w-full text-4xl font-bold bg-transparent border-none outline-none text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)]/50"
-              required
-            />
-          </div>
+      <main className="flex-1 min-h-0 flex flex-col overflow-hidden">
+        {/* 标题输入 */}
+        <div className="shrink-0 px-6 py-4 border-b border-[var(--color-border)]">
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="无标题"
+            className="w-full text-2xl font-bold bg-transparent border-none outline-none text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)]/50"
+            required
+          />
+        </div>
 
-          {/* Tiptap 编辑器 */}
-          <div className="min-h-[400px]">
-            <YooptaEditorWrapper
-              content={content}
-              onChange={setContent}
-              placeholder="开始编写..."
-            />
-          </div>
+        {/* Split 编辑器 */}
+        <div className="flex-1 min-h-0 h-full">
+          <SplitEditor
+            value={content}
+            onChange={setContent}
+            onSave={async (value) => {
+              setContent(value);
+            }}
+            filePath={filePath}
+            currentCommit={gitCommit}
+          />
+        </div>
 
-          {/* 底部操作栏 */}
-          <div className="flex justify-end gap-3 pt-6 border-t border-[var(--color-border)]">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.back()}
-            >
-              取消
-            </Button>
-            <Button type="submit" loading={loading}>
-              保存
-            </Button>
-          </div>
-        </form>
+        {/* 隐藏的表单，用于提交保存 */}
+        <form id="edit-form" onSubmit={handleSubmit} className="hidden" />
       </main>
 
       {/* 属性设置弹窗 */}

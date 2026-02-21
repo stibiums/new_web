@@ -27,6 +27,8 @@ export interface MonacoMarkdownEditorProps {
   filePath?: string;
   /** 当前 Git commit */
   currentCommit?: string | null;
+  /** 是否隐藏工具栏 */
+  hideToolbar?: boolean;
 }
 
 /**
@@ -48,9 +50,10 @@ export function MonacoMarkdownEditor({
   autoSaveInterval = 30000, // 默认 30 秒
   loading,
   className = "",
-  minHeight = "500px",
+  minHeight = "100%",
   filePath,
   currentCommit,
+  hideToolbar = false,
 }: MonacoMarkdownEditorProps) {
   // Monaco Editor 实例引用
   const editorRef = useRef<any>(null);
@@ -208,92 +211,93 @@ export function MonacoMarkdownEditor({
 
   return (
     <div
-      className={`monaco-markdown-editor ${className}`}
-      style={{ height: minHeight, minHeight }}
+      className={`monaco-markdown-editor h-full ${className}`}
     >
-      {/* 工具栏 */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border)] bg-[var(--color-muted)]/30">
-        <div className="flex items-center gap-1">
-          {/* 上传图片按钮 */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => openFilePicker("image/*")}
-            disabled={readOnly || uploading}
-            title="上传图片"
-          >
-            {uploading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <ImageIcon className="w-4 h-4" />
-            )}
-            <span className="ml-1 hidden sm:inline">图片</span>
-          </Button>
-
-          {/* 上传 PDF 按钮 */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => openFilePicker(".pdf", "pdf")}
-            disabled={readOnly || uploading}
-            title="上传 PDF"
-          >
-            <FileText className="w-4 h-4" />
-            <span className="ml-1 hidden sm:inline">PDF</span>
-          </Button>
-
-          {/* 上传视频按钮 */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => openFilePicker("video/*", "video")}
-            disabled={readOnly || uploading}
-            title="上传视频"
-          >
-            <Video className="w-4 h-4" />
-            <span className="ml-1 hidden sm:inline">视频</span>
-          </Button>
-
-          {/* 上传 Jupyter 按钮 */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => openFilePicker(".ipynb,.json", "jupyter")}
-            disabled={readOnly || uploading}
-            title="上传 Jupyter Notebook"
-          >
-            <FileCode className="w-4 h-4" />
-            <span className="ml-1 hidden sm:inline">Notebook</span>
-          </Button>
-
-          {/* 历史版本按钮 */}
-          {filePath && (
+      {/* 工具栏 - 根据 hideToolbar 控制显示 */}
+      {!hideToolbar && (
+        <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border)] bg-[var(--color-muted)]/30">
+          <div className="flex items-center gap-1">
+            {/* 上传图片按钮 */}
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setShowHistory(true)}
-              disabled={readOnly}
-              title="历史版本"
+              onClick={() => openFilePicker("image/*")}
+              disabled={readOnly || uploading}
+              title="上传图片"
             >
-              <History className="w-4 h-4" />
-              <span className="ml-1 hidden sm:inline">历史</span>
+              {uploading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <ImageIcon className="w-4 h-4" />
+              )}
+              <span className="ml-1 hidden sm:inline">图片</span>
             </Button>
+
+            {/* 上传 PDF 按钮 */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => openFilePicker(".pdf", "pdf")}
+              disabled={readOnly || uploading}
+              title="上传 PDF"
+            >
+              <FileText className="w-4 h-4" />
+              <span className="ml-1 hidden sm:inline">PDF</span>
+            </Button>
+
+            {/* 上传视频按钮 */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => openFilePicker("video/*", "video")}
+              disabled={readOnly || uploading}
+              title="上传视频"
+            >
+              <Video className="w-4 h-4" />
+              <span className="ml-1 hidden sm:inline">视频</span>
+            </Button>
+
+            {/* 上传 Jupyter 按钮 */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => openFilePicker(".ipynb,.json", "jupyter")}
+              disabled={readOnly || uploading}
+              title="上传 Jupyter Notebook"
+            >
+              <FileCode className="w-4 h-4" />
+              <span className="ml-1 hidden sm:inline">Notebook</span>
+            </Button>
+
+            {/* 历史版本按钮 */}
+            {filePath && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowHistory(true)}
+                disabled={readOnly}
+                title="历史版本"
+              >
+                <History className="w-4 h-4" />
+                <span className="ml-1 hidden sm:inline">历史</span>
+              </Button>
+            )}
+          </div>
+
+          {/* 当前 Commit 显示 */}
+          {currentCommit && (
+            <div className="text-xs text-muted-foreground">
+              <code className="bg-muted px-1.5 py-0.5 rounded">
+                {currentCommit.substring(0, 7)}
+              </code>
+            </div>
           )}
         </div>
-
-        {/* 当前 Commit 显示 */}
-        {currentCommit && (
-          <div className="text-xs text-muted-foreground">
-            <code className="bg-muted px-1.5 py-0.5 rounded">
-              {currentCommit.substring(0, 7)}
-            </code>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* 编辑器 */}
       <Editor
-        height={`calc(${typeof minHeight === 'number' ? `${minHeight}px` : minHeight} - 44px)`}
+        height="100%"
         defaultLanguage="markdown"
         value={value}
         onChange={handleChange}
