@@ -2,7 +2,7 @@
 
 import Editor, { OnMount } from "@monaco-editor/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Loader2, History, Image as ImageIcon } from "lucide-react";
+import { Loader2, History, Image as ImageIcon, FileText, Video, FileCode } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { GitHistoryDialog } from "./GitHistoryDialog";
 
@@ -126,8 +126,8 @@ export function MonacoMarkdownEditor({
     [onChange, onSave]
   );
 
-  // 图片上传处理
-  const handleImageUpload = async (file: File, editor: any) => {
+  // 通用的资源上传处理
+  const handleUpload = async (file: File, editor: any) => {
     if (uploading) return;
 
     setUploading(true);
@@ -142,10 +142,23 @@ export function MonacoMarkdownEditor({
 
       const data = await res.json();
       if (data.url) {
-        // 在光标位置插入 Markdown 图片语法
         const position = editor.getPosition();
-        const imageMarkdown = `![${file.name}](${data.url})\n`;
-        editor.executeEdits("insert-image", [
+        let markdown = "";
+
+        // 根据文件类型生成不同的 Markdown 语法
+        if (data.type === "img") {
+          markdown = `![${file.name}](${data.url})\n`;
+        } else if (data.type === "pdf") {
+          markdown = `[${file.name}](${data.url})\n`;
+        } else if (data.type === "video") {
+          markdown = `<video src="${data.url}" controls></video>\n`;
+        } else if (data.type === "jupyter") {
+          markdown = `[${file.name}](${data.url})\n`;
+        } else {
+          markdown = `[${file.name}](${data.url})\n`;
+        }
+
+        editor.executeEdits("insert-resource", [
           {
             range: {
               startLineNumber: position.lineNumber,
@@ -153,15 +166,37 @@ export function MonacoMarkdownEditor({
               endLineNumber: position.lineNumber,
               endColumn: position.column,
             },
-            text: imageMarkdown,
+            text: markdown,
           },
         ]);
       }
     } catch (error) {
-      console.error("Image upload failed:", error);
+      console.error("Upload failed:", error);
     } finally {
       setUploading(false);
     }
+  };
+
+  // 打开文件选择器
+  const openFilePicker = (accept: string, type?: string) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = accept;
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file && editorRef.current) {
+        if (type) {
+          // 指定类型上传
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("type", type);
+          await handleUpload({ ...file, type: type } as File, editorRef.current);
+        } else {
+          await handleUpload(file, editorRef.current);
+        }
+      }
+    };
+    input.click();
   };
 
   // 内容变化处理 (保留作为备用)
@@ -205,23 +240,12 @@ export function MonacoMarkdownEditor({
     >
       {/* 工具栏 */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border)] bg-[var(--color-muted)]/30">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           {/* 上传图片按钮 */}
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              const input = document.createElement("input");
-              input.type = "file";
-              input.accept = "image/*";
-              input.onchange = async (e) => {
-                const file = (e.target as HTMLInputElement).files?.[0];
-                if (file && editorRef.current) {
-                  await handleImageUpload(file, editorRef.current);
-                }
-              };
-              input.click();
-            }}
+            onClick={() => openFilePicker("image/*")}
             disabled={readOnly || uploading}
             title="上传图片"
           >
@@ -230,7 +254,43 @@ export function MonacoMarkdownEditor({
             ) : (
               <ImageIcon className="w-4 h-4" />
             )}
-            <span className="ml-2">上传图片</span>
+            <span className="ml-1 hidden sm:inline">图片</span>
+          </Button>
+
+          {/* 上传 PDF 按钮 */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => openFilePicker(".pdf", "pdf")}
+            disabled={readOnly || uploading}
+            title="上传 PDF"
+          >
+            <FileText className="w-4 h-4" />
+            <span className="ml-1 hidden sm:inline">PDF</span>
+          </Button>
+
+          {/* 上传视频按钮 */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => openFilePicker("video/*", "video")}
+            disabled={readOnly || uploading}
+            title="上传视频"
+          >
+            <Video className="w-4 h-4" />
+            <span className="ml-1 hidden sm:inline">视频</span>
+          </Button>
+
+          {/* 上传 Jupyter 按钮 */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => openFilePicker(".ipynb,.json", "jupyter")}
+            disabled={readOnly || uploading}
+            title="上传 Jupyter Notebook"
+          >
+            <FileCode className="w-4 h-4" />
+            <span className="ml-1 hidden sm:inline">Notebook</span>
           </Button>
 
           {/* 历史版本按钮 */}
@@ -243,7 +303,7 @@ export function MonacoMarkdownEditor({
               title="历史版本"
             >
               <History className="w-4 h-4" />
-              <span className="ml-2">历史版本</span>
+              <span className="ml-1 hidden sm:inline">历史</span>
             </Button>
           )}
         </div>
