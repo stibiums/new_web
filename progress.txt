@@ -72,10 +72,10 @@
 - [x] 4.5.4 syncNoteToDatabase() 笔记同步
 
 ### 4.6 Monaco Editor 组件
-- [ ] 4.6.1 MonacoMarkdownEditor.tsx 基础集成
-- [ ] 4.6.2 Ctrl+S 保存快捷键
-- [ ] 4.6.3 自动保存逻辑
-- [ ] 4.6.4 文件加载逻辑
+- [x] 4.6.1 MonacoMarkdownEditor.tsx 基础集成
+- [x] 4.6.2 Ctrl+S 保存快捷键
+- [x] 4.6.3 自动保存逻辑
+- [x] 4.6.4 文件加载逻辑
 
 ### 4.7 Markdown 渲染组件
 - [ ] 4.7.1 MarkdownRenderer.tsx (react-markdown)
@@ -132,4 +132,4 @@
 ---
 
 ## 接下来做什么
-→ 阶段 4.5：数据同步服务 (syncPostToDatabase, syncProjectToDatabase, syncAllContent)
+→ 阶段 4.6：Monaco Editor 组件 (MonacoMarkdownEditor, Ctrl+S 保存)
