@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, type ReactNode } from "react";
+import React, { useState, useEffect, useCallback, type ReactNode, type ReactElement } from "react";
 import { createPortal } from "react-dom";
 
 export interface DialogProps {
@@ -152,12 +152,19 @@ export function DialogFooter({ children, className = "" }: DialogFooterProps) {
 }
 
 export interface DialogCloseProps {
-  children: ReactNode;
+  children?: ReactNode;
   onClick?: () => void;
   className?: string;
+  asChild?: boolean;
 }
 
-export function DialogClose({ children, onClick, className = "" }: DialogCloseProps) {
+export function DialogClose({ children, onClick, className = "", asChild }: DialogCloseProps) {
+  if (asChild && children) {
+    // 使用 cloneElement 让子元素作为按钮
+    return React.cloneElement(children as ReactElement<any>, {
+      onClick,
+    });
+  }
   return (
     <button
       onClick={onClick}

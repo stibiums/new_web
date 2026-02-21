@@ -247,7 +247,7 @@ export default function EditPostPage() {
           </div>
 
           <DialogFooter>
-            <DialogClose>
+            <DialogClose asChild>
               <Button variant="outline">取消</Button>
             </DialogClose>
             <Button onClick={handleMetaSave}>保存</Button>
