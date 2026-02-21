@@ -20,8 +20,6 @@ export interface SplitEditorProps {
   loading?: React.ReactNode;
   /** 自定义 className */
   className?: string;
-  /** 最小高度 */
-  minHeight?: string | number;
   /** 文件路径 (用于 Git 历史) */
   filePath?: string;
   /** 当前 Git commit */
@@ -47,7 +45,6 @@ export function SplitEditor({
   readOnly = false,
   loading,
   className = "",
-  minHeight = "100%",
   filePath,
   currentCommit,
 }: SplitEditorProps) {
@@ -117,7 +114,7 @@ export function SplitEditor({
   );
 
   return (
-    <div className={`split-editor h-full ${className}`}>
+    <div className={`split-editor flex flex-col ${className}`}>
       {/* 顶部工具栏 */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border)] bg-[var(--color-muted)]/30">
         <div className="flex items-center gap-1">
@@ -128,6 +125,7 @@ export function SplitEditor({
               size="sm"
               onClick={() => setViewMode("editor")}
               title="仅编辑"
+              className={viewMode === "editor" ? "ring-2 ring-[var(--color-primary)] ring-offset-1" : ""}
             >
               <FileCode className="w-4 h-4" />
             </Button>
@@ -136,6 +134,7 @@ export function SplitEditor({
               size="sm"
               onClick={() => setViewMode("split")}
               title="分屏模式"
+              className={viewMode === "split" ? "ring-2 ring-[var(--color-primary)] ring-offset-1" : ""}
             >
               <Columns className="w-4 h-4" />
             </Button>
@@ -144,6 +143,7 @@ export function SplitEditor({
               size="sm"
               onClick={() => setViewMode("preview")}
               title="仅预览"
+              className={viewMode === "preview" ? "ring-2 ring-[var(--color-primary)] ring-offset-1" : ""}
             >
               <Monitor className="w-4 h-4" />
             </Button>
@@ -189,7 +189,7 @@ export function SplitEditor({
       </div>
 
       {/* 编辑区域 */}
-      <div ref={containerRef} className="h-full">
+      <div ref={containerRef} className="flex-1 min-h-0 overflow-hidden">
         {viewMode === "split" ? (
           <div className="flex h-full">
             {/* 左侧：编辑器 */}
@@ -201,7 +201,7 @@ export function SplitEditor({
                 onSave={onSave}
                 readOnly={readOnly}
                 loading={loading}
-                minHeight={minHeight}
+                minHeight="100%"
                 filePath={filePath}
                 currentCommit={currentCommit}
                 hideToolbar
@@ -230,7 +230,7 @@ export function SplitEditor({
               onSave={onSave}
               readOnly={readOnly}
               loading={loading}
-              minHeight={minHeight}
+              minHeight="100%"
               filePath={filePath}
               currentCommit={currentCommit}
               hideToolbar
