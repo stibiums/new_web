@@ -12,12 +12,10 @@ export interface SplitEditorProps {
   value: string;
   /** 内容变化回调 */
   onChange?: (value: string) => void;
-  /** 保存回调 (Ctrl+S 或自动保存触发) */
+  /** 保存回调 (Ctrl+S 触发) */
   onSave?: (value: string) => void;
   /** 是否只读 */
   readOnly?: boolean;
-  /** 自动保存间隔 (毫秒), 0 表示不自动保存 */
-  autoSaveInterval?: number;
   /** 加载状态显示 */
   loading?: React.ReactNode;
   /** 自定义 className */
@@ -47,7 +45,6 @@ export function SplitEditor({
   onChange,
   onSave,
   readOnly = false,
-  autoSaveInterval = 30000,
   loading,
   className = "",
   minHeight = "100%",
@@ -203,7 +200,6 @@ export function SplitEditor({
                 onChange={onChange}
                 onSave={onSave}
                 readOnly={readOnly}
-                autoSaveInterval={autoSaveInterval}
                 loading={loading}
                 minHeight={minHeight}
                 filePath={filePath}
@@ -233,7 +229,6 @@ export function SplitEditor({
               onChange={onChange}
               onSave={onSave}
               readOnly={readOnly}
-              autoSaveInterval={autoSaveInterval}
               loading={loading}
               minHeight={minHeight}
               filePath={filePath}

@@ -11,12 +11,10 @@ export interface MonacoMarkdownEditorProps {
   value: string;
   /** 内容变化回调 */
   onChange?: (value: string) => void;
-  /** 保存回调 (Ctrl+S 或自动保存触发) */
+  /** 保存回调 (Ctrl+S 触发) */
   onSave?: (value: string) => void;
   /** 是否只读 */
   readOnly?: boolean;
-  /** 自动保存间隔 (毫秒), 0 表示不自动保存 */
-  autoSaveInterval?: number;
   /** 加载状态显示 */
   loading?: React.ReactNode;
   /** 自定义 className */
@@ -37,7 +35,6 @@ export interface MonacoMarkdownEditorProps {
  * 功能:
  * - Monaco Editor 作为 Markdown 编辑器
  * - Ctrl+S / Cmd+S 保存快捷键
- * - 自动保存功能
  * - 主题跟随系统
  * - Git 历史版本查看
  * - 图片拖拽/粘贴上传
@@ -47,7 +44,6 @@ export function MonacoMarkdownEditor({
   onChange,
   onSave,
   readOnly = false,
-  autoSaveInterval = 30000, // 默认 30 秒
   loading,
   className = "",
   minHeight = "100%",
@@ -182,20 +178,6 @@ export function MonacoMarkdownEditor({
     },
     []
   );
-
-  // 自动保存逻辑
-  useEffect(() => {
-    if (autoSaveInterval <= 0 || readOnly || !onSave) return;
-
-    const timer = setInterval(() => {
-      if (editorRef.current) {
-        const currentValue = editorRef.current.getValue();
-        onSave(currentValue);
-      }
-    }, autoSaveInterval);
-
-    return () => clearInterval(timer);
-  }, [autoSaveInterval, readOnly, onSave]);
 
   // 恢复到历史版本
   const handleRevert = useCallback(
