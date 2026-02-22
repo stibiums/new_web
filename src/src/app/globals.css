@@ -174,3 +174,13 @@ code, pre {
   overflow-y: hidden;
   padding: 1rem 0;
 }
+
+/* Monaco Editor 预览选中高亮 */
+.editor-preview-highlight {
+  background-color: rgba(255, 215, 0, 0.35) !important;
+  border-radius: 2px;
+}
+
+.editor-preview-highlight-line {
+  background-color: rgba(255, 215, 0, 0.08) !important;
+}

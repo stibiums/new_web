@@ -32,6 +32,8 @@ export interface MonacoMarkdownEditorProps {
   contentType?: ContentType;
   /** 文章 slug (用于资源上传路径) */
   slug?: string;
+  /** 编辑器 mount 回调，用于向上传递 editor 实例 */
+  onEditorMount?: (editor: any) => void;
 }
 
 /**
@@ -57,6 +59,7 @@ export function MonacoMarkdownEditor({
   hideToolbar = false,
   contentType,
   slug,
+  onEditorMount,
 }: MonacoMarkdownEditorProps) {
   // Monaco Editor 实例引用
   const editorRef = useRef<any>(null);
@@ -114,6 +117,8 @@ export function MonacoMarkdownEditor({
   const handleEditorDidMount: OnMount = useCallback(
     (editor, monaco) => {
       editorRef.current = editor;
+      // 向上暴露 editor 实例
+      onEditorMount?.(editor);
 
       // 注册 Ctrl+S / Cmd+S 保存快捷键
       editor.addCommand(
@@ -135,7 +140,7 @@ export function MonacoMarkdownEditor({
         wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\-\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g,
       });
     },
-    [onChange, onSave]
+    [onChange, onSave, onEditorMount]
   );
 
   // 通用的资源上传处理
