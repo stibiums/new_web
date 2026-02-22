@@ -13,6 +13,7 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import rehypeUnwrapImages from "rehype-unwrap-images";
 
 // Styles
 import "react-medium-image-zoom/dist/styles.css";
@@ -76,6 +77,7 @@ export function MarkdownRenderer({ content, className = "" }: MarkdownRendererPr
           rehypeKatex,
           rehypeSlug,
           [rehypeAutolinkHeadings, { behavior: "wrap" }],
+          rehypeUnwrapImages,
         ]}
         components={{
           // 1. 自定义 a 标签 (内部链接使用 next/link)
