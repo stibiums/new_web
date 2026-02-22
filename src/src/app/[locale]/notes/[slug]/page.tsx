@@ -98,8 +98,14 @@ export default function NotePage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12 flex flex-col lg:flex-row gap-8 items-start">
-      <article className="flex-1 min-w-0 w-full max-w-4xl">
+    <div className="max-w-[1400px] mx-auto px-4 py-12 flex flex-col lg:flex-row gap-8 items-start relative">
+      {/* TOC Sidebar (Left) */}
+      <aside className="hidden lg:block w-64 shrink-0 sticky top-24">
+        <TableOfContents content={getContent(note)} />
+      </aside>
+
+      {/* Main Content (Centered) */}
+      <article className="flex-1 min-w-0 w-full max-w-3xl mx-auto">
         {/* Back link */}
         <Link
           href={`/${locale}/notes`}
@@ -184,10 +190,8 @@ export default function NotePage() {
         <Giscus />
       </article>
 
-      {/* TOC Sidebar */}
-      <aside className="hidden lg:block w-64 shrink-0">
-        <TableOfContents content={getContent(note)} />
-      </aside>
+      {/* Right Spacer (to balance the layout and keep the article centered) */}
+      <div className="hidden xl:block w-64 shrink-0"></div>
     </div>
   );
 }

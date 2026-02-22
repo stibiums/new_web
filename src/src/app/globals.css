@@ -5,10 +5,10 @@
   /* 亮色模式 */
   --background: #FAFAFA;
   --foreground: #1A1A2E;
-  --primary: #4A3AFF;
-  --primary-hover: #3A2AEF;
-  --secondary: #6C63FF;
-  --muted: #F1F0FB;
+  --primary: #7C3AED; /* Violet 600 */
+  --primary-hover: #6D28D9; /* Violet 700 */
+  --secondary: #8B5CF6; /* Violet 500 */
+  --muted: #F5F3FF; /* Violet 50 */
   --muted-foreground: #64748B;
   --border: #E2E8F0;
   --card: #FFFFFF;
@@ -21,9 +21,9 @@
   /* 暗色模式 */
   --background: #0F0F23;
   --foreground: #E2E8F0;
-  --primary: #7C6AFF;
-  --primary-hover: #9B8FFF;
-  --secondary: #8B7FFF;
+  --primary: #8B5CF6; /* Violet 500 */
+  --primary-hover: #A78BFA; /* Violet 400 */
+  --secondary: #7C3AED; /* Violet 600 */
   --muted: #1E1E35;
   --muted-foreground: #94A3B8;
   --border: #2D2D44;
@@ -96,6 +96,15 @@ code, pre {
 .page-padding {
   padding-left: var(--spacing-page-mobile);
   padding-right: var(--spacing-page-mobile);
+}
+
+/* 隐藏滚动条但允许滚动 */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 @media (min-width: 768px) {

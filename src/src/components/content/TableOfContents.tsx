@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import GithubSlugger from "github-slugger";
 
 interface TocItem {
@@ -16,6 +16,8 @@ interface TableOfContentsProps {
 export function TableOfContents({ content }: TableOfContentsProps) {
   const [toc, setToc] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState<string>("");
+  const [isVisible, setIsVisible] = useState(true);
+  const tocContainerRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const slugger = new GithubSlugger();
@@ -50,7 +52,32 @@ export function TableOfContents({ content }: TableOfContentsProps) {
         // Find the first intersecting entry
         const visibleEntries = entries.filter((entry) => entry.isIntersecting);
         if (visibleEntries.length > 0) {
-          setActiveId(visibleEntries[0].target.id);
+          const newActiveId = visibleEntries[0].target.id;
+          setActiveId(newActiveId);
+
+          // 自动滚动目录容器，使当前激活的项保持在可视区域内
+          if (tocContainerRef.current) {
+            const activeElement = tocContainerRef.current.querySelector(`[data-id="${newActiveId}"]`);
+            if (activeElement) {
+              const container = tocContainerRef.current;
+              const elementRect = activeElement.getBoundingClientRect();
+              const containerRect = container.getBoundingClientRect();
+
+              // 增加一个缓冲区域（例如 20px），当元素接近边缘时就开始滚动
+              const buffer = 20;
+              if (elementRect.top < containerRect.top + buffer || elementRect.bottom > containerRect.bottom - buffer) {
+                // 使用 scrollTop 进行平滑滚动，而不是 scrollIntoView，因为 scrollIntoView 可能会导致整个页面滚动
+                const offsetTop = (activeElement as HTMLElement).offsetTop;
+                const containerHalfHeight = container.clientHeight / 2;
+                const elementHalfHeight = activeElement.clientHeight / 2;
+                
+                container.scrollTo({
+                  top: offsetTop - containerHalfHeight + elementHalfHeight,
+                  behavior: "smooth"
+                });
+              }
+            }
+          }
         }
       },
       { rootMargin: "-100px 0px -80% 0px" }
@@ -68,25 +95,53 @@ export function TableOfContents({ content }: TableOfContentsProps) {
     };
   }, [toc]);
 
+  // 监听滚动，当到达评论区时隐藏目录
+  useEffect(() => {
+    const handleScroll = () => {
+      const giscusContainer = document.querySelector('.giscus');
+      if (giscusContainer) {
+        const rect = giscusContainer.getBoundingClientRect();
+        // 当评论区顶部进入视口（距离视口底部 100px）时，隐藏目录
+        if (rect.top < window.innerHeight - 100) {
+          setIsVisible(false);
+        } else {
+          setIsVisible(true);
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    // 初始化检查一次
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   if (toc.length === 0) {
     return null;
   }
 
   return (
-    <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-4">
+    <div 
+      ref={tocContainerRef}
+      className={`sticky top-24 max-h-[calc(100vh-20rem)] overflow-y-auto pr-8 scrollbar-hide transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+    >
       <h3 className="font-semibold mb-4 text-lg">目录</h3>
       <ul className="space-y-2 text-sm">
         {toc.map((item) => (
           <li
             key={item.id}
+            data-id={item.id}
             style={{ paddingLeft: `${(item.level - 2) * 1}rem` }}
           >
             <a
               href={`#${item.id}`}
-              className={`block py-1 transition-colors hover:text-primary ${
+              className={`block py-1 border-l-2 pl-3 transition-colors hover:text-primary ${
                 activeId === item.id
-                  ? "text-primary font-medium"
-                  : "text-muted-foreground"
+                  ? "text-primary font-medium border-primary"
+                  : "text-muted-foreground border-transparent hover:border-muted-foreground/30"
               }`}
               onClick={(e) => {
                 e.preventDefault();

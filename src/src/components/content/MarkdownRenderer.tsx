@@ -85,7 +85,7 @@ export function MarkdownRenderer({ content, className = "", enableSourceLines = 
   ];
 
   return (
-    <div className={`prose prose-lg dark:prose-invert max-w-none ${className}`}>
+    <div className={`prose prose-lg dark:prose-invert max-w-none prose-h1:border-b prose-h1:border-border/50 prose-h1:pb-2 prose-h2:border-b prose-h2:border-border/50 prose-h2:pb-2 prose-p:text-foreground/90 prose-li:my-2 prose-a:text-primary hover:prose-a:underline prose-code:before:content-none prose-code:after:content-none prose-img:rounded-xl prose-img:shadow-md prose-img:mx-auto prose-table:border prose-th:bg-muted/50 prose-th:p-2 prose-td:p-2 ${className}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={rehypePluginList}
