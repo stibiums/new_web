@@ -156,7 +156,10 @@ export function SplitEditor({
             </Button>
           </div>
 
-          {/* 资源管理按钮 - 左侧面板 */}
+        </div>
+
+        <div className="flex items-center gap-1">
+          {/* 资源管理按钮 - 右侧面板 */}
           <Button
             variant="ghost"
             size="sm"
@@ -167,9 +170,7 @@ export function SplitEditor({
             <FileCode className="w-4 h-4" />
             <span className="ml-1 hidden sm:inline">资源</span>
           </Button>
-        </div>
 
-        <div className="flex items-center gap-1">
           {/* 历史版本按钮 - 右侧面板 */}
           {filePath && (
             <Button

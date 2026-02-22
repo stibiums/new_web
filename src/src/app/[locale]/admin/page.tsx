@@ -15,8 +15,10 @@ interface Stats {
     id: string;
     title: string;
     titleEn: string | null;
+    type: "BLOG" | "NOTE";
     views: number;
     likes: number;
+    updatedAt: Date | null;
     publishedAt: Date | null;
   }[];
   recentProjects: {
@@ -206,7 +208,7 @@ export default function AdminDashboard() {
       {/* Recent Posts */}
       <div className="rounded-lg border border-[var(--color-border)]">
         <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
-          <h2 className="text-lg font-semibold">最近文章</h2>
+          <h2 className="text-lg font-semibold">最近修改</h2>
           <Link
             href="/admin/posts"
             className="text-sm text-[var(--color-primary)] hover:underline"
@@ -219,16 +221,25 @@ export default function AdminDashboard() {
             stats.recentPosts.map((post) => (
               <Link
                 key={post.id}
-                href={`/admin/posts/${post.id}/edit`}
+                href={`/admin/${post.type === "NOTE" ? "notes" : "posts"}/${post.id}/edit`}
                 className="flex items-center justify-between p-4 hover:bg-[var(--color-muted)]/50 transition-colors"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium truncate">
-                    {post.titleEn || post.title}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium truncate">
+                      {post.titleEn || post.title}
+                    </p>
+                    <span className={`text-xs px-2 py-0.5 rounded ${
+                      post.type === "NOTE"
+                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                        : "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                    }`}>
+                      {post.type === "NOTE" ? "笔记" : "文章"}
+                    </span>
+                  </div>
                   <p className="text-sm text-[var(--color-muted-foreground)]">
-                    {post.publishedAt
-                      ? new Date(post.publishedAt).toLocaleDateString("zh-CN")
+                    {post.updatedAt
+                      ? new Date(post.updatedAt).toLocaleDateString("zh-CN")
                       : "未发布"}
                   </p>
                 </div>
@@ -251,7 +262,7 @@ export default function AdminDashboard() {
             ))
           ) : (
             <div className="p-8 text-center text-[var(--color-muted-foreground)]">
-              暂无文章
+              暂无内容
             </div>
           )}
         </div>

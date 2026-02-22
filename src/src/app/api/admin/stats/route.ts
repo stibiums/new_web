@@ -42,17 +42,19 @@ export async function GET() {
       prisma.post.aggregate({ _sum: { views: true } }),
       prisma.post.aggregate({ _sum: { likes: true } }),
 
-      // 最近发布的文章
+      // 最近修改的内容（文章+笔记）
       prisma.post.findMany({
-        where: { published: true },
-        orderBy: { publishedAt: "desc" },
+        where: { type: { in: ["BLOG", "NOTE"] } },
+        orderBy: { updatedAt: "desc" },
         take: 5,
         select: {
           id: true,
           title: true,
           titleEn: true,
+          type: true,
           views: true,
           likes: true,
+          updatedAt: true,
           publishedAt: true,
         },
       }),
