@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
@@ -23,6 +23,7 @@ interface Post {
 
 export default function PostsPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const params = useParams();
   const locale = params.locale as string;
 
@@ -61,7 +62,7 @@ export default function PostsPage() {
 
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, [pathname]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
