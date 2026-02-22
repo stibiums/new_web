@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { SplitEditor } from "@/components/editor";
 import { Button } from "@/components/ui/Button";
@@ -77,6 +77,12 @@ export default function NewProjectPage() {
     setMetaOpen(false);
   };
 
+  const handleSave = useCallback((value: string) => {
+    setContent(value);
+    const form = document.getElementById("edit-form") as HTMLFormElement | null;
+    if (form) form.requestSubmit();
+  }, []);
+
   return (
     <div className="h-screen flex flex-col bg-[var(--color-background)]">
       {/* 顶部工具栏 */}
@@ -126,11 +132,7 @@ export default function NewProjectPage() {
           <SplitEditor
             value={content}
             onChange={setContent}
-            onSave={async (value) => {
-              setContent(value);
-              const form = document.getElementById("edit-form") as HTMLFormElement | null;
-              if (form) form.requestSubmit();
-            }}
+            onSave={handleSave}
           />
         </div>
 
