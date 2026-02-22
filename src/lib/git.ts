@@ -377,8 +377,8 @@ export async function revertToCommit(
       return null;
     }
 
-    // 2. 恢复 Markdown 文件（git checkout 会自动 stage）
-    await git.checkout(commitHash, { '--': null, filePath: normalizedPath });
+    // 2. 恢复 Markdown 文件（git checkout <hash> -- <path>，自动 stage）
+    await git.raw(['checkout', commitHash, '--', normalizedPath]);
     console.log(`[Git] Restored md: ${normalizedPath}`);
 
     // 3. 提取并尝试恢复关联资源文件（尽力恢复策略）
@@ -389,7 +389,7 @@ export async function revertToCommit(
       // /assets/posts/slug/image.png → public/assets/posts/slug/image.png
       const assetRelPath = assetUrl.startsWith('/') ? `public${assetUrl}` : `public/${assetUrl}`;
       try {
-        await git.checkout(commitHash, { '--': null, filePath: assetRelPath });
+        await git.raw(['checkout', commitHash, '--', assetRelPath]);
         restoredAssets.push(assetRelPath);
         console.log(`[Git] Restored asset: ${assetRelPath}`);
       } catch {
