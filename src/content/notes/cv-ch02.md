@@ -3,7 +3,7 @@ title: 'CV - 2: 图像形成 (Image Formation)'
 excerpt: ''
 tags:
   - '"notes CV computer-vision image-formation"'
-published: false
+published: true
 ---
 
 > **授课**: 王鹏帅 (Peng-Shuai Wang)
