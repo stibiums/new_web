@@ -5,7 +5,15 @@ import { useRouter, useParams } from "next/navigation";
 import { SplitEditor } from "@/components/editor";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/Dialog";
 import { toast } from "sonner";
 
 export default function EditProjectPage() {
@@ -17,16 +25,20 @@ export default function EditProjectPage() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
+  // 元信息弹窗
+  const [metaOpen, setMetaOpen] = useState(false);
   const [slug, setSlug] = useState("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [content, setContent] = useState("");
   const [techStack, setTechStack] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
   const [demoUrl, setDemoUrl] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
   const [published, setPublished] = useState(false);
+
+  // 内容
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [content, setContent] = useState("");
 
   // Git 相关状态
   const [filePath, setFilePath] = useState("");
@@ -54,7 +66,7 @@ export default function EditProjectPage() {
         setGithubUrl(project.githubUrl || "");
         setDemoUrl(project.demoUrl || "");
         setCoverImage(project.coverImage || "");
-        setSortOrder(project.sortOrder);
+        setSortOrder(project.sortOrder || 0);
         setPublished(project.published);
         // Git 相关
         setFilePath(project.filePath || "");
@@ -117,6 +129,10 @@ export default function EditProjectPage() {
     }
   };
 
+  const handleMetaSave = () => {
+    setMetaOpen(false);
+  };
+
   if (fetching) {
     return (
       <div className="h-screen flex items-center justify-center bg-[var(--color-background)]">
@@ -174,6 +190,13 @@ export default function EditProjectPage() {
               )}
             </div>
           )}
+          <Button variant="ghost" size="sm" onClick={() => setMetaOpen(true)}>
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            属性
+          </Button>
           <Button type="button" variant="outline" size="sm" onClick={() => router.back()}>
             取消
           </Button>
@@ -184,128 +207,122 @@ export default function EditProjectPage() {
       </div>
 
       {/* 主内容区 */}
-      <main className="flex-1 min-h-0 overflow-y-auto">
-        <form id="edit-form" onSubmit={handleSubmit} className="max-w-4xl mx-auto p-6 space-y-6">
-          {/* 基本设置 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>基本设置</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Slug</label>
-                <Input
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  placeholder="project-slug"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">排序</label>
-                  <Input
-                    type="number"
-                    value={sortOrder}
-                    onChange={(e) => setSortOrder(Number(e.target.value))}
-                    placeholder="0"
-                  />
-                </div>
-                <div className="flex items-center gap-2 pt-6">
-                  <input
-                    type="checkbox"
-                    id="published"
-                    checked={published}
-                    onChange={(e) => setPublished(e.target.checked)}
-                    className="w-4 h-4"
-                  />
-                  <label htmlFor="published" className="text-sm font-medium">
-                    发布项目
-                  </label>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      <main className="flex-1 min-h-0 flex flex-col overflow-hidden">
+        {/* 标题输入 */}
+        <div className="shrink-0 px-6 py-4 border-b border-[var(--color-border)]">
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="无标题"
+            className="w-full text-2xl font-bold bg-transparent border-none outline-none text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)]/50"
+            required
+          />
+        </div>
 
-          {/* 项目链接 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>项目链接</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">GitHub 链接</label>
-                <Input
-                  value={githubUrl}
-                  onChange={(e) => setGithubUrl(e.target.value)}
-                  placeholder="https://github.com/username/project"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Demo 链接</label>
-                <Input
-                  value={demoUrl}
-                  onChange={(e) => setDemoUrl(e.target.value)}
-                  placeholder="https://demo.example.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">封面图</label>
-                <Input
-                  value={coverImage}
-                  onChange={(e) => setCoverImage(e.target.value)}
-                  placeholder="https://example.com/cover.jpg"
-                />
-              </div>
-            </CardContent>
-          </Card>
+        {/* 编辑器 */}
+        <div className="flex-1 min-h-0 h-full">
+          <SplitEditor
+            value={content}
+            onChange={setContent}
+            onSave={async (value) => {
+              setContent(value);
+              const form = document.getElementById("edit-form") as HTMLFormElement | null;
+              if (form) form.requestSubmit();
+            }}
+            filePath={filePath}
+            currentCommit={gitCommit}
+          />
+        </div>
 
-          {/* 项目内容 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>项目内容</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">标题</label>
-                <Input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="输入项目标题"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">技术栈</label>
-                <Input
-                  value={techStack}
-                  onChange={(e) => setTechStack(e.target.value)}
-                  placeholder="React, Node.js, PostgreSQL"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">简介</label>
-                <Input
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="输入项目简介"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">详细介绍</label>
-                <div className="h-[400px]">
-                  <SplitEditor
-                    value={content}
-                    onChange={setContent}
-                    filePath={filePath}
-                    currentCommit={gitCommit}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </form>
+        {/* 隐藏的表单 */}
+        <form id="edit-form" onSubmit={handleSubmit} style={{ display: 'none' }} />
       </main>
+
+      {/* 属性设置弹窗 */}
+      <Dialog open={metaOpen} onOpenChange={setMetaOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>属性设置</DialogTitle>
+            <DialogDescription>
+              设置项目的元信息
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+            <div>
+              <label className="block text-sm font-medium mb-2">Slug</label>
+              <Input
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                placeholder="project-slug"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">技术栈</label>
+              <Input
+                value={techStack}
+                onChange={(e) => setTechStack(e.target.value)}
+                placeholder="React, Node.js, PostgreSQL"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">GitHub 链接</label>
+              <Input
+                value={githubUrl}
+                onChange={(e) => setGithubUrl(e.target.value)}
+                placeholder="https://github.com/username/project"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Demo 链接</label>
+              <Input
+                value={demoUrl}
+                onChange={(e) => setDemoUrl(e.target.value)}
+                placeholder="https://demo.example.com"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">封面图</label>
+              <Input
+                value={coverImage}
+                onChange={(e) => setCoverImage(e.target.value)}
+                placeholder="封面图 URL"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">排序</label>
+                <Input
+                  type="number"
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(Number(e.target.value))}
+                  placeholder="0"
+                />
+              </div>
+              <div className="flex items-center gap-2 pt-6">
+                <input
+                  type="checkbox"
+                  id="published"
+                  checked={published}
+                  onChange={(e) => setPublished(e.target.checked)}
+                  className="w-4 h-4 rounded border-[var(--color-border)]"
+                />
+                <label htmlFor="published" className="text-sm font-medium">
+                  发布项目
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">取消</Button>
+            </DialogClose>
+            <Button onClick={handleMetaSave}>保存</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
