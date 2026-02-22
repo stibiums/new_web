@@ -11,7 +11,7 @@ published: true
 
 # Hello World
 
-这是一篇 **测试文章**，用于验证 Monaco Editor 组件。元神好玩
+这是一篇 **测试文章**，用于验证 Monaco Editor 组件。元神好
 
 ## 功能测试
 
