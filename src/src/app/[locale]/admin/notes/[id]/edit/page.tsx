@@ -6,6 +6,15 @@ import { useRouter } from "@/i18n/routing";
 import { SplitEditor } from "@/components/editor/SplitEditor";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/Dialog";
 import { toast } from "sonner";
 
 export default function EditNotePage() {
@@ -16,6 +25,7 @@ export default function EditNotePage() {
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [metaOpen, setMetaOpen] = useState(false);
 
   // 基本信息
   const [slug, setSlug] = useState("");
@@ -169,6 +179,13 @@ export default function EditNotePage() {
               )}
             </div>
           )}
+          <Button variant="ghost" size="sm" onClick={() => setMetaOpen(true)}>
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            属性
+          </Button>
           <Button type="button" variant="outline" size="sm" onClick={() => router.push("/admin/notes")}>
             取消
           </Button>
@@ -212,6 +229,48 @@ export default function EditNotePage() {
         {/* 隐藏的表单 */}
         <form id="edit-form" onSubmit={handleSubmit} style={{ display: 'none' }} />
       </main>
+
+      {/* 属性设置弹窗 */}
+      <Dialog open={metaOpen} onOpenChange={setMetaOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>属性设置</DialogTitle>
+            <DialogDescription>
+              设置笔记的元信息
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+            <div>
+              <label className="block text-sm font-medium mb-2">Slug</label>
+              <Input
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                placeholder="note-slug"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="published"
+                checked={published}
+                onChange={(e) => setPublished(e.target.checked)}
+                className="w-4 h-4 rounded border-[var(--color-border)]"
+              />
+              <label htmlFor="published" className="text-sm font-medium">
+                发布笔记
+              </label>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">取消</Button>
+            </DialogClose>
+            <Button onClick={() => setMetaOpen(false)}>保存</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
