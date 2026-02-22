@@ -402,23 +402,40 @@ export async function revertToCommit(
       console.log(`[Git] Restored ${restoredAssets.length} asset(s) along with md file`);
     }
 
-    // 4. 一次性提交所有变更（合并为单个 commit）
-    const fileName = path.basename(normalizedPath);
-    const message = `revert: 恢复 ${fileName} 到版本 ${commitHash.substring(0, 7)}`;
+    // 4. 检查是否有实际变更被 staged（目标版本与当前内容完全相同时无需 commit）
+    const status = await git.status();
+    const hasStagedChanges = status.staged.length > 0;
 
-    const newCommit = await gitCommit(message);
-    if (!newCommit) {
-      console.error(`[Git] Failed to commit revert of: ${normalizedPath}`);
-      return null;
+    let finalCommit: string;
+
+    if (!hasStagedChanges) {
+      // 文件内容已与目标版本相同，无需产生新 commit
+      // 返回当前 HEAD commit 作为标识
+      const headCommit = await getCurrentCommit();
+      finalCommit = headCommit ? headCommit.substring(0, 7) : commitHash.substring(0, 7);
+      console.log(`[Git] No staged changes after checkout (already at target version), skipping commit`);
+    } else {
+      // 5. 一次性提交所有变更（合并为单个 commit）
+      const fileName = path.basename(normalizedPath);
+      const message = `revert: 恢复 ${fileName} 到版本 ${commitHash.substring(0, 7)}`;
+
+      const newCommit = await gitCommit(message);
+      if (!newCommit) {
+        console.error(`[Git] Failed to commit revert of: ${normalizedPath}`);
+        return null;
+      }
+
+      finalCommit = newCommit;
+
+      // 后台 push，不阻塞响应
+      gitPush().catch((err) => {
+        console.warn(`[Git] Background push failed after revert`, err);
+      });
+
+      console.log(`[Git] Revert committed: ${finalCommit}`);
     }
 
-    // 5. 后台 push，不阻塞响应
-    gitPush().catch((err) => {
-      console.warn(`[Git] Background push failed after revert`, err);
-    });
-
-    console.log(`[Git] Revert committed: ${newCommit}`);
-    return { newCommit, content: historicalContent };
+    return { newCommit: finalCommit, content: historicalContent };
   } catch (error) {
     console.error('[Git] Failed to revert to commit', error);
     return null;
