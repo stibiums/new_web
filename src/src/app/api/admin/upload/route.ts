@@ -131,12 +131,12 @@ export async function POST(request: NextRequest) {
       // per-article 路径: public/assets/{contentType}/{slug}/{filename}
       uploadDir = path.join(process.cwd(), "public", "assets", contentType, slug);
       url = `/assets/${contentType}/${slug}/${filename}`;
-      gitFilePath = `src/public/assets/${contentType}/${slug}/${filename}`;
+      gitFilePath = `public/assets/${contentType}/${slug}/${filename}`;
     } else {
       // 兼容旧的全局路径: public/assets/{subDir}/{filename}
       uploadDir = path.join(process.cwd(), "public", "assets", config.subDir);
       url = `/assets/${config.subDir}/${filename}`;
-      gitFilePath = `src/public/assets/${config.subDir}/${filename}`;
+      gitFilePath = `public/assets/${config.subDir}/${filename}`;
     }
 
     // 确保目录存在

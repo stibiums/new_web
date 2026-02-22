@@ -59,7 +59,7 @@ export async function DELETE(
 
     // Git 自动提交
     try {
-      const gitFilePath = `src/public/assets/${contentType}/${slug}/${sanitizedFilename}`;
+      const gitFilePath = `public/assets/${contentType}/${slug}/${sanitizedFilename}`;
       await autoCommit(gitFilePath, `chore(asset): 删除资源 - ${sanitizedFilename}`);
     } catch (gitError) {
       console.error("Git auto commit failed:", gitError);
