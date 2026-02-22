@@ -24,6 +24,9 @@ published: true
 
 ## 1. 相机 (Camera)
 
+![1771752999291-Screenshot-from-2025-12-16-14-11-06.png](/assets/notes/cv-ch02/1771752999291-Screenshot-from-2025-12-16-14-11-06.png)
+
+
 ### 1.1 光传输 (Light Transport)
 
 图像形成涉及光传输的基本原理：
