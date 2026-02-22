@@ -10,7 +10,10 @@ const PROJECT_ROOT = process.env.GIT_CONTENT_ROOT || process.cwd();
 
 console.log(`[Git] Initializing with PROJECT_ROOT: ${PROJECT_ROOT}`);
 
-const git: SimpleGit = simpleGit(PROJECT_ROOT);
+const git: SimpleGit = simpleGit({
+  baseDir: PROJECT_ROOT,
+  timeout: { block: 10000 }, // 10 秒超时，防止 push 等操作挂起
+});
 
 /**
  * 获取文件分类
@@ -187,14 +190,12 @@ export async function autoCommit(
       return null;
     }
 
-    // 3. git push
-    const pushResult = await gitPush();
-    if (!pushResult) {
-      console.warn(`[Git] Push failed, but commit succeeded: ${commitHash}`);
-      // push 失败不返回 null，因为 commit 已经成功
-    }
+    // 3. git push（后台执行，不阻塞 API 响应）
+    gitPush().catch((err) => {
+      console.warn(`[Git] Background push failed for: ${filePath}`, err);
+    });
 
-    console.log(`[Git] Successfully committed and pushed: ${commitHash}`);
+    console.log(`[Git] Successfully committed: ${commitHash} (push in background)`);
     return commitHash;
   } catch (error) {
     console.error(`[Git] Auto commit failed for: ${filePath}`, error);
