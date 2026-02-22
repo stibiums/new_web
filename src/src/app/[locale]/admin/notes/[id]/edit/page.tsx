@@ -203,6 +203,8 @@ export default function EditNotePage() {
             }}
             filePath={filePath}
             currentCommit={gitCommit}
+            contentType="notes"
+            slug={slug}
           />
         </div>
 

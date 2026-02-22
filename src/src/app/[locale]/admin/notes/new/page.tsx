@@ -134,6 +134,8 @@ export default function NewNotePage() {
             value={content}
             onChange={setContent}
             onSave={handleSave}
+            contentType="notes"
+            slug={slug}
           />
         </div>
 

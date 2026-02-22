@@ -145,6 +145,8 @@ export default function NewProjectPage() {
             value={content}
             onChange={setContent}
             onSave={handleSave}
+            contentType="projects"
+            slug={slug}
           />
         </div>
 

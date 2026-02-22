@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Monitor, Columns, FileCode, History, Loader2 } from "lucide-react";
+import { Monitor, Columns, FileCode, History } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { MonacoMarkdownEditor } from "./MonacoMarkdownEditor";
 import { MarkdownRenderer } from "@/components/content/MarkdownRenderer";
 import { GitHistoryDialog } from "./GitHistoryDialog";
+import { ResourcePanel, type ContentType } from "./ResourcePanel";
 
 export interface SplitEditorProps {
   /** 文件内容 */
@@ -26,6 +27,10 @@ export interface SplitEditorProps {
   filePath?: string;
   /** 当前 Git commit */
   currentCommit?: string | null;
+  /** 内容类型 (用于资源管理) */
+  contentType?: ContentType;
+  /** 文章 slug (用于资源管理) */
+  slug?: string;
 }
 
 type ViewMode = "split" | "editor" | "preview";
@@ -50,6 +55,8 @@ export function SplitEditor({
   minHeight = "100%",
   filePath,
   currentCommit,
+  contentType,
+  slug,
 }: SplitEditorProps) {
   // 视图模式
   const [viewMode, setViewMode] = useState<ViewMode>("split");
@@ -204,6 +211,8 @@ export function SplitEditor({
                 minHeight={minHeight}
                 filePath={filePath}
                 currentCommit={currentCommit}
+                contentType={contentType}
+                slug={slug}
                 hideToolbar
               />
               </div>
@@ -233,6 +242,8 @@ export function SplitEditor({
               minHeight={minHeight}
               filePath={filePath}
               currentCommit={currentCommit}
+              contentType={contentType}
+              slug={slug}
               hideToolbar
             />
           </div>
@@ -248,6 +259,8 @@ export function SplitEditor({
       {/* 资源管理面板 */}
       {showResourcePanel && (
         <ResourcePanel
+          contentType={contentType || "posts"}
+          slug={slug || ""}
           onClose={() => setShowResourcePanel(false)}
           onInsert={handleInsertResource}
         />
@@ -263,97 +276,6 @@ export function SplitEditor({
           onRevert={handleRevert}
         />
       )}
-    </div>
-  );
-}
-
-// 资源面板组件
-interface ResourcePanelProps {
-  onClose: () => void;
-  onInsert: (markdown: string) => void;
-}
-
-function ResourcePanel({ onClose, onInsert }: ResourcePanelProps) {
-  const [resources, setResources] = useState<{ url: string; name: string; type: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-
-  // 加载资源列表
-  // TODO: 实现资源列表加载 API
-  // useEffect(() => { ... }, [])
-
-  const handleInsert = (resource: { url: string; name: string; type: string }) => {
-    let markdown = "";
-    if (resource.type.startsWith("image/")) {
-      markdown = `![${resource.name}](${resource.url})\n`;
-    } else if (resource.type === "application/pdf") {
-      markdown = `[${resource.name}](${resource.url})\n`;
-    } else {
-      markdown = `[${resource.name}](${resource.url})\n`;
-    }
-    onInsert(markdown);
-  };
-
-  return (
-    <div className="fixed inset-y-0 right-0 w-80 bg-[var(--color-background)] border-l border-[var(--color-border)] shadow-lg z-50 flex flex-col">
-      {/* 头部 */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)]">
-        <h3 className="font-semibold">资源管理</h3>
-        <Button variant="ghost" size="sm" onClick={onClose}>
-          ×
-        </Button>
-      </div>
-
-      {/* 搜索 */}
-      <div className="px-4 py-2 border-b border-[var(--color-border)]">
-        <input
-          type="text"
-          placeholder="搜索资源..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-3 py-1.5 text-sm bg-[var(--color-muted)] border border-[var(--color-border)] rounded-md"
-        />
-      </div>
-
-      {/* 资源列表 */}
-      <div className="flex-1 overflow-auto p-4">
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : resources.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <FileCode className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p>暂无资源</p>
-            <p className="text-xs mt-1">使用上方按钮上传文件</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-2">
-            {resources
-              .filter((r) => r.name.toLowerCase().includes(search.toLowerCase()))
-              .map((resource, index) => (
-                <button
-                  key={index}
-                  className="p-2 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-muted)] transition-colors text-left"
-                  onClick={() => handleInsert(resource)}
-                >
-                  {resource.type.startsWith("image/") ? (
-                    <img
-                      src={resource.url}
-                      alt={resource.name}
-                      className="w-full h-20 object-cover rounded mb-2"
-                    />
-                  ) : (
-                    <div className="w-full h-20 flex items-center justify-center bg-[var(--color-muted)] rounded mb-2">
-                      <FileCode className="w-8 h-8 text-muted-foreground" />
-                    </div>
-                  )}
-                  <p className="text-xs truncate">{resource.name}</p>
-                </button>
-              ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

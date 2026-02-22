@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, History, Image as ImageIcon, FileText, Video, FileCode } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { GitHistoryDialog } from "./GitHistoryDialog";
+import type { ContentType } from "./ResourcePanel";
 
 export interface MonacoMarkdownEditorProps {
   /** 文件内容 */
@@ -27,6 +28,10 @@ export interface MonacoMarkdownEditorProps {
   currentCommit?: string | null;
   /** 是否隐藏工具栏 */
   hideToolbar?: boolean;
+  /** 内容类型 (用于资源上传路径) */
+  contentType?: ContentType;
+  /** 文章 slug (用于资源上传路径) */
+  slug?: string;
 }
 
 /**
@@ -50,15 +55,21 @@ export function MonacoMarkdownEditor({
   filePath,
   currentCommit,
   hideToolbar = false,
+  contentType,
+  slug,
 }: MonacoMarkdownEditorProps) {
   // Monaco Editor 实例引用
   const editorRef = useRef<any>(null);
+  // 编辑器容器引用（用于拖拽上传）
+  const containerRef = useRef<HTMLDivElement>(null);
   // 主题模式
   const [isDark, setIsDark] = useState(true);
   // 历史弹窗状态
   const [showHistory, setShowHistory] = useState(false);
   // 上传中状态
   const [uploading, setUploading] = useState(false);
+  // 拖拽悬停状态
+  const [dragOverEditor, setDragOverEditor] = useState(false);
 
   // 检测系统主题
   useEffect(() => {
@@ -68,6 +79,35 @@ export function MonacoMarkdownEditor({
     const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
     mediaQuery.addEventListener("change", handler);
     return () => mediaQuery.removeEventListener("change", handler);
+  }, []);
+
+  // 监听 insert-resource 自定义事件（从 ResourcePanel 触发）
+  useEffect(() => {
+    const handleInsertResource = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      const markdown = customEvent.detail;
+      const editor = editorRef.current;
+      if (!editor || !markdown) return;
+
+      const position = editor.getPosition();
+      if (position) {
+        editor.executeEdits("insert-resource", [
+          {
+            range: {
+              startLineNumber: position.lineNumber,
+              startColumn: position.column,
+              endLineNumber: position.lineNumber,
+              endColumn: position.column,
+            },
+            text: markdown,
+          },
+        ]);
+        editor.focus();
+      }
+    };
+
+    window.addEventListener("insert-resource", handleInsertResource);
+    return () => window.removeEventListener("insert-resource", handleInsertResource);
   }, []);
 
   // 处理编辑器 mount
@@ -106,6 +146,9 @@ export function MonacoMarkdownEditor({
     try {
       const formData = new FormData();
       formData.append("file", file);
+      // 传入 per-article 路径参数
+      if (contentType) formData.append("contentType", contentType);
+      if (slug) formData.append("slug", slug);
 
       const res = await fetch("/api/admin/upload", {
         method: "POST",
@@ -191,10 +234,77 @@ export function MonacoMarkdownEditor({
     [onChange, onSave]
   );
 
+  // 拖拽上传/插入处理
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // 检查是否有文件或资源 markdown
+    if (e.dataTransfer.types.includes("Files") || e.dataTransfer.types.includes("application/x-resource-markdown")) {
+      setDragOverEditor(true);
+      e.dataTransfer.dropEffect = "copy";
+    }
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverEditor(false);
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverEditor(false);
+
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    // 情况1: 从 ResourcePanel 拖拽的资源（已有 markdown）
+    const resourceMarkdown = e.dataTransfer.getData("application/x-resource-markdown");
+    if (resourceMarkdown) {
+      const position = editor.getPosition();
+      if (position) {
+        editor.executeEdits("insert-resource-drag", [
+          {
+            range: {
+              startLineNumber: position.lineNumber,
+              startColumn: position.column,
+              endLineNumber: position.lineNumber,
+              endColumn: position.column,
+            },
+            text: resourceMarkdown,
+          },
+        ]);
+        editor.focus();
+      }
+      return;
+    }
+
+    // 情况2: 从系统文件管理器拖入的文件
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      for (const file of Array.from(files)) {
+        await handleUpload(file, editor);
+      }
+    }
+  }, [handleUpload]);
+
   return (
     <div
-      className={`monaco-markdown-editor h-full ${className}`}
+      ref={containerRef}
+      className={`monaco-markdown-editor h-full relative ${className}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
+      {/* 拖拽上传覆盖层 */}
+      {dragOverEditor && (
+        <div className="absolute inset-0 z-10 bg-primary/5 border-2 border-dashed border-primary rounded-lg flex items-center justify-center pointer-events-none">
+          <div className="bg-[var(--color-background)]/90 px-4 py-2 rounded-lg shadow-lg text-sm font-medium text-primary">
+            松开以上传/插入文件
+          </div>
+        </div>
+      )}
       {/* 工具栏 - 根据 hideToolbar 控制显示 */}
       {!hideToolbar && (
         <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border)] bg-[var(--color-muted)]/30">

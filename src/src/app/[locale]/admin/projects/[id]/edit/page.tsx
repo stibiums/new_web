@@ -232,6 +232,8 @@ export default function EditProjectPage() {
             }}
             filePath={filePath}
             currentCommit={gitCommit}
+            contentType="projects"
+            slug={slug}
           />
         </div>
 

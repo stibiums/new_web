@@ -225,6 +225,8 @@ export default function EditPostPage() {
             }}
             filePath={filePath}
             currentCommit={gitCommit}
+            contentType="posts"
+            slug={slug}
           />
         </div>
 

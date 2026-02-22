@@ -36,6 +36,9 @@ const ASSET_TYPES: Record<string, AssetConfig> = {
 
 type AssetType = keyof typeof ASSET_TYPES;
 
+// 支持的内容类型
+type ContentType = "posts" | "notes" | "projects";
+
 function getAssetType(mimeType: string): AssetType | null {
   for (const [type, config] of Object.entries(ASSET_TYPES)) {
     if (config.allowedTypes.includes(mimeType)) {
@@ -73,6 +76,9 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const type = formData.get("type") as AssetType | null;
+    // per-article 路径参数
+    const contentType = formData.get("contentType") as ContentType | null;
+    const slug = formData.get("slug") as string | null;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -116,8 +122,22 @@ export async function POST(request: NextRequest) {
     const baseName = path.basename(file.name, ext).replace(/[^a-zA-Z0-9_-]/g, "-");
     const filename = `${Date.now()}-${baseName}${ext}`;
 
-    // 上传到对应目录
-    const uploadDir = path.join(process.cwd(), "public", "assets", config.subDir);
+    // 确定上传目录：per-article 路径 或 全局路径
+    let uploadDir: string;
+    let url: string;
+    let gitFilePath: string;
+
+    if (contentType && slug) {
+      // per-article 路径: public/assets/{contentType}/{slug}/{filename}
+      uploadDir = path.join(process.cwd(), "public", "assets", contentType, slug);
+      url = `/assets/${contentType}/${slug}/${filename}`;
+      gitFilePath = `src/public/assets/${contentType}/${slug}/${filename}`;
+    } else {
+      // 兼容旧的全局路径: public/assets/{subDir}/{filename}
+      uploadDir = path.join(process.cwd(), "public", "assets", config.subDir);
+      url = `/assets/${config.subDir}/${filename}`;
+      gitFilePath = `src/public/assets/${config.subDir}/${filename}`;
+    }
 
     // 确保目录存在
     await mkdir(uploadDir, { recursive: true });
@@ -126,12 +146,8 @@ export async function POST(request: NextRequest) {
     const filePath = path.join(uploadDir, filename);
     await writeFile(filePath, buffer);
 
-    // 返回 Markdown 可用的 URL
-    const url = `/assets/${config.subDir}/${filename}`;
-
     // 自动 Git 提交
     try {
-      const gitFilePath = `src/public/assets/${config.subDir}/${filename}`;
       await autoCommit(gitFilePath, `feat(asset): 上传 ${assetType} - ${filename}`);
     } catch (gitError) {
       console.error("Git auto commit failed:", gitError);

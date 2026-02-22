@@ -94,9 +94,15 @@
 - [x] 4.9.3 笔记和项目编辑页
 - [x] 4.9.4 修复 Yoopta CSS 全局污染导致按钮样式异常 (barrel export 隔离)
 
-### 4.10 图片/资源上传
-- [ ] 4.10.1 保留图片上传 API
-- [ ] 4.10.2 public/uploads/ 目录
+### 4.10 图片/资源上传与管理
+- [x] 4.10.1 上传 API 重构 (支持 per-article 路径: /assets/{contentType}/{slug}/)
+- [x] 4.10.2 资源列表 API (GET /api/admin/resources)
+- [x] 4.10.3 资源删除 API (DELETE /api/admin/resources/[filename])
+- [x] 4.10.4 ResourcePanel 独立组件 (上传/浏览/搜索/筛选/拖拽/下载/删除)
+- [x] 4.10.5 SplitEditor 集成 ResourcePanel (contentType/slug 传递)
+- [x] 4.10.6 MonacoEditor insert-resource 事件监听 (修复资源插入链路)
+- [x] 4.10.7 MonacoEditor 系统文件拖入上传 + ResourcePanel 拖拽插入
+- [x] 4.10.8 所有编辑页面传入 contentType/slug (posts/notes/projects × new/edit)
 
 ### 4.11 CRUD 页面
 - [ ] 4.11.1 文章列表页
@@ -122,7 +128,7 @@
 - [x] 6.9 Giscus 评论
 - [x] 6.10-6.11 RSS + Sitemap
 
-## 阶段 7：部署
+## 阶段 7：部署（先不进行）
 - [ ] 7.1-7.2 Dockerfile + docker-compose
 - [ ] 7.3 .env.example
 - [ ] 7.4 Gitea Actions workflow
@@ -133,4 +139,4 @@
 ---
 
 ## 接下来做什么
-→ 阶段 4.9：后台编辑页面 (文章编辑页集成 Monaco Editor)
+→ 阶段 4.11：CRUD 页面 (文章列表/新建/笔记/项目/出版物管理等)

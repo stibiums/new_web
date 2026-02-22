@@ -141,6 +141,8 @@ export default function NewPostPage() {
             value={content}
             onChange={setContent}
             onSave={handleSave}
+            contentType="posts"
+            slug={slug}
           />
         </div>
 
