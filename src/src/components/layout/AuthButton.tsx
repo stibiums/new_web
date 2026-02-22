@@ -22,7 +22,7 @@ export function AuthButton() {
           title={t("nav.admin")}
         >
           <Settings className="w-4 h-4" />
-          <span className="hidden sm:inline">{t("nav.admin")}</span>
+          <span className="sr-only">{t("nav.admin")}</span>
         </a>
         <button
           onClick={() => signOut({ callbackUrl: `/${locale}/login` })}
