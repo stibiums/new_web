@@ -8,7 +8,7 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { AuthButton } from "@/components/layout/AuthButton";
 import { Menu, X, Search } from "lucide-react";
 
-export function Header() {
+export function Header({ siteLogo, siteTitle }: { siteLogo?: string; siteTitle?: string }) {
   const t = useTranslations();
   const pathname = usePathname();
   const locale = useLocale();
@@ -41,7 +41,11 @@ export function Header() {
           href={`/${locale}`}
           className="flex items-center gap-2 text-xl font-bold text-primary hover:text-primary-hover transition-colors"
         >
-          <span className="font-mono">Stibiums</span>
+          {siteLogo ? (
+            <img src={siteLogo} alt={siteTitle || "Logo"} className="h-8 w-auto" />
+          ) : (
+            <span className="font-mono">{siteTitle || "Stibiums"}</span>
+          )}
         </Link>
 
         {/* Desktop Navigation */}

@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { SearchProvider } from '@/components/search/SearchProvider';
+import { prisma } from '@/lib/prisma';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({locale}));
@@ -25,14 +26,28 @@ export default async function LocaleLayout({
 
   const messages = await getMessages();
 
+  // 获取全局配置
+  let siteConfig: Record<string, string> = {};
+  try {
+    const configs = await prisma.siteConfig.findMany();
+    configs.forEach((c) => {
+      siteConfig[c.key] = c.value;
+    });
+  } catch (error) {
+    console.error("Failed to fetch site config:", error);
+  }
+
+  const siteTitle = locale === "en" && siteConfig.site_title_en ? siteConfig.site_title_en : siteConfig.site_title;
+  const copyright = locale === "en" && siteConfig.footer_copyright_en ? siteConfig.footer_copyright_en : siteConfig.footer_copyright;
+
   return (
     <NextIntlClientProvider messages={messages}>
       <div className="flex flex-col min-h-screen">
-        <Header />
+        <Header siteLogo={siteConfig.site_logo} siteTitle={siteTitle} />
         <main className="flex-1">
           {children}
         </main>
-        <Footer />
+        <Footer copyright={copyright} githubUrl={siteConfig.github_url} email={siteConfig.email} />
         <SearchProvider />
       </div>
     </NextIntlClientProvider>

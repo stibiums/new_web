@@ -39,6 +39,7 @@ export default function Home() {
   const [recentPosts, setRecentPosts] = useState<Post[]>([]);
   const [recentProjects, setRecentProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [welcomeMsg, setWelcomeMsg] = useState("");
 
   useEffect(() => {
     const fetchHomeData = async () => {
@@ -48,6 +49,16 @@ export default function Home() {
         if (res.ok) {
           setRecentPosts(data.data.recentPosts || []);
           setRecentProjects(data.data.recentProjects || []);
+        }
+        
+        // Fetch welcome message from settings
+        const settingsRes = await fetch("/api/admin/settings");
+        const settingsData = await settingsRes.json();
+        if (settingsRes.ok) {
+          const msg = locale === "en" && settingsData.data.home_welcome_en 
+            ? settingsData.data.home_welcome_en 
+            : settingsData.data.home_welcome;
+          setWelcomeMsg(msg || t('subtitle'));
         }
       } catch (error) {
         console.error("Failed to fetch home data:", error);
@@ -97,8 +108,8 @@ export default function Home() {
             {t('title')}
           </h1>
 
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {t('subtitle')}
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto whitespace-pre-wrap">
+            {welcomeMsg || t('subtitle')}
           </p>
 
           {/* Social Links - 5.4 */}

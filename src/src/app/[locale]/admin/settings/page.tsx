@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/Card";
+import { THEME_PRESETS } from "@/lib/themes";
 
 interface Settings {
   site_title: string;
@@ -26,6 +27,11 @@ interface Settings {
   google_analytics_id: string;
   custom_head: string;
   custom_footer: string;
+  theme_color: string;
+  home_welcome: string;
+  home_welcome_en: string;
+  footer_copyright: string;
+  footer_copyright_en: string;
 }
 
 const defaultSettings: Settings = {
@@ -41,6 +47,11 @@ const defaultSettings: Settings = {
   google_analytics_id: "",
   custom_head: "",
   custom_footer: "",
+  theme_color: "violet",
+  home_welcome: "",
+  home_welcome_en: "",
+  footer_copyright: "",
+  footer_copyright_en: "",
 };
 
 export default function SettingsPage() {
@@ -181,6 +192,38 @@ export default function SettingsPage() {
               />
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* 外观设置 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>外观设置</CardTitle>
+          <CardDescription>配置网站的主题颜色和图标</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-3">
+            <label className="text-sm font-medium">主题色预设</label>
+            <div className="flex flex-wrap gap-4">
+              {THEME_PRESETS.map((preset) => (
+                <button
+                  key={preset.id}
+                  onClick={() => handleChange("theme_color", preset.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
+                    settings.theme_color === preset.id
+                      ? "border-primary bg-primary/5"
+                      : "border-transparent hover:bg-muted"
+                  }`}
+                >
+                  <span
+                    className="w-5 h-5 rounded-full shadow-sm"
+                    style={{ backgroundColor: preset.color }}
+                  />
+                  <span className="text-sm font-medium">{preset.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium">Logo URL</label>
@@ -196,6 +239,54 @@ export default function SettingsPage() {
                 value={settings.site_favicon}
                 onChange={(e) => handleChange("site_favicon", e.target.value)}
                 placeholder="/favicon.ico"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 内容设置 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>内容设置</CardTitle>
+          <CardDescription>配置首页欢迎语和页脚信息</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">首页欢迎语 (中文)</label>
+              <Textarea
+                value={settings.home_welcome}
+                onChange={(e) => handleChange("home_welcome", e.target.value)}
+                placeholder="欢迎来到我的个人网站..."
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">首页欢迎语 (English)</label>
+              <Textarea
+                value={settings.home_welcome_en}
+                onChange={(e) => handleChange("home_welcome_en", e.target.value)}
+                placeholder="Welcome to my personal website..."
+                rows={3}
+              />
+            </div>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">页脚版权信息 (中文)</label>
+              <Input
+                value={settings.footer_copyright}
+                onChange={(e) => handleChange("footer_copyright", e.target.value)}
+                placeholder="© 2026 Stibiums. All rights reserved."
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">页脚版权信息 (English)</label>
+              <Input
+                value={settings.footer_copyright_en}
+                onChange={(e) => handleChange("footer_copyright_en", e.target.value)}
+                placeholder="© 2026 Stibiums. All rights reserved."
               />
             </div>
           </div>

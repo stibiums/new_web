@@ -4,6 +4,8 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { ThemeProvider } from "@/components/theme";
 import { SessionProvider } from "@/components/auth/SessionProvider";
+import { prisma } from "@/lib/prisma";
+import { getThemeCss } from "@/lib/themes";
 import "./globals.css";
 
 const inter = Inter({
@@ -35,9 +37,24 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const messages = await getMessages();
+  
+  // 获取主题配置
+  let themeCss = "";
+  try {
+    const themeConfig = await prisma.siteConfig.findUnique({
+      where: { key: "theme_color" }
+    });
+    themeCss = getThemeCss(themeConfig?.value);
+  } catch (error) {
+    console.error("Failed to fetch theme config:", error);
+    themeCss = getThemeCss("violet"); // fallback
+  }
 
   return (
     <html lang="zh" suppressHydrationWarning>
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: themeCss }} />
+      </head>
       <body
         className={`${inter.variable} ${notoSansSC.variable} ${jetbrainsMono.variable} antialiased`}
       >

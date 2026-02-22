@@ -16,6 +16,11 @@ const ALLOWED_KEYS = [
   "google_analytics_id",
   "custom_head",
   "custom_footer",
+  "theme_color",
+  "home_welcome",
+  "home_welcome_en",
+  "footer_copyright",
+  "footer_copyright_en",
 ];
 
 export async function GET() {
