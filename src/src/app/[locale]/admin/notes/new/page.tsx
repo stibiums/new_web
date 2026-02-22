@@ -35,12 +35,15 @@ export default function NewNotePage() {
     e.preventDefault();
     setLoading(true);
 
+    // 如果 slug 为空，从标题生成
+    const finalSlug = slug || generateSlug(title);
+
     try {
       const res = await fetch("/api/admin/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          slug,
+          slug: finalSlug,
           title,
           content,
           type: "NOTE",
@@ -64,6 +67,15 @@ export default function NewNotePage() {
 
   const handleMetaSave = () => {
     setMetaOpen(false);
+  };
+
+  // 从标题生成 slug
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .replace(/[^\u4e00-\u9fa5a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      || `note-${Date.now()}`;
   };
 
   const handleSave = useCallback((value: string) => {
