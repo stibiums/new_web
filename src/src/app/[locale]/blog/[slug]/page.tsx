@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Calendar, Eye, Heart, ArrowLeft, Share2 } from "lucide-react";
-import { TiptapRenderer } from "@/components/content/TiptapRenderer";
+import { MarkdownRenderer, TableOfContents } from "@/components/content";
 import { Giscus } from "@/components/ui/Giscus";
 
 interface Post {
@@ -158,88 +158,92 @@ export default function BlogPostPage() {
   }
 
   return (
-    <article className="max-w-4xl mx-auto px-4 py-12">
-      {/* Back link */}
-      <Link
-        href={`/${locale}/blog`}
-        className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary mb-8"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        {tCommon("back")}
-      </Link>
+    <div className="max-w-6xl mx-auto px-4 py-12 flex flex-col lg:flex-row gap-8 items-start">
+      <article className="flex-1 min-w-0 w-full max-w-4xl">
+        {/* Back link */}
+        <Link
+          href={`/${locale}/blog`}
+          className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary mb-8"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          {tCommon("back")}
+        </Link>
 
-      {/* Header */}
-      <header className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold mb-4">{getTitle(post)}</h1>
+        {/* Header */}
+        <header className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">{getTitle(post)}</h1>
 
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          {post.publishedAt && (
-            <span className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
-              {new Date(post.publishedAt).toLocaleDateString()}
-            </span>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            {post.publishedAt && (
+              <span className="flex items-center gap-1">
+                <Calendar className="w-4 h-4" />
+                {new Date(post.publishedAt).toLocaleDateString()}
+              </span>
+            )}
+            {post.views > 0 && (
+              <span className="flex items-center gap-1">
+                <Eye className="w-4 h-4" />
+                {post.views}
+              </span>
+            )}
+            <button
+              onClick={handleLike}
+              disabled={likeLoading}
+              className={`flex items-center gap-1 hover:text-red-500 transition-colors ${
+                liked ? "text-red-500" : ""
+              }`}
+            >
+              <Heart
+                className={`w-4 h-4 ${liked ? "fill-current animate-pulse" : ""}`}
+              />
+              {post.likes}
+            </button>
+          </div>
+
+          {getTags(post).length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-4">
+              {getTags(post).map((tag) => (
+                <span key={tag} className="px-2 py-1 rounded bg-muted text-xs">
+                  {tag}
+                </span>
+              ))}
+            </div>
           )}
-          {post.views > 0 && (
-            <span className="flex items-center gap-1">
-              <Eye className="w-4 h-4" />
-              {post.views}
-            </span>
-          )}
-          <button
-            onClick={handleLike}
-            disabled={likeLoading}
-            className={`flex items-center gap-1 hover:text-red-500 transition-colors ${
-              liked ? "text-red-500" : ""
-            }`}
-          >
-            <Heart
-              className={`w-4 h-4 ${liked ? "fill-current animate-pulse" : ""}`}
+        </header>
+
+        {/* Cover Image */}
+        {post.coverImage && (
+          <div className="mb-8 rounded-lg overflow-hidden">
+            <img
+              src={post.coverImage}
+              alt={getTitle(post)}
+              className="w-full h-auto"
             />
-            {post.likes}
+          </div>
+        )}
+
+        {/* Content */}
+        <MarkdownRenderer content={getContent(post)} />
+
+        {/* Share */}
+        <div className="flex justify-end gap-4 mt-8 pt-8 border-t border-border">
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+          >
+            <Share2 className="w-4 h-4" />
+            分享
           </button>
         </div>
 
-        {getTags(post).length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-4">
-            {getTags(post).map((tag) => (
-              <span key={tag} className="px-2 py-1 rounded bg-muted text-xs">
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-      </header>
+        {/* Giscus Comments */}
+        <Giscus />
+      </article>
 
-      {/* Cover Image */}
-      {post.coverImage && (
-        <div className="mb-8 rounded-lg overflow-hidden">
-          <img
-            src={post.coverImage}
-            alt={getTitle(post)}
-            className="w-full h-auto"
-          />
-        </div>
-      )}
-
-      {/* Content */}
-      <div className="prose prose-lg dark:prose-invert max-w-none">
-        {/* Render Tiptap JSON content - placeholder for now */}
-        <TiptapRenderer content={getContent(post)} />
-      </div>
-
-      {/* Share */}
-      <div className="flex justify-end gap-4 mt-8 pt-8 border-t border-border">
-        <button
-          onClick={handleShare}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-        >
-          <Share2 className="w-4 h-4" />
-          分享
-        </button>
-      </div>
-
-      {/* Giscus Comments */}
-      <Giscus />
-    </article>
+      {/* TOC Sidebar */}
+      <aside className="hidden lg:block w-64 shrink-0">
+        <TableOfContents content={getContent(post)} />
+      </aside>
+    </div>
   );
 }
