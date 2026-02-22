@@ -273,10 +273,16 @@ export async function getFileAtCommit(
   commitHash: string
 ): Promise<string | null> {
   try {
-    // 规范化路径
-    const normalizedPath = filePath.startsWith('src/') ? filePath.slice(4) : filePath;
+    // git show 中的路径必须相对于仓库根目录（不是 baseDir/CWD）
+    // 通过 revparse 获取仓库根目录，计算正确的相对路径
+    const repoRoot = (await git.revparse(['--show-toplevel'])).trim();
+    // filePath 可能带有 src/ 前缀（如 src/content/notes/xxx.md）或不带（content/notes/xxx.md）
+    // 先还原为相对于 PROJECT_ROOT 的路径（不带 src/），再拼成绝对路径再求相对于 repoRoot
+    const normalizedToBase = filePath.startsWith('src/') ? filePath.slice(4) : filePath;
+    const absolutePath = path.join(PROJECT_ROOT, normalizedToBase);
+    const relToRoot = path.relative(repoRoot, absolutePath);
 
-    const result = await git.show([`${commitHash}:${normalizedPath}`]);
+    const result = await git.show([`${commitHash}:${relToRoot}`]);
     return result;
   } catch (error) {
     console.error('[Git] Failed to get file at commit', error);

@@ -20,7 +20,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const editorMode = isEditorPage(pathname);
 
   return (
-    <div className={editorMode ? "h-screen overflow-hidden bg-[var(--color-background)]" : "min-h-screen bg-[var(--color-muted)]"}>
+    <div className={editorMode ? "fixed inset-0 z-50 overflow-hidden bg-[var(--color-background)]" : "min-h-screen bg-[var(--color-muted)]"}>
       <AdminSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main content */}

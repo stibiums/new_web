@@ -1,7 +1,21 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, type ReactNode, type ReactElement } from "react";
+import React, {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  useContext,
+  createContext,
+  type ReactNode,
+  type ReactElement,
+} from "react";
 import { createPortal } from "react-dom";
+
+/** 用于 DialogContent 向外层容器传递尺寸/样式 */
+const DialogContainerCtx = createContext<{
+  setContainerClass: React.Dispatch<React.SetStateAction<string>>;
+} | null>(null);
 
 export interface DialogProps {
   open?: boolean;
@@ -54,20 +68,27 @@ function DialogRoot({
   onOpenChange?: (open: boolean) => void;
   children: ReactNode;
 }) {
+  // DialogContent 可通过 context 动态覆盖容器尺寸类
+  const [containerClass, setContainerClass] = useState("max-w-lg");
+
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* 背景遮罩 */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={() => onOpenChange?.(false)}
-      />
-      {/* 弹窗内容 */}
-      <div className="relative z-10 w-full max-w-lg mx-4 bg-[var(--color-background)] rounded-xl shadow-lg border border-[var(--color-border)] animate-in fade-in zoom-in-95 duration-200">
-        {children}
+    <DialogContainerCtx.Provider value={{ setContainerClass }}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        {/* 背景遮罩 */}
+        <div
+          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          onClick={() => onOpenChange?.(false)}
+        />
+        {/* 弹窗内容 */}
+        <div
+          className={`relative z-10 w-full mx-auto bg-[var(--color-background)] rounded-xl shadow-2xl border border-[var(--color-border)] animate-in fade-in zoom-in-95 duration-200 ${containerClass}`}
+        >
+          {children}
+        </div>
       </div>
-    </div>,
+    </DialogContainerCtx.Provider>,
     document.body
   );
 }
@@ -87,11 +108,22 @@ export interface DialogContentProps {
 }
 
 export function DialogContent({ children, className = "" }: DialogContentProps) {
-  return (
-    <div className={className}>
-      {children}
-    </div>
-  );
+  const ctx = useContext(DialogContainerCtx);
+
+  // 将 className 传递给外层容器，让容器承载尺寸/布局样式
+  useLayoutEffect(() => {
+    if (ctx && className) {
+      ctx.setContainerClass(className);
+    }
+    return () => {
+      // 弹窗关闭后恢复默认尺寸
+      ctx?.setContainerClass("max-w-lg");
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [className]);
+
+  // DialogContent 本身不再渲染多余的 div，直接透传子节点
+  return <>{children}</>;
 }
 
 export interface DialogHeaderProps {

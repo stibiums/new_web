@@ -175,12 +175,12 @@ export function SplitEditor({
   const [showResourcePanel, setShowResourcePanel] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
-  // Monaco editor 实例（滚动同步 & 高亮）
+  // Monaco editor 实例（高亮）
   const monacoEditorRef = useRef<any>(null);
-  // 预览容器（滚动同步）
+  // 预览容器—也是滚动的唯一驱动源
   const previewRef = useRef<HTMLDivElement>(null);
-  // 防止滚动同步循环
-  const isSyncing = useRef(false);
+  // 编辑器面板外层 div（拦截 wheel 事件用）
+  const editorPaneRef = useRef<HTMLDivElement>(null);
   // 高亮装饰集合
   const decorationsRef = useRef<any>(null);
   // 锚点表：源码行号 → 预览 offsetTop
@@ -228,48 +228,29 @@ export function SplitEditor({
     };
   }, []);
 
-  // ─── 滚动同步：Monaco → Preview ────────────────────────────────
+  // ─── 拦截编辑区 wheel 事件，将滚动转发到预览区 ─────────────────
+  // Monaco 内部会对 wheel 事件调用 stopPropagation，导致冒泡阶段监听器
+  // 收不到事件。用 capture:true 在捕获阶段拦截，早于 Monaco 处理。
   useEffect(() => {
-    const editor = monacoEditorRef.current;
-    const preview = previewRef.current;
-    if (!editor || !preview) return;
-
-    const disposable = editor.onDidScrollChange(() => {
-      if (isSyncing.current) return;
+    const pane = editorPaneRef.current;
+    if (!pane) return;
+    const onWheel = (e: WheelEvent) => {
       const preview = previewRef.current;
       if (!preview) return;
-      const previewMax = preview.scrollHeight - preview.clientHeight;
-      if (previewMax <= 0) return;
-
-      const anchors = anchorsRef.current;
-      if (anchors.length >= 2) {
-        // 锚点表就绪：取当前可见范围第一行，通过分段线性映射到预览 scrollTop
-        const visibleRanges = editor.getVisibleRanges();
-        const topLine: number = visibleRanges[0]?.startLineNumber ?? 1;
-        const totalLines: number = editor.getModel()?.getLineCount() ?? 1;
-        const targetTop = lineToPreviewTop(topLine, anchors, totalLines, previewMax);
-        isSyncing.current = true;
-        preview.scrollTop = targetTop;
-        requestAnimationFrame(() => { isSyncing.current = false; });
-      } else {
-        // Fallback：纯比例映射
-        const editorScrollTop = editor.getScrollTop();
-        const editorMax = editor.getScrollHeight() - (editor.getLayoutInfo()?.height ?? 0);
-        if (editorMax <= 0) return;
-        isSyncing.current = true;
-        preview.scrollTop = (editorScrollTop / editorMax) * previewMax;
-        requestAnimationFrame(() => { isSyncing.current = false; });
-      }
-    });
-
-    return () => disposable?.dispose();
-  }, [monacoEditorRef.current]); // eslint-disable-line react-hooks/exhaustive-deps
+      e.preventDefault();
+      e.stopPropagation();
+      preview.scrollTop += e.deltaY;
+    };
+    pane.addEventListener("wheel", onWheel, { passive: false, capture: true });
+    return () => pane.removeEventListener("wheel", onWheel, { capture: true });
+  }, []);
 
   // ─── 滚动同步：Preview → Monaco ────────────────────────────────
+  // 预览滚动后，通过锚点表反推编辑器位置（无循环，编辑器不会再触具 onScroll）
   const handlePreviewScroll = useCallback(() => {
     const editor = monacoEditorRef.current;
     const preview = previewRef.current;
-    if (!editor || !preview || isSyncing.current) return;
+    if (!editor || !preview) return;
     const previewMax = preview.scrollHeight - preview.clientHeight;
     if (previewMax <= 0) return;
 
@@ -277,18 +258,11 @@ export function SplitEditor({
     if (anchors.length >= 2) {
       const totalLines: number = editor.getModel()?.getLineCount() ?? 1;
       const targetLine = previewTopToLine(preview.scrollTop, anchors, totalLines, previewMax);
-      // 通过 Monaco 公开 API 将行号转换为像素位置
-      const targetPixel: number = editor.getTopForLineNumber(targetLine);
-      isSyncing.current = true;
-      editor.setScrollTop(targetPixel);
-      requestAnimationFrame(() => { isSyncing.current = false; });
+      editor.setScrollTop(editor.getTopForLineNumber(targetLine));
     } else {
-      // Fallback：纯比例映射
       const ratio = preview.scrollTop / previewMax;
       const editorMax = editor.getScrollHeight() - (editor.getLayoutInfo()?.height ?? 0);
-      isSyncing.current = true;
       editor.setScrollTop(ratio * editorMax);
-      requestAnimationFrame(() => { isSyncing.current = false; });
     }
   }, []);
 
@@ -632,8 +606,7 @@ export function SplitEditor({
         {viewMode === "split" ? (
           <div className="flex h-full">
             {/* 左侧：编辑器（含悬浮操作按钮） */}
-            <div
-              style={{ width: `${splitRatio}%` }}
+            <div              ref={editorPaneRef}              style={{ width: `${splitRatio}%` }}
               className="relative h-full border-r border-[var(--color-border)] overflow-hidden"
             >
               {floatingActions}
@@ -649,6 +622,7 @@ export function SplitEditor({
                 contentType={contentType}
                 slug={slug}
                 hideToolbar
+                hideScrollbar
                 onEditorMount={handleEditorMount}
               />
             </div>

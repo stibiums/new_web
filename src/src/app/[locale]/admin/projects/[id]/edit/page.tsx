@@ -136,14 +136,14 @@ export default function EditProjectPage() {
 
   if (fetching) {
     return (
-      <div className="h-screen flex items-center justify-center bg-[var(--color-background)]">
+      <div className="h-full flex items-center justify-center bg-[var(--color-background)]">
         <div className="text-[var(--color-muted-foreground)]">加载中...</div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-[var(--color-background)]">
+    <div className="h-full flex flex-col bg-[var(--color-background)]">
       {/* 顶部工具栏 */}
       <div className="shrink-0 border-b border-[var(--color-border)] bg-[var(--color-background)]/80 backdrop-blur-sm px-6 h-14 flex items-center justify-between">
         <button

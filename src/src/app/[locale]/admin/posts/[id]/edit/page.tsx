@@ -131,14 +131,14 @@ export default function EditPostPage() {
 
   if (fetching) {
     return (
-      <div className="h-screen flex items-center justify-center bg-[var(--color-background)]">
+      <div className="h-full flex items-center justify-center bg-[var(--color-background)]">
         <div className="text-[var(--color-muted-foreground)]">加载中...</div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-[var(--color-background)]">
+    <div className="h-full flex flex-col bg-[var(--color-background)]">
       {/* 合并工具栏：返回 | 视图切换 | 存属取保 */}
       <div className="shrink-0 border-b border-[var(--color-border)] bg-[var(--color-background)]/80 backdrop-blur-sm px-4 h-12 flex items-center justify-between gap-2">
         {/* 左：返回 */}

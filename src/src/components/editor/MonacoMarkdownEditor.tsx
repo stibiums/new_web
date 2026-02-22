@@ -34,6 +34,8 @@ export interface MonacoMarkdownEditorProps {
   slug?: string;
   /** 编辑器 mount 回调，用于向上传递 editor 实例 */
   onEditorMount?: (editor: any) => void;
+  /** 隐藏滚动条（分屏模式下由预览区统一控制滚动时使用） */
+  hideScrollbar?: boolean;
 }
 
 /**
@@ -60,6 +62,7 @@ export function MonacoMarkdownEditor({
   contentType,
   slug,
   onEditorMount,
+  hideScrollbar = false,
 }: MonacoMarkdownEditorProps) {
   // Monaco Editor 实例引用
   const editorRef = useRef<any>(null);
@@ -424,6 +427,9 @@ export function MonacoMarkdownEditor({
           cursorSmoothCaretAnimation: "on",
           smoothScrolling: true,
           bracketPairColorization: { enabled: true },
+          scrollbar: hideScrollbar
+            ? { vertical: "hidden", horizontal: "hidden", verticalScrollbarSize: 0, horizontalScrollbarSize: 0 }
+            : { vertical: "auto", horizontal: "auto" },
           // Markdown 优化
           quickSuggestions: false,
           suggestOnTriggerCharacters: false,
