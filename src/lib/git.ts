@@ -346,21 +346,46 @@ export async function getFileHistory(
     // 规范化路径（移除 src/ 前缀）
     const normalizedPath = filePath.startsWith('src/') ? filePath.slice(4) : filePath;
 
+    // 多取一些用于线性时间轴过滤，最终再截断到 limit
+    const fetchCount = Math.max(limit * 3, 100);
     const result = await git.log({
       file: normalizedPath,
-      maxCount: limit,
+      maxCount: fetchCount,
     });
 
     if (!result.all || result.all.length === 0) {
       return [];
     }
 
-    return result.all.map((commit) => ({
+    const allCommits = result.all.map((commit) => ({
       hash: commit.hash,
       date: commit.date,
       message: commit.message,
       author: commit.author_name,
     }));
+
+    // ── 线性时间轴过滤 ──────────────────────────────────────────────
+    // revert commit message 格式："revert: 恢复 <file> 到版本 <hash7>"
+    // 找到最近一条 revert commit，截断并丢弃它与目标版本之间的所有 commit，
+    // 只保留目标版本及更早的历史，使时间轴呈线性无分叉。
+    const revertPattern = /^revert: 恢复 .+ 到版本 ([a-f0-9]{7})/;
+    for (let i = 0; i < allCommits.length; i++) {
+      const match = allCommits[i].message.match(revertPattern);
+      if (match) {
+        const targetShortHash = match[1];
+        const targetIdx = allCommits.findIndex((c) =>
+          c.hash.startsWith(targetShortHash)
+        );
+        if (targetIdx !== -1) {
+          // 从目标版本开始返回，丢弃 revert commit 和被覆盖的中间 commit
+          return allCommits.slice(targetIdx, targetIdx + limit);
+        }
+        break; // 找到 revert 但目标不在列表内，保底退出
+      }
+    }
+    // ────────────────────────────────────────────────────────────────
+
+    return allCommits.slice(0, limit);
   } catch (error) {
     console.error('[Git] Failed to get file history', error);
     return null;

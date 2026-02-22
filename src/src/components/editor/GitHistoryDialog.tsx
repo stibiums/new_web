@@ -51,12 +51,17 @@ export function GitHistoryDialog({
   }>({ canUndo: false });
   const [undoing, setUndoing] = useState(false);
 
+  // 是否选中了最新（当前）版本
+  const isCurrentVersion =
+    history.length > 0 && selectedCommit === history[0]?.hash;
+
   // 计算 diff（当前内容 → 历史版本）
   // 方向：绿色 = 恢复后会加回来的行，红色 = 恢复后会消失的行
+  // 选中当前版本时无需 diff
   const diffResult = useMemo(() => {
-    if (!previewContent) return null;
+    if (!previewContent || isCurrentVersion) return null;
     return diffLines(currentContent, previewContent, { newlineIsToken: false });
-  }, [previewContent, currentContent]);
+  }, [previewContent, currentContent, isCurrentVersion]);
 
   // 打开时加载历史记录
   useEffect(() => {
@@ -264,7 +269,7 @@ export function GitHistoryDialog({
                 )}
               </div>
               {/* 视图切换 Tab */}
-              {previewContent && (
+              {previewContent && !isCurrentVersion && (
                 <div className="flex rounded-md overflow-hidden border border-[var(--color-border)] text-xs">
                   {(["rendered", "diff", "raw"] as PreviewTab[]).map((tab, i) => (
                     <button
@@ -294,6 +299,14 @@ export function GitHistoryDialog({
                     <div className="w-6 h-6 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     <span className="text-sm">加载中...</span>
                   </div>
+                </div>
+              ) : isCurrentVersion ? (
+                <div className="flex flex-col items-center justify-center h-full gap-3 text-[var(--color-muted-foreground)]">
+                  <svg className="w-10 h-10 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-sm font-medium">这是当前已保存的版本</p>
+                  <p className="text-xs opacity-60">内容与现在完全一致，无需恢复</p>
                 </div>
               ) : previewContent !== null ? (
                 previewTab === "rendered" ? (
@@ -335,9 +348,10 @@ export function GitHistoryDialog({
           )}
           <Button
             onClick={handleRevert}
-            disabled={!selectedCommit || !previewContent || reverting}
+            disabled={!selectedCommit || !previewContent || reverting || isCurrentVersion}
+            title={isCurrentVersion ? "当前已是此版本" : undefined}
           >
-            {reverting ? "恢复中..." : "恢复到此版本"}
+            {reverting ? "恢复中..." : isCurrentVersion ? "当前版本" : "恢复到此版本"}
           </Button>
         </DialogFooter>
       </DialogContent>
