@@ -26,6 +26,8 @@ export default function NewNotePage() {
   // 元信息状态
   const [metaOpen, setMetaOpen] = useState(false);
   const [slug, setSlug] = useState("");
+  const [category, setCategory] = useState("");
+  const [tags, setTags] = useState("");
   const [published, setPublished] = useState(false);
 
   // 内容和标题状态
@@ -48,6 +50,8 @@ export default function NewNotePage() {
           title,
           content,
           type: "NOTE",
+          category,
+          tags,
           published,
         }),
       });
@@ -161,6 +165,22 @@ export default function NewNotePage() {
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 placeholder="note-slug"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">分类</label>
+              <Input
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="输入分类"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">标签</label>
+              <Input
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                placeholder="标签，用逗号分隔"
               />
             </div>
             <div className="flex items-center gap-2">

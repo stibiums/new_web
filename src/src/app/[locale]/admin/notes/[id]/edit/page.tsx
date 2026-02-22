@@ -29,6 +29,8 @@ export default function EditNotePage() {
 
   // 基本信息
   const [slug, setSlug] = useState("");
+  const [category, setCategory] = useState("");
+  const [tags, setTags] = useState("");
   const [published, setPublished] = useState(false);
 
   // 内容
@@ -65,6 +67,8 @@ export default function EditNotePage() {
         setTitle(note.title || "");
         setContent(note.content || "");
         setExcerpt(note.excerpt || "");
+        setCategory(note.category || "");
+        setTags(note.tags || "");
         setPublished(note.published);
         // Git 相关
         setFilePath(note.filePath || "");
@@ -94,6 +98,8 @@ export default function EditNotePage() {
           title,
           content,
           excerpt,
+          category,
+          tags,
           published,
         }),
       });
@@ -247,6 +253,22 @@ export default function EditNotePage() {
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 placeholder="note-slug"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">分类</label>
+              <Input
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="输入分类"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">标签</label>
+              <Input
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                placeholder="标签，用逗号分隔"
               />
             </div>
             <div className="flex items-center gap-2">
