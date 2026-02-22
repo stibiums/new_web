@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { SplitEditor } from "@/components/editor";
+import { SplitEditor } from "@/components/editor/SplitEditor";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import {

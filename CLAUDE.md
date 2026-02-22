@@ -102,6 +102,42 @@ src/
 
 ---
 
+## ⚠️ 已知陷阱 & 注意事项
+
+### 1. Barrel Export 与第三方 CSS 污染
+
+**问题**: `@yoopta/themes-shadcn` 包内含未分层 (unlayered) 的 CSS 重置规则 `button { background-color: transparent }`，会覆盖 Tailwind CSS 4 的所有分层 (layered) 工具类。
+
+**根因**: CSS Cascade Layers 规范中，unlayered CSS 优先级永远高于 `@layer` 内的 CSS。Yoopta 的 CSS 通过 barrel export 间接加载后不会在页面卸载时移除，导致返回其他页面时样式异常（按钮背景变透明、与白色背景融为一体）。
+
+**规则**:
+- `editor/index.ts` 中 **不得** 导出 `YooptaEditorWrapper` 和 `PLUGINS/MARKS`
+- 需要使用时，必须直接引用具体文件：
+  ```typescript
+  // ✅ 正确
+  import { SplitEditor } from "@/components/editor/SplitEditor";
+  import { PLUGINS, MARKS } from "@/components/editor/plugins";
+  
+  // ❌ 错误 - 会间接加载 Yoopta CSS 导致全局样式污染
+  import { SplitEditor } from "@/components/editor";
+  ```
+- 任何在 barrel export 中引入带有全局 CSS 副作用的第三方库都可能导致同类问题，新增导出前务必检查
+
+### 2. 页面导航一致性
+
+**规则**: 管理后台页面统一使用 Next.js 客户端路由，禁止使用 `window.location.href` 或 `window.location.reload()`。
+
+```typescript
+// ✅ 正确
+router.push(`/${locale}/admin/posts`);
+
+// ❌ 错误 - 会强制刷新，破坏 SPA 体验
+window.location.href = `/${locale}/admin/posts`;
+window.location.reload();
+```
+
+---
+
 ## 内容格式
 
 ### Markdown 文件 + Git 版本管理

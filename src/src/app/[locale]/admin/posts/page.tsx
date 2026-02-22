@@ -61,17 +61,7 @@ export default function PostsPage() {
   };
 
   useEffect(() => {
-    // 监听浏览器前进/后退按钮
-    const handlePopState = () => {
-      window.location.reload();
-    };
-    window.addEventListener('popstate', handlePopState);
-
     fetchPosts();
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
   }, [pathname]);
 
   const handleSearch = (e: React.FormEvent) => {
