@@ -231,15 +231,12 @@ export function MonacoMarkdownEditor({
   );
 
   // 恢复到历史版本
+  // 注意：服务端已在 revert API 中直接同步数据库，无需再次触发 onSave（避免产生额外 git commit）
   const handleRevert = useCallback(
     (content: string) => {
       onChange?.(content);
-      // 同时触发保存
-      setTimeout(() => {
-        onSave?.(content);
-      }, 100);
     },
-    [onChange, onSave]
+    [onChange]
   );
 
   // 拖拽上传/插入处理

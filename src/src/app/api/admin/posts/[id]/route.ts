@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { writeMarkdownFile, deleteMarkdownFile, FrontMatter } from "@/lib/markdown-file";
-import { autoCommit } from "@/lib/git";
+import { autoCommit, autoRemove } from "@/lib/git";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -148,9 +148,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     const contentDir = existing.type === "NOTE" ? "notes" : "posts";
     deleteMarkdownFile(contentDir as "posts" | "notes" | "projects", existing.slug);
 
-    // 2. Git 自动提交（删除文件）
+    // 2. Git 追踪删除（文件已从磁盘删除，用 autoRemove 代替 autoCommit）
     if (existing.filePath) {
-      await autoCommit(existing.filePath);
+      await autoRemove(existing.filePath);
     }
 
     // 3. 删除数据库记录

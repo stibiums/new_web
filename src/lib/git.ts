@@ -16,6 +16,16 @@ const git: SimpleGit = simpleGit({
 });
 
 /**
+ * 从 Markdown 内容中提取资源文件路径（/assets/... 引用）
+ */
+function extractAssetPaths(content: string): string[] {
+  // 匹配 Markdown 和 HTML 中出现的 /assets/... 路径
+  const regex = /\/assets\/[^\s"')>\]]+/g;
+  const matches = content.match(regex) || [];
+  return [...new Set(matches)];
+}
+
+/**
  * 获取文件分类
  * 支持带 src/ 前缀和不带前缀的路径
  */
@@ -77,6 +87,55 @@ export async function gitAdd(filePath: string): Promise<boolean> {
   } catch (error) {
     console.error(`[Git] Failed to add file: ${filePath}`, error);
     return false;
+  }
+}
+
+/**
+ * gitRemove - 将已从磁盘删除的文件从 git 索引中移除（git rm --cached）
+ * @param filePath - 文件路径
+ */
+export async function gitRemove(filePath: string): Promise<boolean> {
+  try {
+    await git.raw(['rm', '--cached', '--ignore-unmatch', '-f', filePath]);
+    console.log(`[Git] Staged removal: ${filePath}`);
+    return true;
+  } catch (error) {
+    console.error(`[Git] Failed to remove from index: ${filePath}`, error);
+    return false;
+  }
+}
+
+/**
+ * autoRemove - 自动提交文件删除（git rm --cached + commit + push）
+ * 适用于文件已从磁盘删除的场景（如 deleteMarkdownFile 之后）
+ */
+export async function autoRemove(
+  filePath: string,
+  message?: string
+): Promise<string | null> {
+  const category = getFileCategory(filePath);
+  const fileName = path.basename(filePath);
+  const fileTypeLabel = getFileTypeLabel(category);
+  const commitMessage = message || `feat(content): 删除 ${fileTypeLabel} - ${fileName}`;
+
+  try {
+    await gitRemove(filePath);
+
+    const commitHash = await gitCommit(commitMessage);
+    if (!commitHash) {
+      console.error(`[Git] Nothing staged or commit failed for removal: ${filePath}`);
+      return null;
+    }
+
+    gitPush().catch((err) => {
+      console.warn(`[Git] Background push failed for removal: ${filePath}`, err);
+    });
+
+    console.log(`[Git] Successfully removed and committed: ${commitHash}`);
+    return commitHash;
+  } catch (error) {
+    console.error(`[Git] Auto remove failed for: ${filePath}`, error);
+    return null;
   }
 }
 
@@ -291,33 +350,75 @@ export async function getFileAtCommit(
 }
 
 /**
- * 恢复到特定版本
- * @param filePath - 文件路径
- * @param commitHash - 提交 hash
- * @returns 新的 commit hash 或 null
+ * 恢复到特定版本（同时恢复 Markdown 文件及其引用的资源文件）
+ *
+ * 改进点：
+ * 1. 先获取目标 commit 的文件内容，从中提取资源路径
+ * 2. 同时 checkout Markdown 文件和所有关联资源文件
+ * 3. 合并为单个 git commit（不再产生双重提交）
+ * 4. 返回 { newCommit, content } 供调用方同步数据库
+ *
+ * @param filePath - 文件路径（支持带 src/ 前缀）
+ * @param commitHash - 目标 commit hash
+ * @returns { newCommit: string; content: string } 或 null
  */
 export async function revertToCommit(
   filePath: string,
   commitHash: string
-): Promise<string | null> {
+): Promise<{ newCommit: string; content: string } | null> {
   try {
     // 规范化路径
     const normalizedPath = filePath.startsWith('src/') ? filePath.slice(4) : filePath;
 
-    // 使用 git checkout 恢复到特定版本
-    await git.checkout(commitHash, { '--': null, filePath: normalizedPath });
-
-    // 自动提交恢复
-    const fileName = path.basename(normalizedPath);
-    const message = `revert: 恢复到 ${fileName} 版本 ${commitHash.substring(0, 7)}`;
-
-    const newCommit = await gitCommit(message);
-    if (newCommit) {
-      // push 到远程
-      await gitPush();
+    // 1. 先获取目标版本的 Markdown 内容，提取关联资源路径
+    const historicalContent = await getFileAtCommit(filePath, commitHash);
+    if (historicalContent === null) {
+      console.error(`[Git] Cannot get content at commit ${commitHash} for: ${filePath}`);
+      return null;
     }
 
-    return newCommit;
+    // 2. 恢复 Markdown 文件（git checkout 会自动 stage）
+    await git.checkout(commitHash, { '--': null, filePath: normalizedPath });
+    console.log(`[Git] Restored md: ${normalizedPath}`);
+
+    // 3. 提取并尝试恢复关联资源文件（尽力恢复策略）
+    const assetUrls = extractAssetPaths(historicalContent);
+    const restoredAssets: string[] = [];
+
+    for (const assetUrl of assetUrls) {
+      // /assets/posts/slug/image.png → public/assets/posts/slug/image.png
+      const assetRelPath = assetUrl.startsWith('/') ? `public${assetUrl}` : `public/${assetUrl}`;
+      try {
+        await git.checkout(commitHash, { '--': null, filePath: assetRelPath });
+        restoredAssets.push(assetRelPath);
+        console.log(`[Git] Restored asset: ${assetRelPath}`);
+      } catch {
+        // 目标 commit 中不存在该资源，跳过（不影响主流程）
+        console.warn(`[Git] Asset not in commit ${commitHash.substring(0, 7)}, skipped: ${assetRelPath}`);
+      }
+    }
+
+    if (restoredAssets.length > 0) {
+      console.log(`[Git] Restored ${restoredAssets.length} asset(s) along with md file`);
+    }
+
+    // 4. 一次性提交所有变更（合并为单个 commit）
+    const fileName = path.basename(normalizedPath);
+    const message = `revert: 恢复 ${fileName} 到版本 ${commitHash.substring(0, 7)}`;
+
+    const newCommit = await gitCommit(message);
+    if (!newCommit) {
+      console.error(`[Git] Failed to commit revert of: ${normalizedPath}`);
+      return null;
+    }
+
+    // 5. 后台 push，不阻塞响应
+    gitPush().catch((err) => {
+      console.warn(`[Git] Background push failed after revert`, err);
+    });
+
+    console.log(`[Git] Revert committed: ${newCommit}`);
+    return { newCommit, content: historicalContent };
   } catch (error) {
     console.error('[Git] Failed to revert to commit', error);
     return null;

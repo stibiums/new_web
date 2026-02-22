@@ -116,7 +116,8 @@ export function GitHistoryDialog({
       const data = await res.json();
 
       if (data.success) {
-        onRevert(previewContent);
+        // 优先使用服务端返回的权威内容（DB 已同步），fallback 到本地预览内容
+        onRevert(data.content || previewContent);
         onOpenChange(false);
         alert(`已恢复到版本 ${selectedCommit.substring(0, 7)}`);
       } else {
