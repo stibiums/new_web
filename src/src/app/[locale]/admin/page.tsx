@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 
 interface Stats {
   posts: { total: number; published: number };
@@ -74,7 +74,7 @@ export default function AdminDashboard() {
       label: "文章",
       value: stats?.posts.total || 0,
       published: stats?.posts.published || 0,
-      href: `/${locale}/admin/posts`,
+      href: "/admin/posts",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -85,7 +85,7 @@ export default function AdminDashboard() {
       label: "笔记",
       value: stats?.notes.total || 0,
       published: stats?.notes.published || 0,
-      href: `/${locale}/admin/notes`,
+      href: "/admin/notes",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -96,7 +96,7 @@ export default function AdminDashboard() {
       label: "项目",
       value: stats?.projects.total || 0,
       published: stats?.projects.published || 0,
-      href: `/${locale}/admin/projects`,
+      href: "/admin/projects",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
@@ -106,7 +106,7 @@ export default function AdminDashboard() {
     {
       label: "出版物",
       value: stats?.publications.total || 0,
-      href: `/${locale}/admin/publications`,
+      href: "/admin/publications",
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -208,7 +208,7 @@ export default function AdminDashboard() {
         <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
           <h2 className="text-lg font-semibold">最近文章</h2>
           <Link
-            href={`/${locale}/admin/posts`}
+            href="/admin/posts"
             className="text-sm text-[var(--color-primary)] hover:underline"
           >
             查看全部
@@ -219,7 +219,7 @@ export default function AdminDashboard() {
             stats.recentPosts.map((post) => (
               <Link
                 key={post.id}
-                href={`/${locale}/admin/posts/${post.id}/edit`}
+                href={`/admin/posts/${post.id}/edit`}
                 className="flex items-center justify-between p-4 hover:bg-[var(--color-muted)]/50 transition-colors"
               >
                 <div className="min-w-0 flex-1">
@@ -262,25 +262,25 @@ export default function AdminDashboard() {
         <h2 className="text-lg font-semibold mb-4">快速操作</h2>
         <div className="flex flex-wrap gap-3">
           <Link
-            href={`/${locale}/admin/posts/new`}
+            href="/admin/posts/new"
             className="px-4 py-2 rounded-lg bg-[var(--color-primary)] text-white text-sm font-medium hover:bg-[var(--color-primary-hover)] transition-colors"
           >
             新建文章
           </Link>
           <Link
-            href={`/${locale}/admin/notes/new`}
+            href="/admin/notes/new"
             className="px-4 py-2 rounded-lg border border-[var(--color-border)] text-sm font-medium hover:bg-[var(--color-card)] transition-colors"
           >
             新建笔记
           </Link>
           <Link
-            href={`/${locale}/admin/projects/new`}
+            href="/admin/projects/new"
             className="px-4 py-2 rounded-lg border border-[var(--color-border)] text-sm font-medium hover:bg-[var(--color-card)] transition-colors"
           >
             新建项目
           </Link>
           <Link
-            href={`/${locale}/admin/publications/new`}
+            href="/admin/publications/new"
             className="px-4 py-2 rounded-lg border border-[var(--color-border)] text-sm font-medium hover:bg-[var(--color-card)] transition-colors"
           >
             新建出版物

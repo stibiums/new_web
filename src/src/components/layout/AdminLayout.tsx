@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, usePathname } from "@/i18n/routing";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -88,7 +87,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const isActive = (href: string) => {
     if (href === "/admin") {
-      return pathname === "/admin" || pathname === "/en/admin";
+      return pathname === "/admin";
     }
     return pathname.startsWith(href);
   };

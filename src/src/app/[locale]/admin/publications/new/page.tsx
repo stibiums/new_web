@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -51,7 +52,7 @@ export default function NewPublicationPage() {
       }
 
       toast.success("出版物创建成功");
-      router.push(`/${locale}/admin/publications`);
+      router.push("/admin/publications");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "创建失败");
     } finally {

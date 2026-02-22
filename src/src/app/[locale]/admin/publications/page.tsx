@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -105,8 +105,11 @@ export default function PublicationsPage() {
             管理您的学术出版物
           </p>
         </div>
-        <Link href={`/${locale}/admin/publications/new`}>
-          <Button>新建出版物</Button>
+        <Link 
+          href="/admin/publications/new"
+          className="inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] h-10 px-4 text-base"
+        >
+          新建出版物
         </Link>
       </div>
 
@@ -188,11 +191,10 @@ export default function PublicationsPage() {
                               </a>
                             )}
                             <Link
-                              href={`/${locale}/admin/publications/${pub.id}/edit`}
+                              href={`/admin/publications/${pub.id}/edit`}
+                              className="inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 bg-transparent hover:bg-[var(--color-muted)] text-[var(--color-foreground)] h-8 px-3 text-sm"
                             >
-                              <Button variant="ghost" size="sm">
-                                编辑
-                              </Button>
+                              编辑
                             </Link>
                             <Button
                               variant="ghost"

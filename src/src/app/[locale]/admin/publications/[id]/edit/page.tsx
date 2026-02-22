@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -52,7 +53,7 @@ export default function EditPublicationPage() {
         toast.error(
           error instanceof Error ? error.message : "Failed to fetch publication"
         );
-        router.push(`/${locale}/admin/publications`);
+        router.push("/admin/publications");
       } finally {
         setFetching(false);
       }
@@ -88,7 +89,7 @@ export default function EditPublicationPage() {
       }
 
       toast.success("出版物更新成功");
-      router.push(`/${locale}/admin/publications`);
+      router.push("/admin/publications");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "更新失败");
     } finally {

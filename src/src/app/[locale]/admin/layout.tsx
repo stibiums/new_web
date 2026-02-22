@@ -1,6 +1,5 @@
 import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { routing } from "@/i18n/routing";
+import { redirect, routing } from "@/i18n/routing";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 
 export function generateStaticParams() {
@@ -18,7 +17,7 @@ export default async function AdminLayoutPage({
   const session = await auth();
 
   if (!session) {
-    redirect(`/${locale}/login`);
+    redirect({ href: "/login", locale });
   }
 
   return <AdminLayout>{children}</AdminLayout>;

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { SplitEditor } from "@/components/editor/SplitEditor";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -57,7 +58,7 @@ export default function NewNotePage() {
       }
 
       toast.success("笔记创建成功");
-      router.push(`/${locale}/admin/notes`);
+      router.push("/admin/notes");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "创建失败");
     } finally {

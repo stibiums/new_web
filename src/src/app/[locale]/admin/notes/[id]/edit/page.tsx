@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { SplitEditor } from "@/components/editor/SplitEditor";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -60,7 +61,7 @@ export default function EditNotePage() {
         setGitCommit(note.gitCommit || null);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Failed to fetch note");
-        router.push(`/${locale}/admin/notes`);
+        router.push("/admin/notes");
       } finally {
         setFetching(false);
       }
@@ -124,7 +125,7 @@ export default function EditNotePage() {
       {/* 顶部工具栏 */}
       <div className="shrink-0 border-b border-[var(--color-border)] bg-[var(--color-background)]/80 backdrop-blur-sm px-6 h-14 flex items-center justify-between">
         <button
-          onClick={() => router.push(`/${locale}/admin/notes`)}
+          onClick={() => router.push("/admin/notes")}
           className="flex items-center gap-2 text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -168,7 +169,7 @@ export default function EditNotePage() {
               )}
             </div>
           )}
-          <Button type="button" variant="outline" size="sm" onClick={() => router.push(`/${locale}/admin/notes`)}>
+          <Button type="button" variant="outline" size="sm" onClick={() => router.push("/admin/notes")}>
             取消
           </Button>
           <Button type="submit" form="edit-form" size="sm" loading={loading}>
