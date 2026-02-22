@@ -20,15 +20,10 @@ export default function EditNotePage() {
   const [slug, setSlug] = useState("");
   const [published, setPublished] = useState(false);
 
-  // 中文内容
+  // 内容
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [excerpt, setExcerpt] = useState("");
-
-  // 英文内容
-  const [titleEn, setTitleEn] = useState("");
-  const [contentEn, setContentEn] = useState("");
-  const [excerptEn, setExcerptEn] = useState("");
 
   // Git 相关状态
   const [filePath, setFilePath] = useState("");
@@ -59,9 +54,6 @@ export default function EditNotePage() {
         setTitle(note.title || "");
         setContent(note.content || "");
         setExcerpt(note.excerpt || "");
-        setTitleEn(note.titleEn || "");
-        setContentEn(note.contentEn || "");
-        setExcerptEn(note.excerptEn || "");
         setPublished(note.published);
         // Git 相关
         setFilePath(note.filePath || "");
@@ -89,11 +81,8 @@ export default function EditNotePage() {
         body: JSON.stringify({
           slug,
           title,
-          titleEn,
           content,
-          contentEn,
           excerpt,
-          excerptEn,
           published,
         }),
       });
@@ -179,16 +168,6 @@ export default function EditNotePage() {
               )}
             </div>
           )}
-          {/* 属性按钮 */}
-          <Button variant="ghost" size="sm" onClick={() => {
-            // 显示属性对话框
-          }}>
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            属性
-          </Button>
           <Button type="button" variant="outline" size="sm" onClick={() => router.back()}>
             取消
           </Button>
@@ -212,44 +191,19 @@ export default function EditNotePage() {
           />
         </div>
 
-        {/* 中文编辑器 */}
-        <div className="flex-1 min-h-0 h-1/2 border-b border-[var(--color-border)]">
-          <div className="px-6 py-2 text-sm font-medium text-[var(--color-muted-foreground)]">
-            中文内容
-          </div>
-          <div className="h-[calc(100%-2rem)]">
-            <SplitEditor
-              value={content}
-              onChange={setContent}
-              onSave={async (value) => {
-                setContent(value);
-                const form = document.getElementById("edit-form") as HTMLFormElement | null;
-                if (form) form.requestSubmit();
-              }}
-              filePath={filePath}
-              currentCommit={gitCommit}
-            />
-          </div>
-        </div>
-
-        {/* 英文编辑器 */}
-        <div className="flex-1 min-h-0 h-1/2">
-          <div className="px-6 py-2 text-sm font-medium text-[var(--color-muted-foreground)]">
-            English Content
-          </div>
-          <div className="h-[calc(100%-2rem)]">
-            <SplitEditor
-              value={contentEn}
-              onChange={setContentEn}
-              onSave={async (value) => {
-                setContentEn(value);
-                const form = document.getElementById("edit-form") as HTMLFormElement | null;
-                if (form) form.requestSubmit();
-              }}
-              filePath={filePath}
-              currentCommit={gitCommit}
-            />
-          </div>
+        {/* 编辑器 */}
+        <div className="flex-1 min-h-0 h-full">
+          <SplitEditor
+            value={content}
+            onChange={setContent}
+            onSave={async (value) => {
+              setContent(value);
+              const form = document.getElementById("edit-form") as HTMLFormElement | null;
+              if (form) form.requestSubmit();
+            }}
+            filePath={filePath}
+            currentCommit={gitCommit}
+          />
         </div>
 
         {/* 隐藏的表单 */}

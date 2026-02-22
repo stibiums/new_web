@@ -19,11 +19,8 @@ export default function EditProjectPage() {
 
   const [slug, setSlug] = useState("");
   const [title, setTitle] = useState("");
-  const [titleEn, setTitleEn] = useState("");
   const [description, setDescription] = useState("");
-  const [descriptionEn, setDescriptionEn] = useState("");
   const [content, setContent] = useState("");
-  const [contentEn, setContentEn] = useState("");
   const [techStack, setTechStack] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
   const [demoUrl, setDemoUrl] = useState("");
@@ -51,11 +48,8 @@ export default function EditProjectPage() {
 
         setSlug(project.slug || "");
         setTitle(project.title || "");
-        setTitleEn(project.titleEn || "");
         setDescription(project.description || "");
-        setDescriptionEn(project.descriptionEn || "");
         setContent(project.content || "");
-        setContentEn(project.contentEn || "");
         setTechStack(project.techStack || "");
         setGithubUrl(project.githubUrl || "");
         setDemoUrl(project.demoUrl || "");
@@ -88,11 +82,8 @@ export default function EditProjectPage() {
         body: JSON.stringify({
           slug,
           title,
-          titleEn,
           description,
-          descriptionEn,
           content,
-          contentEn,
           techStack,
           githubUrl,
           demoUrl,
@@ -269,10 +260,10 @@ export default function EditProjectPage() {
             </CardContent>
           </Card>
 
-          {/* 中文内容 */}
+          {/* 项目内容 */}
           <Card>
             <CardHeader>
-              <CardTitle>中文内容</CardTitle>
+              <CardTitle>项目内容</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -306,42 +297,6 @@ export default function EditProjectPage() {
                   <SplitEditor
                     value={content}
                     onChange={setContent}
-                    filePath={filePath}
-                    currentCommit={gitCommit}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* English Content */}
-          <Card>
-            <CardHeader>
-              <CardTitle>English Content</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Title</label>
-                <Input
-                  value={titleEn}
-                  onChange={(e) => setTitleEn(e.target.value)}
-                  placeholder="Enter project title"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Description</label>
-                <Input
-                  value={descriptionEn}
-                  onChange={(e) => setDescriptionEn(e.target.value)}
-                  placeholder="Enter project description"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Content</label>
-                <div className="h-[400px]">
-                  <SplitEditor
-                    value={contentEn}
-                    onChange={setContentEn}
                     filePath={filePath}
                     currentCommit={gitCommit}
                   />
