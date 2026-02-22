@@ -176,7 +176,7 @@ export async function autoCommit(
     if (isAlreadyStaged) {
       console.log(`[Git] File already staged, skipping add: ${filePath}`);
     } else {
-      const addResult = await git.add(fullPath);
+      const addResult = await git.add(filePath);
       console.log(`[Git] after await git.add(), result:`, addResult);
     }
 

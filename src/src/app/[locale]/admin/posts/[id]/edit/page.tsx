@@ -40,6 +40,8 @@ export default function EditPostPage() {
   // Git 相关状态
   const [filePath, setFilePath] = useState("");
   const [gitCommit, setGitCommit] = useState<string | null>(null);
+  // 保存状态
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -77,6 +79,7 @@ export default function EditPostPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setSaveStatus('saving');
 
     try {
       const res = await fetch(`/api/admin/posts/${postId}`, {
@@ -94,13 +97,24 @@ export default function EditPostPage() {
         }),
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "更新失败");
+        throw new Error(data.error || "更新失败");
       }
 
+      // 更新 Git commit 状态
+      if (data.data?.gitCommit) {
+        setGitCommit(data.data.gitCommit);
+      }
+
+      setSaveStatus('saved');
       toast.success("文章更新成功");
+
+      // 3 秒后重置状态
+      setTimeout(() => setSaveStatus('idle'), 3000);
     } catch (error) {
+      setSaveStatus('error');
       toast.error(error instanceof Error ? error.message : "更新失败");
     } finally {
       setLoading(false);
@@ -132,7 +146,42 @@ export default function EditPostPage() {
           </svg>
           返回
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* 保存状态显示 */}
+          {saveStatus !== 'idle' && (
+            <div className="flex items-center gap-1.5 text-sm">
+              {saveStatus === 'saving' && (
+                <>
+                  <svg className="w-4 h-4 animate-spin text-[var(--color-muted-foreground)]" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  <span className="text-[var(--color-muted-foreground)]">保存中...</span>
+                </>
+              )}
+              {saveStatus === 'saved' && (
+                <>
+                  <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-green-500">已保存</span>
+                  {gitCommit && (
+                    <span className="text-xs text-[var(--color-muted-foreground)] font-mono">
+                      {gitCommit.substring(0, 7)}
+                    </span>
+                  )}
+                </>
+              )}
+              {saveStatus === 'error' && (
+                <>
+                  <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  <span className="text-red-500">保存失败</span>
+                </>
+              )}
+            </div>
+          )}
           <Button variant="ghost" size="sm" onClick={() => setMetaOpen(true)}>
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
