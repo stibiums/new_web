@@ -284,6 +284,51 @@ export async function getStatus(): Promise<{
 }
 
 /**
+ * 获取文件原始历史（不经过线性时间轴过滤，内部使用）
+ */
+async function getRawFileHistory(
+  filePath: string,
+  limit = 10
+): Promise<{ hash: string; date: string; message: string; author: string }[] | null> {
+  try {
+    const normalizedPath = filePath.startsWith('src/') ? filePath.slice(4) : filePath;
+    const result = await git.log({ file: normalizedPath, maxCount: limit });
+    if (!result.all || result.all.length === 0) return [];
+    return result.all.map((c) => ({
+      hash: c.hash,
+      date: c.date,
+      message: c.message,
+      author: c.author_name,
+    }));
+  } catch (error) {
+    console.error('[Git] Failed to get raw file history', error);
+    return null;
+  }
+}
+
+/**
+ * 检查文件是否处于「刚刚回溯过」的状态
+ * 若最近一次 commit 是 revert commit，则返回可撤销的目标 commit 信息
+ */
+export async function getUndoRevertInfo(filePath: string): Promise<
+  | { canUndo: true; undoToHash: string; undoToMessage: string }
+  | { canUndo: false }
+> {
+  const raw = await getRawFileHistory(filePath, 5);
+  if (!raw || raw.length < 2) return { canUndo: false };
+
+  const revertPattern = /^revert: 恢复 .+ 到版本 ([a-f0-9]{7})/;
+  if (!revertPattern.test(raw[0].message)) return { canUndo: false };
+
+  // index 1 = revert 之前的那个 commit，即撤销后应恢复到的版本
+  return {
+    canUndo: true,
+    undoToHash: raw[1].hash,
+    undoToMessage: raw[1].message,
+  };
+}
+
+/**
  * 获取文件的历史提交记录
  * @param filePath - 文件路径（如 content/posts/xxx.md）
  * @param limit - 返回数量限制

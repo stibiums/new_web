@@ -44,11 +44,18 @@ export function GitHistoryDialog({
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewTab, setPreviewTab] = useState<PreviewTab>("rendered");
   const [reverting, setReverting] = useState(false);
+  const [undoInfo, setUndoInfo] = useState<{
+    canUndo: boolean;
+    undoToHash?: string;
+    undoToMessage?: string;
+  }>({ canUndo: false });
+  const [undoing, setUndoing] = useState(false);
 
-  // 计算 diff（历史版本 → 当前内容）
+  // 计算 diff（当前内容 → 历史版本）
+  // 方向：绿色 = 恢复后会加回来的行，红色 = 恢复后会消失的行
   const diffResult = useMemo(() => {
     if (!previewContent) return null;
-    return diffLines(previewContent, currentContent, { newlineIsToken: false });
+    return diffLines(currentContent, previewContent, { newlineIsToken: false });
   }, [previewContent, currentContent]);
 
   // 打开时加载历史记录
@@ -69,6 +76,9 @@ export function GitHistoryDialog({
       const data = await res.json();
       if (data.history) {
         setHistory(data.history);
+      }
+      if (data.undoInfo) {
+        setUndoInfo(data.undoInfo);
       }
     } catch (error) {
       console.error("Failed to load history:", error);
@@ -128,6 +138,34 @@ export function GitHistoryDialog({
       alert("恢复失败");
     } finally {
       setReverting(false);
+    }
+  };
+
+  // 撤销上一次回溯
+  const handleUndoRevert = async () => {
+    if (!undoInfo.canUndo || !undoInfo.undoToHash) return;
+    if (!confirm(`确定要撤销上一次回溯，恢复到版本 ${undoInfo.undoToHash.substring(0, 7)}（${undoInfo.undoToMessage}）？`)) return;
+
+    setUndoing(true);
+    try {
+      const res = await fetch("/api/admin/git/revert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filePath, commitHash: undoInfo.undoToHash }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        onRevert(data.content);
+        onOpenChange(false);
+        alert(`已撤销回溯，恢复到版本 ${undoInfo.undoToHash.substring(0, 7)}`);
+      } else {
+        alert("撤销失败: " + data.error);
+      }
+    } catch (error) {
+      console.error("Failed to undo revert:", error);
+      alert("撤销失败");
+    } finally {
+      setUndoing(false);
     }
   };
 
@@ -285,6 +323,16 @@ export function GitHistoryDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             关闭
           </Button>
+          {undoInfo.canUndo && (
+            <Button
+              variant="outline"
+              onClick={handleUndoRevert}
+              disabled={undoing}
+              title={`撤销回溯，恢复到：${undoInfo.undoToMessage}`}
+            >
+              {undoing ? "撤销中..." : "↩ 撤销回溯"}
+            </Button>
+          )}
           <Button
             onClick={handleRevert}
             disabled={!selectedCommit || !previewContent || reverting}
@@ -343,7 +391,7 @@ function DiffView({ diffResult }: { diffResult: Change[] | null }) {
       {/* 统计栏 */}
       <div className="flex items-center gap-3 px-4 py-2 border-b border-[var(--color-border)] text-xs bg-[var(--color-muted)]/20 flex-shrink-0">
         <span className="font-medium text-[var(--color-muted-foreground)]">
-          {hasChanges ? "历史版本 → 当前内容" : "与当前内容完全一致"}
+          {hasChanges ? "恢复后的变化（绿色=加回，红色=移除）" : "与当前内容完全一致"}
         </span>
         {hasChanges && (
           <>

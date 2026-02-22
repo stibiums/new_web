@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getFileHistory, getFileAtCommit, getFileDiff } from "@/lib/git";
+import { getFileHistory, getFileAtCommit, getFileDiff, getUndoRevertInfo } from "@/lib/git";
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -45,7 +45,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Failed to get history" }, { status: 500 });
     }
 
-    return NextResponse.json({ history });
+    // 同时查询撤销信息（是否刚刚发生过回溯，可以撤销）
+    const undoInfo = await getUndoRevertInfo(filePath);
+    return NextResponse.json({ history, undoInfo });
   } catch (error) {
     console.error("Git history error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
