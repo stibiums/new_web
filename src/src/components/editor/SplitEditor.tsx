@@ -10,6 +10,86 @@ import { ResourcePanel, type ContentType } from "./ResourcePanel";
 
 export type ViewMode = "split" | "editor" | "preview";
 
+// ─── 锚点类型：源码行号 → 预览 offsetTop 映射 ─────────────────────────────
+interface AnchorPoint {
+  /** Markdown 源码行号（1-based） */
+  line: number;
+  /** 相对预览滚动容器顶部的像素偏移 */
+  top: number;
+}
+
+/**
+ * 将源码行号映射到预览容器 scrollTop（分段线性插值）
+ * @param line       目标源码行号
+ * @param anchors    锚点表（已按 line 升序排列）
+ * @param totalLines 源码总行数
+ * @param maxTop     preview.scrollHeight - preview.clientHeight
+ */
+function lineToPreviewTop(
+  line: number,
+  anchors: AnchorPoint[],
+  totalLines: number,
+  maxTop: number
+): number {
+  if (anchors.length === 0 || maxTop <= 0) return 0;
+  const last = anchors[anchors.length - 1];
+
+  // 首锚点之前：从 0 线性插值到第一个锚点
+  if (line <= anchors[0].line) {
+    if (anchors[0].line <= 1) return anchors[0].top;
+    return (line / anchors[0].line) * anchors[0].top;
+  }
+  // 末锚点之后：从末锚点线性延伸到 maxTop
+  if (line >= last.line) {
+    if (last.line >= totalLines) return maxTop;
+    const tail = totalLines - last.line;
+    const frac = Math.min(1, (line - last.line) / tail);
+    return last.top + frac * (maxTop - last.top);
+  }
+  // 二分查找上下界锚点
+  let lo = 0, hi = anchors.length - 1;
+  while (lo < hi - 1) {
+    const mid = (lo + hi) >> 1;
+    if (anchors[mid].line <= line) lo = mid;
+    else hi = mid;
+  }
+  const a = anchors[lo], b = anchors[hi];
+  if (b.line === a.line) return a.top;
+  return a.top + ((line - a.line) / (b.line - a.line)) * (b.top - a.top);
+}
+
+/**
+ * 将预览容器 scrollTop 映射回源码行号（分段线性插值的逆映射）
+ */
+function previewTopToLine(
+  scrollTop: number,
+  anchors: AnchorPoint[],
+  totalLines: number,
+  maxTop: number
+): number {
+  if (anchors.length === 0) return 1;
+  const last = anchors[anchors.length - 1];
+
+  if (scrollTop <= anchors[0].top) {
+    if (anchors[0].top <= 0) return anchors[0].line;
+    return Math.max(1, Math.round((scrollTop / anchors[0].top) * anchors[0].line));
+  }
+  if (scrollTop >= last.top) {
+    if (maxTop <= last.top) return last.line;
+    const frac = Math.min(1, (scrollTop - last.top) / (maxTop - last.top));
+    return Math.round(last.line + frac * (totalLines - last.line));
+  }
+  let lo = 0, hi = anchors.length - 1;
+  while (lo < hi - 1) {
+    const mid = (lo + hi) >> 1;
+    if (anchors[mid].top <= scrollTop) lo = mid;
+    else hi = mid;
+  }
+  const a = anchors[lo], b = anchors[hi];
+  if (b.top === a.top) return a.line;
+  return Math.round(a.line + ((scrollTop - a.top) / (b.top - a.top)) * (b.line - a.line));
+}
+
 export interface SplitEditorProps {
   /** 文件内容 */
   value: string;
@@ -103,6 +183,10 @@ export function SplitEditor({
   const isSyncing = useRef(false);
   // 高亮装饰集合
   const decorationsRef = useRef<any>(null);
+  // 锚点表：源码行号 → 预览 offsetTop
+  const anchorsRef = useRef<AnchorPoint[]>([]);
+  // 锚点重建防抖计时器
+  const buildAnchorsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ─── 锁定页面滚动 ───────────────────────────────────────────────
   useEffect(() => {
@@ -112,6 +196,8 @@ export function SplitEditor({
       document.body.style.overflow = prev;
       // 清理高亮防抖计时器
       if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+      // 清理锚点重建计时器
+      if (buildAnchorsTimerRef.current) clearTimeout(buildAnchorsTimerRef.current);
     };
   }, []);
 
@@ -150,18 +236,30 @@ export function SplitEditor({
 
     const disposable = editor.onDidScrollChange(() => {
       if (isSyncing.current) return;
-      const editorScrollTop = editor.getScrollTop();
-      const editorScrollHeight = editor.getScrollHeight();
-      const editorClientHeight = editor.getLayoutInfo()?.height ?? 0;
-      const editorMax = editorScrollHeight - editorClientHeight;
-      if (editorMax <= 0) return;
-
-      const ratio = editorScrollTop / editorMax;
+      const preview = previewRef.current;
+      if (!preview) return;
       const previewMax = preview.scrollHeight - preview.clientHeight;
+      if (previewMax <= 0) return;
 
-      isSyncing.current = true;
-      preview.scrollTop = ratio * previewMax;
-      requestAnimationFrame(() => { isSyncing.current = false; });
+      const anchors = anchorsRef.current;
+      if (anchors.length >= 2) {
+        // 锚点表就绪：取当前可见范围第一行，通过分段线性映射到预览 scrollTop
+        const visibleRanges = editor.getVisibleRanges();
+        const topLine: number = visibleRanges[0]?.startLineNumber ?? 1;
+        const totalLines: number = editor.getModel()?.getLineCount() ?? 1;
+        const targetTop = lineToPreviewTop(topLine, anchors, totalLines, previewMax);
+        isSyncing.current = true;
+        preview.scrollTop = targetTop;
+        requestAnimationFrame(() => { isSyncing.current = false; });
+      } else {
+        // Fallback：纯比例映射
+        const editorScrollTop = editor.getScrollTop();
+        const editorMax = editor.getScrollHeight() - (editor.getLayoutInfo()?.height ?? 0);
+        if (editorMax <= 0) return;
+        isSyncing.current = true;
+        preview.scrollTop = (editorScrollTop / editorMax) * previewMax;
+        requestAnimationFrame(() => { isSyncing.current = false; });
+      }
     });
 
     return () => disposable?.dispose();
@@ -172,19 +270,64 @@ export function SplitEditor({
     const editor = monacoEditorRef.current;
     const preview = previewRef.current;
     if (!editor || !preview || isSyncing.current) return;
-
     const previewMax = preview.scrollHeight - preview.clientHeight;
     if (previewMax <= 0) return;
 
-    const ratio = preview.scrollTop / previewMax;
-    const editorScrollHeight = editor.getScrollHeight();
-    const editorClientHeight = editor.getLayoutInfo()?.height ?? 0;
-    const editorMax = editorScrollHeight - editorClientHeight;
-
-    isSyncing.current = true;
-    editor.setScrollTop(ratio * editorMax);
-    requestAnimationFrame(() => { isSyncing.current = false; });
+    const anchors = anchorsRef.current;
+    if (anchors.length >= 2) {
+      const totalLines: number = editor.getModel()?.getLineCount() ?? 1;
+      const targetLine = previewTopToLine(preview.scrollTop, anchors, totalLines, previewMax);
+      // 通过 Monaco 公开 API 将行号转换为像素位置
+      const targetPixel: number = editor.getTopForLineNumber(targetLine);
+      isSyncing.current = true;
+      editor.setScrollTop(targetPixel);
+      requestAnimationFrame(() => { isSyncing.current = false; });
+    } else {
+      // Fallback：纯比例映射
+      const ratio = preview.scrollTop / previewMax;
+      const editorMax = editor.getScrollHeight() - (editor.getLayoutInfo()?.height ?? 0);
+      isSyncing.current = true;
+      editor.setScrollTop(ratio * editorMax);
+      requestAnimationFrame(() => { isSyncing.current = false; });
+    }
   }, []);
+
+  // ─── 锚点表建立 ──────────────────────────────────────────────────
+  /**
+   * 扫描预览容器中所有带 [data-source-line] 的元素，
+   * 计算其相对预览容器顶部的累计 offsetTop，建立排序后的锚点列表。
+   */
+  const buildAnchors = useCallback(() => {
+    const preview = previewRef.current;
+    if (!preview) return;
+    const els = preview.querySelectorAll<HTMLElement>("[data-source-line]");
+    const points: AnchorPoint[] = [];
+    const seen = new Set<number>();
+    els.forEach((el) => {
+      const line = parseInt(el.getAttribute("data-source-line") ?? "0", 10);
+      if (!line || seen.has(line)) return;
+      seen.add(line);
+      // 累加 offsetTop 直到到达预览滚动容器（排除容器内 padding 偏移）
+      let top = 0;
+      let cur: HTMLElement | null = el;
+      while (cur && cur !== preview) {
+        top += cur.offsetTop;
+        cur = cur.offsetParent as HTMLElement | null;
+      }
+      points.push({ line, top });
+    });
+    points.sort((a, b) => a.line - b.line);
+    anchorsRef.current = points;
+  }, []);
+
+  // 内容变化时重建锚点表（延迟 120ms 等待 DOM 渲染稳定）
+  useEffect(() => {
+    if (buildAnchorsTimerRef.current) clearTimeout(buildAnchorsTimerRef.current);
+    buildAnchorsTimerRef.current = setTimeout(buildAnchors, 120);
+    return () => {
+      if (buildAnchorsTimerRef.current) clearTimeout(buildAnchorsTimerRef.current);
+    };
+  }, [value, buildAnchors]);
 
   // 高亮防抖计时器
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -217,26 +360,57 @@ export function SplitEditor({
       const model = editor.getModel();
       if (!model) return;
 
-      // ── 计算选中位置在预览文档中的比例 ──────────────────────────────
-      // 用于在多个匹配项中选出"与选中位置最近"的那一个，而非"距视口中心最近"
-      let selectionDocRatio = 0.5;
+      // ── 通过 data-source-line 锚点精确定位选中所在块 ─────────────
+      // 向上遍历 DOM 寻找最近的 [data-source-line] 祖先
+      let anchorLine = 0;
+      let nextAnchorLine = 0;
       if (selection && selection.rangeCount > 0 && preview) {
         try {
-          const rect = selection.getRangeAt(0).getBoundingClientRect();
-          const previewRect = preview.getBoundingClientRect();
-          // 选中位置相对预览文档顶部的绝对 Y
-          const absY = preview.scrollTop + (rect.top - previewRect.top);
-          selectionDocRatio = Math.max(0, Math.min(1, absY / Math.max(1, preview.scrollHeight)));
+          const range = selection.getRangeAt(0);
+          let node: Node | null = range.startContainer;
+          while (node && node !== (preview as Node)) {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              const lineAttr = (node as HTMLElement).getAttribute("data-source-line");
+              if (lineAttr) {
+                anchorLine = parseInt(lineAttr, 10);
+                break;
+              }
+            }
+            node = node.parentNode;
+          }
         } catch { /* ignore */ }
       }
-      const totalLines = model.getLineCount();
-      // 预览比例对应的源码目标行（用于最近匹配判断）
-      const targetLine = Math.max(1, Math.round(selectionDocRatio * totalLines));
 
-      // ── 多策略匹配 ───────────────────────────────────────────────────
+      // 确定块的行范围上界（下一个锚点行 - 1）
+      if (anchorLine > 0) {
+        const anchors = anchorsRef.current;
+        const idx = anchors.findIndex((a) => a.line === anchorLine);
+        if (idx >= 0 && idx + 1 < anchors.length) {
+          nextAnchorLine = anchors[idx + 1].line - 1;
+        } else {
+          nextAnchorLine = model.getLineCount();
+        }
+      }
+
+      // ── Fallback：无锚点时通过比例估算目标行 ─────────────────────
+      let targetLine = anchorLine > 0 ? anchorLine : 0;
+      if (targetLine === 0) {
+        let selectionDocRatio = 0.5;
+        if (selection && selection.rangeCount > 0 && preview) {
+          try {
+            const rect = selection.getRangeAt(0).getBoundingClientRect();
+            const previewRect = preview.getBoundingClientRect();
+            const absY = preview.scrollTop + (rect.top - previewRect.top);
+            selectionDocRatio = Math.max(0, Math.min(1, absY / Math.max(1, preview.scrollHeight)));
+          } catch { /* ignore */ }
+        }
+        targetLine = Math.max(1, Math.round(selectionDocRatio * model.getLineCount()));
+      }
+
+      // ── 多策略匹配 ──────────────────────────────────────────────
       let matches: any[] | null = null;
 
-      // Strategy 1: 精确全文匹配（适合普通段落文字）  
+      // Strategy 1: 精确全文匹配（适合普通段落文字）
       matches = model.findMatches(selected, false, false, false, null, false);
 
       // Strategy 2: 多行选中时，取第一个非空行单独匹配
@@ -257,7 +431,6 @@ export function SplitEditor({
         const candidate = selected.split("\n")[0].trim().slice(0, 40);
         if (candidate.length >= 2) {
           const escaped = candidate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-          // 每个字符之间允许穿插常见 Markdown inline 标记
           const mdMarker = "(?:[*_~`]+)?";
           const regexStr = escaped.split("").join(mdMarker);
           try {
@@ -266,14 +439,53 @@ export function SplitEditor({
         }
       }
 
+      // Strategy 4: 渲染内容与源码有差距（代码块/数学公式/图片等），
+      // 文字匹配失败时，直接用锚点块范围高亮整个块。
+      if ((!matches || matches.length === 0) && anchorLine > 0) {
+        const endLine = nextAnchorLine > 0 ? nextAnchorLine : anchorLine + 10;
+        const blockRange = {
+          startLineNumber: anchorLine,
+          startColumn: 1,
+          endLineNumber: Math.min(endLine, model.getLineCount()),
+          endColumn: model.getLineMaxColumn(Math.min(endLine, model.getLineCount())),
+        };
+        const decoration = [{
+          range: blockRange,
+          options: {
+            inlineClassName: "editor-preview-highlight",
+            className: "editor-preview-highlight-line",
+          },
+        }];
+        if (decorationsRef.current) {
+          decorationsRef.current.set(decoration);
+        } else {
+          decorationsRef.current = editor.createDecorationsCollection(decoration);
+        }
+        editor.revealLineInCenter(anchorLine, 0);
+        return;
+      }
+
       if (!matches || matches.length === 0) { clearHighlights(); return; }
 
-      // ── 选最近目标行的匹配项（而非最近视口中心） ──────────────────────
+      // ── 优先选锚点块范围内的匹配；范围内无匹配则 fallback 到距 targetLine 最近 ──
       let nearest = matches[0];
       let nearestDist = Infinity;
-      for (const match of matches) {
-        const dist = Math.abs(match.range.startLineNumber - targetLine);
-        if (dist < nearestDist) { nearestDist = dist; nearest = match; }
+
+      if (anchorLine > 0 && nextAnchorLine > 0) {
+        // 先从块范围内找
+        const inRange = matches.filter(
+          (m) => m.range.startLineNumber >= anchorLine && m.range.startLineNumber <= nextAnchorLine
+        );
+        if (inRange.length > 0) {
+          nearest = inRange[0];
+          nearestDist = 0;
+        }
+      }
+      if (nearestDist === Infinity) {
+        for (const match of matches) {
+          const dist = Math.abs(match.range.startLineNumber - targetLine);
+          if (dist < nearestDist) { nearestDist = dist; nearest = match; }
+        }
       }
 
       const decoration = [{
@@ -456,7 +668,7 @@ export function SplitEditor({
               onMouseUp={handlePreviewSelection}
             >
               <div className="p-4">
-                <MarkdownRenderer content={value} />
+                <MarkdownRenderer content={value} enableSourceLines />
               </div>
             </div>
           </div>
@@ -485,7 +697,7 @@ export function SplitEditor({
             onMouseUp={handlePreviewSelection}
           >
             <div className="p-4">
-              <MarkdownRenderer content={value} />
+              <MarkdownRenderer content={value} enableSourceLines />
             </div>
           </div>
         )}

@@ -14,6 +14,7 @@ import rehypeKatex from "rehype-katex";
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeUnwrapImages from "rehype-unwrap-images";
+import { rehypeSourceLine } from "./rehypeSourceLine";
 
 // Styles
 import "react-medium-image-zoom/dist/styles.css";
@@ -62,23 +63,32 @@ interface MarkdownRendererProps {
   content: string;
   /** 自定义样式类 */
   className?: string;
+  /**
+   * 是否向块级元素注入 `data-source-line` 属性（用于编辑器锚点滚动同步）
+   * 默认 false，仅在 SplitEditor 中启用，避免污染前台页面 DOM
+   */
+  enableSourceLines?: boolean;
 }
 
-export function MarkdownRenderer({ content, className = "" }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content, className = "", enableSourceLines = false }: MarkdownRendererProps) {
   if (!content) {
     return <p className="text-muted-foreground">暂无内容</p>;
   }
+
+  // rehypeSourceLine 必须在 rehypeKatex 之前运行，以捕获原始 position 信息
+  const rehypePluginList = [
+    ...(enableSourceLines ? [rehypeSourceLine] : []),
+    rehypeKatex,
+    rehypeSlug,
+    [rehypeAutolinkHeadings, { behavior: "wrap" }] as any,
+    rehypeUnwrapImages,
+  ];
 
   return (
     <div className={`prose prose-lg dark:prose-invert max-w-none ${className}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[
-          rehypeKatex,
-          rehypeSlug,
-          [rehypeAutolinkHeadings, { behavior: "wrap" }],
-          rehypeUnwrapImages,
-        ]}
+        rehypePlugins={rehypePluginList}
         components={{
           // 1. 自定义 a 标签 (内部链接使用 next/link)
           a({ href, children, ...props }) {
