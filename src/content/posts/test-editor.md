@@ -19,7 +19,6 @@ coverImage: ''
 - [x] 语法高
 - [x] Ctrl+S 保
 - [x] 自动保存
-![1771748312152-Screenshot-from-2026-01-31-19-38-29.png](/assets/posts/test-editor/1771748312152-Screenshot-from-2026-01-31-19-38-29.png)
 
 ## 代码示例
 
