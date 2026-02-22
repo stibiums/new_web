@@ -1,6 +1,7 @@
 ---
 title: 'CV - 2: 图像形成 (Image Formation)'
 excerpt: ''
+category: 从v
 tags:
   - '"notes CV computer-vision image-formation"'
 published: true
