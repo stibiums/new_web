@@ -3,8 +3,10 @@ title: 测试文章
 titleEn: Test Article
 excerpt: 这是一篇测试文章
 category: 测试
-tags: ''
-published: 'true'
+tags:
+  - ''
+coverImage: ''
+published: true
 ---
 
 # Hello World
@@ -15,7 +17,7 @@ published: 'true'
 
 - [x] 基础渲染
 - [x] 语法高亮
-- [x] Ctrl+S 保存
+- [x] Ctrl+S 保
 - [x] 自动保存
 
 ## 代码示例
