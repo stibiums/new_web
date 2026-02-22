@@ -124,7 +124,7 @@ export default function EditNotePage() {
       {/* 顶部工具栏 */}
       <div className="shrink-0 border-b border-[var(--color-border)] bg-[var(--color-background)]/80 backdrop-blur-sm px-6 h-14 flex items-center justify-between">
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push(`/${locale}/admin/notes`)}
           className="flex items-center gap-2 text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -168,7 +168,7 @@ export default function EditNotePage() {
               )}
             </div>
           )}
-          <Button type="button" variant="outline" size="sm" onClick={() => router.back()}>
+          <Button type="button" variant="outline" size="sm" onClick={() => router.push(`/${locale}/admin/notes`)}>
             取消
           </Button>
           <Button type="submit" form="edit-form" size="sm" loading={loading}>
