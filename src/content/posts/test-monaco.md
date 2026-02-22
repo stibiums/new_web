@@ -4,7 +4,7 @@ titleEn: Test Article
 excerpt: 这是一篇测试文章
 category: 测试
 tags:
-  - ''
+  - '[""]'
 coverImage: ''
 published: true
 ---
