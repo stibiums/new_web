@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 // 类型定义
 // ────────────────────────────────────────────────────────────────────────────────
 
-export type NodeType = "NOTE" | "BLOG" | "PROJECT" | "TAG";
+export type NodeType = "NOTE" | "BLOG" | "PROJECT" | "TAG" | "CATEGORY";
 
 export type EdgeType =
   | "EXPLICIT"         // 手工录入的 PostLink
@@ -13,7 +13,8 @@ export type EdgeType =
   | "WIKI_LINK"        // 正文 [[slug]] wiki 链接
   | "TAG_COOCCURRENCE" // 共享相同 tag 的节点对
   | "CATEGORY"         // 同 category 的 NOTE 节点对
-  | "TAG_NODE";        // 内容节点 → Tag 节点的连线
+  | "TAG_NODE"         // 内容节点 → Tag 节点的连线
+  | "CATEGORY_NODE";   // NOTE 节点 → Category 节点的连线
 
 export interface GraphNode {
   id: string;
@@ -138,6 +139,28 @@ export async function GET() {
       });
     }
 
+    // ── 收集所有唯一 Category，生成虚拟 CATEGORY 节点 ───────────────────────
+    const categoryNodeMap = new Map<string, string>(); // category → virtual node id
+    for (const node of nodes) {
+      if (node.nodeType === "NOTE" && node.category) {
+        if (!categoryNodeMap.has(node.category)) {
+          const id = `category::${node.category}`;
+          categoryNodeMap.set(node.category, id);
+          nodes.push({
+            id,
+            slug: node.category,
+            title: node.category,
+            titleEn: null,
+            nodeType: "CATEGORY",
+            category: null,
+            tags: [],
+            excerpt: null,
+            linkCount: 0,
+          });
+        }
+      }
+    }
+
     // ── 构建边 ────────────────────────────────────────────────────────────────
     const edges: GraphEdge[] = [];
     const edgeSet = new Set<string>();
@@ -161,11 +184,18 @@ export async function GET() {
 
     // (B) TAG_NODE 边（内容节点 → Tag 虚拟节点）
     for (const node of [...nodes]) {
-      if (node.nodeType === "TAG") continue;
+      if (node.nodeType === "TAG" || node.nodeType === "CATEGORY") continue;
       for (const tag of node.tags) {
         const tagId = tagNodeMap.get(tag);
         if (tagId) addEdge(node.id, tagId, "TAG_NODE");
       }
+    }
+
+    // (B2) CATEGORY_NODE 边（NOTE 节点 → Category 虚拟节点）
+    for (const node of [...nodes]) {
+      if (node.nodeType !== "NOTE" || !node.category) continue;
+      const catId = categoryNodeMap.get(node.category);
+      if (catId) addEdge(node.id, catId, "CATEGORY_NODE");
     }
 
     // (C) TAG_COOCCURRENCE 边（共享相同 tag 的非 TAG 节点对）
@@ -220,7 +250,7 @@ export async function GET() {
     // ── 更新节点 linkCount（纳入所有边，TAG_NODE 除外）──────────────────────
     const linkCountMap = new Map<string, number>();
     for (const edge of edges) {
-      if (edge.type === "TAG_NODE") continue;
+      if (edge.type === "TAG_NODE" || edge.type === "CATEGORY_NODE") continue;
       linkCountMap.set(edge.source, (linkCountMap.get(edge.source) || 0) + 1);
       linkCountMap.set(edge.target, (linkCountMap.get(edge.target) || 0) + 1);
     }

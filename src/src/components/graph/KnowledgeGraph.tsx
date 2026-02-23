@@ -15,6 +15,7 @@ const NODE_COLOR: Record<NodeType, string> = {
   BLOG: "#10b981",
   PROJECT: "#8b5cf6",
   TAG: "#f59e0b",
+  CATEGORY: "#ef4444",
 };
 
 const NODE_LABEL: Record<NodeType, string> = {
@@ -22,6 +23,7 @@ const NODE_LABEL: Record<NodeType, string> = {
   BLOG: "文章",
   PROJECT: "项目",
   TAG: "标签",
+  CATEGORY: "分类",
 };
 
 const EDGE_COLOR: Record<EdgeType, string> = {
@@ -31,6 +33,7 @@ const EDGE_COLOR: Record<EdgeType, string> = {
   TAG_COOCCURRENCE: "#f97316",
   CATEGORY: "#475569",
   TAG_NODE: "#f59e0b",
+  CATEGORY_NODE: "#ef4444",
 };
 
 const EDGE_LABEL: Record<EdgeType, string> = {
@@ -40,9 +43,10 @@ const EDGE_LABEL: Record<EdgeType, string> = {
   TAG_COOCCURRENCE: "共享标签",
   CATEGORY: "同分类",
   TAG_NODE: "标签关联",
+  CATEGORY_NODE: "分类归属",
 };
 
-const ALL_NODE_TYPES: NodeType[] = ["NOTE", "BLOG", "PROJECT", "TAG"];
+const ALL_NODE_TYPES: NodeType[] = ["NOTE", "BLOG", "PROJECT", "TAG", "CATEGORY"];
 const ALL_EDGE_TYPES: EdgeType[] = [
   "EXPLICIT",
   "FRONT_MATTER",
@@ -50,6 +54,7 @@ const ALL_EDGE_TYPES: EdgeType[] = [
   "TAG_COOCCURRENCE",
   "CATEGORY",
   "TAG_NODE",
+  "CATEGORY_NODE",
 ];
 
 type ViewMode = "force" | "cluster" | "radial";
@@ -66,6 +71,9 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const simulationRef = useRef<d3.Simulation<any, any> | null>(null);
+  const selectedNodeRef = useRef<GraphNode | null>(null);
+  const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   // ── 数据 ──────────────────────────────────────────────────────────────────
@@ -152,7 +160,6 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
     const container = containerRef.current;
     const width = container.clientWidth || 800;
     const height = container.clientHeight || 600;
-    svg.attr("width", width).attr("height", height);
 
     const g = svg.append("g");
 
@@ -162,6 +169,7 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
       .scaleExtent([0.05, 6])
       .on("zoom", (event) => g.attr("transform", event.transform));
     svg.call(zoom as any);
+    zoomRef.current = zoom;
 
     // 尺寸比例
     const maxLink = d3.max(nodes, (d) => d.linkCount) || 1;
@@ -182,12 +190,14 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
           .distance((e: any) => {
             if (e.type === "CATEGORY") return 80;
             if (e.type === "TAG_NODE") return 70;
+            if (e.type === "CATEGORY_NODE") return 70;
             if (e.type === "TAG_COOCCURRENCE") return 120;
             return 100;
           })
           .strength((e: any) => {
             if (e.type === "CATEGORY") return 0.4;
             if (e.type === "TAG_NODE") return 0.3;
+            if (e.type === "CATEGORY_NODE") return 0.3;
             return 0.6;
           })
       )
@@ -198,10 +208,11 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
     // Cluster 模式：按 nodeType 分区
     if (viewMode === "cluster") {
       const CLUSTER_POSITIONS: Record<NodeType, { x: number; y: number }> = {
-        NOTE: { x: width * 0.25, y: height * 0.3 },
-        BLOG: { x: width * 0.75, y: height * 0.3 },
-        PROJECT: { x: width * 0.25, y: height * 0.7 },
-        TAG: { x: width * 0.75, y: height * 0.7 },
+        NOTE: { x: width * 0.2, y: height * 0.3 },
+        BLOG: { x: width * 0.8, y: height * 0.3 },
+        PROJECT: { x: width * 0.2, y: height * 0.7 },
+        TAG: { x: width * 0.65, y: height * 0.7 },
+        CATEGORY: { x: width * 0.8, y: height * 0.7 },
       };
       simulation
         .force("x", d3.forceX<any>((d) => CLUSTER_POSITIONS[d.nodeType as NodeType]?.x ?? width / 2).strength(0.3))
@@ -209,8 +220,8 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
     }
 
     // Radial 模式：已选节点为中心，其余按角度展开
-    if (viewMode === "radial" && selectedNode) {
-      const centerNode = nodes.find((n) => n.id === selectedNode.id);
+    if (viewMode === "radial" && selectedNodeRef.current) {
+      const centerNode = nodes.find((n) => n.id === selectedNodeRef.current!.id);
       if (centerNode) {
         centerNode.fx = width / 2;
         centerNode.fy = height / 2;
@@ -258,10 +269,10 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
       .enter()
       .append("line")
       .attr("stroke", (e) => EDGE_COLOR[e.type])
-      .attr("stroke-opacity", (e) => (e.type === "TAG_NODE" || e.type === "CATEGORY" ? 0.45 : 0.75))
+      .attr("stroke-opacity", (e) => (e.type === "TAG_NODE" || e.type === "CATEGORY_NODE" || e.type === "CATEGORY" ? 0.45 : 0.75))
       .attr("stroke-width", (e) => (e.type === "TAG_COOCCURRENCE" || e.type === "CATEGORY" ? 1.5 : 2.5))
       .attr("stroke-dasharray", (e) =>
-        e.type === "TAG_NODE" ? "4 3" : e.type === "CATEGORY" ? "2 2" : null
+        e.type === "TAG_NODE" || e.type === "CATEGORY_NODE" ? "4 3" : e.type === "CATEGORY" ? "2 2" : null
       )
       .attr("marker-end", (e) =>
         linkTypes.includes(e.type) ? `url(#arrow-${e.type})` : null
@@ -303,29 +314,69 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
       .attr("r", (d) => sizeScale(d.linkCount))
       .attr("fill", (d) => NODE_COLOR[d.nodeType as NodeType] || "#94a3b8")
       .attr("stroke", "#fff")
-      .attr("stroke-width", (d) => (selectedNode?.id === d.id ? 3 : 1.5))
+      .attr("stroke-width", (d) => (selectedNodeRef.current?.id === d.id ? 3 : 1.5))
       .attr("stroke-opacity", 0.8);
 
-    // 节点标签
+    // 节点标签（所有节点均显示）
     nodeGroups
-      .filter((d) => d.linkCount > 0 || d.nodeType === "TAG")
       .append("text")
       .text((d) => {
         const t = locale === "en" && d.titleEn ? d.titleEn : d.title;
-        return t.length > 14 ? t.slice(0, 14) + "…" : t;
+        return t.length > 10 ? t.slice(0, 10) + "…" : t;
       })
-      .attr("x", (d) => sizeScale(d.linkCount) + 4)
-      .attr("y", 4)
-      .attr("font-size", "11px")
+      .attr("x", 0)
+      .attr("y", (d) => sizeScale(d.linkCount) + 13)
+      .attr("text-anchor", "middle")
+      .attr("font-size", "10px")
       .attr("fill", "#94a3b8")
       .attr("font-family", "system-ui")
       .attr("pointer-events", "none");
 
-    // 点击事件
+    // 点击事件：选中节点并平滑居中
     nodeGroups.on("click", (event, d) => {
       event.stopPropagation();
       setSelectedNode((prev) => (prev?.id === d.id ? null : d));
+      // 平滑将节点移动到画布中心
+      if (svgRef.current && zoomRef.current && (d as any).x != null) {
+        const containerEl = containerRef.current;
+        if (containerEl) {
+          const w = containerEl.clientWidth;
+          const h = containerEl.clientHeight;
+          const currentK = d3.zoomTransform(svgRef.current).k;
+          const newTransform = d3.zoomIdentity
+            .translate(w / 2, h / 2)
+            .scale(currentK)
+            .translate(-(d as any).x, -(d as any).y);
+          d3.select(svgRef.current)
+            .transition()
+            .duration(600)
+            .call(zoomRef.current.transform as any, newTransform);
+        }
+      }
     });
+
+    // 悬浮提示
+    nodeGroups
+      .on("mouseover", (event: MouseEvent, d) => {
+        if (!tooltipRef.current) return;
+        const title = (locale === "en" && d.titleEn ? d.titleEn : d.title)
+          .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const typeLabel = NODE_LABEL[d.nodeType as NodeType] || d.nodeType;
+        const color = NODE_COLOR[d.nodeType as NodeType] || "#94a3b8";
+        tooltipRef.current.innerHTML = `<div style="font-weight:600;font-size:13px;margin-bottom:4px">${title}</div><div style="display:flex;align-items:center;gap:6px;font-size:11px;opacity:0.7"><span style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0"></span>${typeLabel}${d.linkCount > 0 ? ` · ${d.linkCount} 个连接` : ""}</div>`;
+        tooltipRef.current.style.display = "block";
+        tooltipRef.current.style.left = `${event.clientX + 14}px`;
+        tooltipRef.current.style.top = `${event.clientY - 44}px`;
+      })
+      .on("mousemove", (event: MouseEvent) => {
+        if (!tooltipRef.current) return;
+        tooltipRef.current.style.left = `${event.clientX + 14}px`;
+        tooltipRef.current.style.top = `${event.clientY - 44}px`;
+      })
+      .on("mouseout", () => {
+        if (!tooltipRef.current) return;
+        tooltipRef.current.style.display = "none";
+      });
 
     // 双击跳转
     nodeGroups.on("dblclick", (event, d) => {
@@ -354,7 +405,7 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
 
       nodeGroups.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
     });
-  }, [allNodes, allEdges, activeNodeTypes, activeEdgeTypes, viewMode, locale, router, selectedNode]);
+  }, [allNodes, allEdges, activeNodeTypes, activeEdgeTypes, viewMode, locale, router]);
 
   // 搜索高亮（覆盖在已渲染的 DOM 上，不触发重渲染）
   useEffect(() => {
@@ -374,6 +425,15 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
   useEffect(() => {
     if (!loading) renderGraph();
   }, [renderGraph, loading]);
+
+  // 将 selectedNode 同步到 ref，并更新节点高亮样式（不触发图重建）
+  useEffect(() => {
+    selectedNodeRef.current = selectedNode;
+    if (!svgRef.current) return;
+    d3.select(svgRef.current)
+      .selectAll<SVGCircleElement, GraphNode>(".nodes g circle")
+      .attr("stroke-width", (d: any) => (selectedNode?.id === d.id ? 3 : 1.5));
+  }, [selectedNode]);
 
   // ── 工具函数 ────────────────────────────────────────────────────────────
 
@@ -512,13 +572,13 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
       </div>
 
       {/* ── 主体区域（图 + 侧边面板）───────────────────────────────── */}
-      <div className="flex flex-1 min-h-0 relative">
-        {/* 图谱 */}
-        <div
-          ref={containerRef}
-          className="flex-1 relative overflow-hidden"
-          style={{ minHeight: 500 }}
-        >
+      <div
+        ref={containerRef}
+        className="flex-1 min-h-0 relative overflow-hidden"
+        style={{ minHeight: 500 }}
+      >
+        {/* 图谱画布 */}
+        <div className="w-full h-full">
           <svg ref={svgRef} className="w-full h-full" />
 
           {/* 悬浮图例 */}
@@ -565,9 +625,9 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
           </div>
         </div>
 
-        {/* 侧边面板 */}
+        {/* 侧边面板（绝对定位叠加在图谱上，不影响画布宽度） */}
         {selectedNode && (
-          <div className="w-72 border-l border-[var(--color-border)] bg-[var(--color-background)] flex flex-col overflow-y-auto shrink-0">
+          <div className="absolute right-0 top-0 bottom-0 w-72 border-l border-[var(--color-border)] bg-[var(--color-background)]/95 backdrop-blur-sm flex flex-col overflow-y-auto shadow-xl z-10">
             {/* 顶部 */}
             <div className="flex items-start justify-between px-4 pt-4 pb-3 border-b border-[var(--color-border)]">
               <div className="flex-1 min-w-0">
@@ -714,6 +774,13 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
           </div>
         )}
       </div>
+
+      {/* 悬浮 Tooltip（固定定位，跟随鼠标） */}
+      <div
+        ref={tooltipRef}
+        style={{ display: "none", position: "fixed", zIndex: 9999, pointerEvents: "none" }}
+        className="bg-[var(--color-background)] border border-[var(--color-border)] rounded-lg px-3 py-2 shadow-lg text-[var(--color-foreground)] max-w-[200px]"
+      />
     </div>
   );
 }
