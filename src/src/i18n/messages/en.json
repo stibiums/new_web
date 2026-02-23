@@ -89,7 +89,10 @@
     "notFound": "Page Not Found",
     "serverError": "Server Error",
     "login": "Login",
-    "logout": "Logout"
+    "logout": "Logout",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "pageOf": "{current} / {total}"
   },
   "admin": {
     "title": "Admin Dashboard",

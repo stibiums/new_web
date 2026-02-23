@@ -89,7 +89,10 @@
     "notFound": "页面未找到",
     "serverError": "服务器错误",
     "login": "登录",
-    "logout": "退出"
+    "logout": "退出",
+    "previousPage": "上一页",
+    "nextPage": "下一页",
+    "pageOf": "{current} / {total} 页"
   },
   "admin": {
     "title": "管理后台",

@@ -59,7 +59,7 @@ export default function PublicationsPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="max-w-[var(--spacing-list-max)] mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold mb-8">{t("title")}</h1>
         <div className="space-y-6">
           {[...Array(3)].map((_, i) => (
@@ -75,7 +75,7 @@ export default function PublicationsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-12">
+    <div className="max-w-[var(--spacing-list-max)] mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold mb-8">{t("title")}</h1>
 
       {publications.length === 0 ? (

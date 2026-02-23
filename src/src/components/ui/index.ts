@@ -46,3 +46,6 @@ export type {
   DialogFooterProps,
   DialogCloseProps,
 } from "./Dialog";
+
+export { Pagination } from "./Pagination";
+export type { PaginationProps } from "./Pagination";
