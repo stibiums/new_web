@@ -250,24 +250,10 @@ export default function Home() {
           <p className="text-muted-foreground">暂无项目</p>
         ) : (
           <div className="grid md:grid-cols-2 gap-4">
-            {recentProjects.map((project) => {
-              const getProjectHref = () => {
-                switch (project.linkType) {
-                  case "GITHUB": return project.githubUrl || "#";
-                  case "DEMO": return project.demoUrl || "#";
-                  case "EXTERNAL": return project.externalUrl || "#";
-                  default: return `/${locale}/projects/${project.slug}`;
-                }
-              };
-              const isExternal = project.linkType !== "DETAIL";
-              return (
+            {recentProjects.map((project) => (
               <div
                 key={project.id}
-                onClick={() => {
-                  const href = getProjectHref();
-                  if (isExternal) window.open(href, "_blank", "noopener,noreferrer");
-                  else window.location.href = href;
-                }}
+                onClick={() => { window.location.href = `/${locale}/projects/${project.slug}`; }}
                 className="p-6 rounded-lg border border-border hover:border-primary/50 transition-colors flex flex-col cursor-pointer"
               >
                 <h3 className="text-lg font-semibold mb-2">{getTitle(project)}</h3>
@@ -291,17 +277,17 @@ export default function Home() {
                   </div>
                 )}
 
-                <div className="flex gap-4 pt-4 border-t border-border">
+                <div className="flex justify-end gap-2 pt-4 border-t border-border">
                   {project.githubUrl && (
                     <a
                       href={project.githubUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+                      title="GitHub"
+                      className="p-1.5 rounded text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
                     >
                       <Github className="w-4 h-4" />
-                      Code
                     </a>
                   )}
                   {project.demoUrl && (
@@ -310,16 +296,15 @@ export default function Home() {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+                      title="Demo"
+                      className="p-1.5 rounded text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
                     >
                       <ExternalLink className="w-4 h-4" />
-                      Demo
                     </a>
                   )}
                 </div>
               </div>
-              );
-            })}
+            ))}
           </div>
         )}
       </section>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Github, ExternalLink } from "lucide-react";
@@ -62,26 +61,6 @@ export default function ProjectsPage() {
     return project.techStack.split(",").map((tech) => tech.trim());
   };
 
-  // 根据 linkType 获取卡片跳转链接
-  const getProjectLink = (project: Project) => {
-    switch (project.linkType) {
-      case "GITHUB":
-        return project.githubUrl || "#";
-      case "DEMO":
-        return project.demoUrl || "#";
-      case "EXTERNAL":
-        return project.externalUrl || "#";
-      case "DETAIL":
-      default:
-        return `/${locale}/projects/${project.slug}`;
-    }
-  };
-
-  // 判断是否为外部链接
-  const isExternalLink = (project: Project) => {
-    return project.linkType === "GITHUB" || project.linkType === "DEMO" || project.linkType === "EXTERNAL";
-  };
-
   if (loading) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-12">
@@ -110,27 +89,9 @@ export default function ProjectsPage() {
           {projects.map((project) => (
             <div
               key={project.id}
-              onClick={() => {
-                const href = getProjectLink(project);
-                if (isExternalLink(project)) {
-                  window.open(href, "_blank", "noopener,noreferrer");
-                } else {
-                  window.location.href = href;
-                }
-              }}
-              className="block p-6 rounded-lg border border-border hover:border-primary/50 transition-colors flex flex-col cursor-pointer"
+              onClick={() => { window.location.href = `/${locale}/projects/${project.slug}`; }}
+              className="p-6 rounded-lg border border-border hover:border-primary/50 transition-colors flex flex-col cursor-pointer"
             >
-              {/* Cover Image */}
-              {project.coverImage && (
-                <div className="mb-4 -mx-6 -mt-6 rounded-t-lg overflow-hidden">
-                  <img
-                    src={project.coverImage}
-                    alt={getTitle(project)}
-                    className="w-full h-40 object-cover"
-                  />
-                </div>
-              )}
-
               <h2 className="text-lg font-semibold mb-2">{getTitle(project)}</h2>
 
               {getDescription(project) && (
@@ -152,17 +113,17 @@ export default function ProjectsPage() {
                 </div>
               )}
 
-              <div className="flex gap-4 pt-4 border-t border-border">
+              <div className="flex justify-end gap-2 pt-4 border-t border-border">
                 {project.githubUrl && (
                   <a
                     href={project.githubUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+                    title={t("github")}
+                    className="p-1.5 rounded text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
                   >
                     <Github className="w-4 h-4" />
-                    {t("github")}
                   </a>
                 )}
                 {project.demoUrl && (
@@ -171,10 +132,10 @@ export default function ProjectsPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+                    title={t("demo")}
+                    className="p-1.5 rounded text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
                   >
                     <ExternalLink className="w-4 h-4" />
-                    {t("demo")}
                   </a>
                 )}
               </div>
