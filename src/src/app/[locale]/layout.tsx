@@ -47,7 +47,15 @@ export default async function LocaleLayout({
         <main className="flex-1">
           {children}
         </main>
-        <Footer copyright={copyright} githubUrl={siteConfig.github_url} email={siteConfig.email} />
+        <Footer 
+          copyright={copyright} 
+          githubUrl={siteConfig.github_url} 
+          email={siteConfig.email} 
+          linkedinUrl={siteConfig.linkedin_url}
+          youtubeUrl={siteConfig.youtube_url}
+          bilibiliUrl={siteConfig.bilibili_url}
+          twitterUrl={siteConfig.twitter_url}
+        />
         <SearchProvider />
       </div>
     </NextIntlClientProvider>

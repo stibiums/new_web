@@ -13,7 +13,7 @@ interface AssetConfig {
 
 const ASSET_TYPES: Record<string, AssetConfig> = {
   img: {
-    allowedTypes: ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"],
+    allowedTypes: ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml", "image/x-icon", "image/vnd.microsoft.icon"],
     maxSize: 5 * 1024 * 1024, // 5MB
     subDir: "img",
   },
@@ -55,6 +55,8 @@ function getExtension(mimeType: string): string {
     "image/gif": ".gif",
     "image/webp": ".webp",
     "image/svg+xml": ".svg",
+    "image/x-icon": ".ico",
+    "image/vnd.microsoft.icon": ".ico",
     "application/pdf": ".pdf",
     "video/mp4": ".mp4",
     "video/webm": ".webm",
@@ -98,9 +100,12 @@ export async function POST(request: NextRequest) {
     const config = ASSET_TYPES[assetType];
 
     // 验证文件类型
-    if (!config.allowedTypes.includes(file.type)) {
+    const fileExt = path.extname(file.name).toLowerCase();
+    const isIco = fileExt === '.ico';
+    
+    if (!config.allowedTypes.includes(file.type) && !isIco) {
       return NextResponse.json(
-        { error: `不支持的 ${assetType} 文件类型` },
+        { error: `不支持的 ${assetType} 文件类型: ${file.type}` },
         { status: 400 }
       );
     }

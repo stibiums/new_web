@@ -1,5 +1,6 @@
 import simpleGit, { SimpleGit } from 'simple-git';
 import path from 'path';
+import { prisma } from '@/lib/prisma';
 
 // 项目根目录
 // 开发时: new_web/src/ 目录（Next.js 工作目录）
@@ -145,7 +146,17 @@ export async function autoRemove(
  */
 export async function gitCommit(message: string): Promise<string | null> {
   try {
-    const result = await git.commit(message);
+    const gitNameConfig = await prisma.siteConfig.findUnique({ where: { key: 'git_name' } });
+    const gitEmailConfig = await prisma.siteConfig.findUnique({ where: { key: 'git_email' } });
+    
+    const gitName = gitNameConfig?.value || 'Admin';
+    const gitEmail = gitEmailConfig?.value || 'admin@stibiums.top';
+    
+    const options = {
+      '--author': `"${gitName} <${gitEmail}>"`
+    };
+
+    const result = await git.commit(message, options);
     if (result.commit) {
       return result.commit.substring(0, 7);
     }

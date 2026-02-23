@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ArrowRight, Github, Mail, ExternalLink, Calendar, Eye } from "lucide-react";
+import { ArrowRight, Github, Mail, ExternalLink, Calendar, Eye, Linkedin, Youtube, Tv } from "lucide-react";
 
 interface Post {
   id: string;
@@ -40,6 +40,7 @@ export default function Home() {
   const [recentProjects, setRecentProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [welcomeMsg, setWelcomeMsg] = useState("");
+  const [siteConfig, setSiteConfig] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchHomeData = async () => {
@@ -52,13 +53,14 @@ export default function Home() {
         }
         
         // Fetch welcome message from settings
-        const settingsRes = await fetch("/api/admin/settings");
+        const settingsRes = await fetch("/api/config");
         const settingsData = await settingsRes.json();
         if (settingsRes.ok) {
           const msg = locale === "en" && settingsData.data.home_welcome_en 
             ? settingsData.data.home_welcome_en 
             : settingsData.data.home_welcome;
           setWelcomeMsg(msg || t('subtitle'));
+          setSiteConfig(settingsData.data);
         }
       } catch (error) {
         console.error("Failed to fetch home data:", error);
@@ -114,33 +116,72 @@ export default function Home() {
 
           {/* Social Links - 5.4 */}
           <div className="flex justify-center gap-4 pt-4">
-            <a
-              href="https://github.com/stibiums"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-              aria-label="GitHub"
-            >
-              <Github className="w-5 h-5" />
-            </a>
-            <a
-              href="mailto:contact@stibiums.top"
-              className="p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-              aria-label="Email"
-            >
-              <Mail className="w-5 h-5" />
-            </a>
-            <a
-              href="https://twitter.com/stibiums"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-              aria-label="Twitter"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-              </svg>
-            </a>
+            {(siteConfig.github_url || "https://github.com/stibiums") && (
+              <a
+                href={siteConfig.github_url || "https://github.com/stibiums"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                aria-label="GitHub"
+              >
+                <Github className="w-5 h-5" />
+              </a>
+            )}
+            {siteConfig.linkedin_url && (
+              <a
+                href={siteConfig.linkedin_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                aria-label="LinkedIn"
+              >
+                <Linkedin className="w-5 h-5" />
+              </a>
+            )}
+            {siteConfig.youtube_url && (
+              <a
+                href={siteConfig.youtube_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                aria-label="YouTube"
+              >
+                <Youtube className="w-5 h-5" />
+              </a>
+            )}
+            {siteConfig.bilibili_url && (
+              <a
+                href={siteConfig.bilibili_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                aria-label="Bilibili"
+              >
+                <Tv className="w-5 h-5" />
+              </a>
+            )}
+            {(siteConfig.twitter_url) && (
+              <a
+                href={siteConfig.twitter_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                aria-label="Twitter"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+              </a>
+            )}
+            {(siteConfig.email || "contact@stibiums.top") && (
+              <a
+                href={`mailto:${siteConfig.email || "contact@stibiums.top"}`}
+                className="p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                aria-label="Email"
+              >
+                <Mail className="w-5 h-5" />
+              </a>
+            )}
           </div>
         </div>
       </section>

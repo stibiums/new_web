@@ -26,10 +26,38 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ["400", "500"],
 });
 
-export const metadata: Metadata = {
-  title: "Stibiums - 个人学术网站",
-  description: "计算机科学研究生 | 全栈开发者",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  let favicon = "/favicon.ico";
+  let title = "Stibiums - 个人学术网站";
+  let description = "计算机科学研究生 | 全栈开发者";
+  
+  try {
+    const configs = await prisma.siteConfig.findMany({
+      where: {
+        key: { in: ["site_favicon", "site_title", "site_description"] }
+      }
+    });
+    
+    const configMap = configs.reduce((acc, curr) => {
+      acc[curr.key] = curr.value;
+      return acc;
+    }, {} as Record<string, string>);
+    
+    if (configMap.site_favicon) favicon = configMap.site_favicon;
+    if (configMap.site_title) title = configMap.site_title;
+    if (configMap.site_description) description = configMap.site_description;
+  } catch (error) {
+    console.error("Failed to fetch metadata config:", error);
+  }
+
+  return {
+    title,
+    description,
+    icons: {
+      icon: favicon,
+    },
+  };
+}
 
 export default async function RootLayout({
   children,

@@ -24,6 +24,11 @@ interface Settings {
   github_url: string;
   twitter_url: string;
   email: string;
+  linkedin_url: string;
+  youtube_url: string;
+  bilibili_url: string;
+  git_name: string;
+  git_email: string;
   google_analytics_id: string;
   custom_head: string;
   custom_footer: string;
@@ -44,6 +49,11 @@ const defaultSettings: Settings = {
   github_url: "",
   twitter_url: "",
   email: "",
+  linkedin_url: "",
+  youtube_url: "",
+  bilibili_url: "",
+  git_name: "",
+  git_email: "",
   google_analytics_id: "",
   custom_head: "",
   custom_footer: "",
@@ -60,6 +70,7 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
@@ -92,7 +103,10 @@ export default function SettingsPage() {
       });
 
       if (res.ok) {
-        setMessage({ type: "success", text: "设置已保存" });
+        setMessage({ type: "success", text: "设置已保存，页面即将刷新..." });
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
         const data = await res.json();
         setMessage({ type: "error", text: data.error || "保存失败" });
@@ -106,6 +120,40 @@ export default function SettingsPage() {
 
   const handleChange = (key: keyof Settings, value: string) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, key: keyof Settings) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(key);
+    setMessage(null);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("type", "img");
+
+    try {
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        handleChange(key, data.url);
+        setMessage({ type: "success", text: "图片上传成功" });
+      } else {
+        setMessage({ type: "error", text: data.error || "上传失败" });
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "上传失败" });
+    } finally {
+      setUploading(null);
+      // 清空 input，允许重复上传同一个文件
+      e.target.value = "";
+    }
   };
 
   if (loading) {
@@ -227,19 +275,51 @@ export default function SettingsPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium">Logo URL</label>
-              <Input
-                value={settings.site_logo}
-                onChange={(e) => handleChange("site_logo", e.target.value)}
-                placeholder="/logo.svg"
-              />
+              <div className="flex gap-2">
+                <Input
+                  value={settings.site_logo}
+                  onChange={(e) => handleChange("site_logo", e.target.value)}
+                  placeholder="/logo.svg"
+                />
+                <input
+                  type="file"
+                  id="logo-upload"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={(e) => handleFileUpload(e, "site_logo")}
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => document.getElementById("logo-upload")?.click()}
+                  disabled={uploading === "site_logo"}
+                >
+                  {uploading === "site_logo" ? "上传中..." : "上传"}
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Favicon URL</label>
-              <Input
-                value={settings.site_favicon}
-                onChange={(e) => handleChange("site_favicon", e.target.value)}
-                placeholder="/favicon.ico"
-              />
+              <div className="flex gap-2">
+                <Input
+                  value={settings.site_favicon}
+                  onChange={(e) => handleChange("site_favicon", e.target.value)}
+                  placeholder="/favicon.ico"
+                />
+                <input
+                  type="file"
+                  id="favicon-upload"
+                  className="hidden"
+                  accept="image/*,.ico"
+                  onChange={(e) => handleFileUpload(e, "site_favicon")}
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => document.getElementById("favicon-upload")?.click()}
+                  disabled={uploading === "site_favicon"}
+                >
+                  {uploading === "site_favicon" ? "上传中..." : "上传"}
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -318,14 +398,71 @@ export default function SettingsPage() {
               />
             </div>
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">邮箱</label>
-            <Input
-              type="email"
-              value={settings.email}
-              onChange={(e) => handleChange("email", e.target.value)}
-              placeholder="hello@example.com"
-            />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">LinkedIn</label>
+              <Input
+                value={settings.linkedin_url}
+                onChange={(e) => handleChange("linkedin_url", e.target.value)}
+                placeholder="https://linkedin.com/in/username"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">YouTube</label>
+              <Input
+                value={settings.youtube_url}
+                onChange={(e) => handleChange("youtube_url", e.target.value)}
+                placeholder="https://youtube.com/@username"
+              />
+            </div>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Bilibili</label>
+              <Input
+                value={settings.bilibili_url}
+                onChange={(e) => handleChange("bilibili_url", e.target.value)}
+                placeholder="https://space.bilibili.com/123456"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">邮箱</label>
+              <Input
+                type="email"
+                value={settings.email}
+                onChange={(e) => handleChange("email", e.target.value)}
+                placeholder="hello@example.com"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Git 配置 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Git 配置</CardTitle>
+          <CardDescription>配置自动提交时使用的 Git 用户信息</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Git 用户名 (user.name)</label>
+              <Input
+                value={settings.git_name}
+                onChange={(e) => handleChange("git_name", e.target.value)}
+                placeholder="Stibiums"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Git 邮箱 (user.email)</label>
+              <Input
+                type="email"
+                value={settings.git_email}
+                onChange={(e) => handleChange("git_email", e.target.value)}
+                placeholder="contact@stibiums.top"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

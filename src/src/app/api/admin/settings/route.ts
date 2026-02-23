@@ -21,6 +21,11 @@ const ALLOWED_KEYS = [
   "home_welcome_en",
   "footer_copyright",
   "footer_copyright_en",
+  "linkedin_url",
+  "youtube_url",
+  "bilibili_url",
+  "git_name",
+  "git_email",
 ];
 
 export async function GET() {
