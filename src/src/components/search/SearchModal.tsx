@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Search, X, FileText, StickyNote } from "lucide-react";
+import { Search, FileText, StickyNote, Layers, BookOpen } from "lucide-react";
 
 interface SearchResult {
   id: string;
@@ -11,7 +11,10 @@ interface SearchResult {
   titleEn: string | null;
   excerpt: string | null;
   excerptEn: string | null;
-  type: string;
+  type: string; // BLOG | NOTE | PROJECT | PUBLICATION
+  authors: string | null;
+  contentSnippet: string | null;
+  contentSnippetEn: string | null;
 }
 
 interface SearchModalProps {
@@ -101,8 +104,17 @@ export function SearchModal({ locale }: SearchModalProps) {
   };
 
   const goToResult = (result: SearchResult) => {
-    const path = result.type === "NOTE" ? "/notes" : "/blog";
-    router.push(`/${locale}${path}/${result.slug}`);
+    let path: string;
+    if (result.type === "NOTE") {
+      path = `/${locale}/notes/${result.slug}`;
+    } else if (result.type === "PROJECT") {
+      path = `/${locale}/projects/${result.slug}`;
+    } else if (result.type === "PUBLICATION") {
+      path = `/${locale}/publications#pub-${result.slug}`;
+    } else {
+      path = `/${locale}/blog/${result.slug}`;
+    }
+    router.push(path);
     setIsOpen(false);
   };
 
@@ -119,11 +131,17 @@ export function SearchModal({ locale }: SearchModalProps) {
   };
 
   const getExcerpt = (result: SearchResult) => {
-    const text = locale === "en" && result.excerptEn ? result.excerptEn : result.excerpt;
+    // Priority: excerpt (locale-aware) → contentSnippet (locale-aware)
+    const isEn = locale === "en";
+    const text =
+      (isEn ? result.excerptEn || result.excerpt : result.excerpt) ||
+      (isEn ? result.contentSnippetEn || result.contentSnippet : result.contentSnippet) ||
+      "";
     if (!text) return "";
-    // Highlight matching text
-    const regex = new RegExp(`(${query})`, "gi");
-    return text.replace(regex, "<mark>$1</mark>").slice(0, 150);
+    // Escape special regex chars before highlighting
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(${escaped})`, "gi");
+    return text.replace(regex, "<mark>$1</mark>").slice(0, 200);
   };
 
   return (
@@ -179,11 +197,20 @@ export function SearchModal({ locale }: SearchModalProps) {
               >
                 {result.type === "NOTE" ? (
                   <StickyNote className="w-5 h-5 mt-0.5 text-muted-foreground flex-shrink-0" />
+                ) : result.type === "PROJECT" ? (
+                  <Layers className="w-5 h-5 mt-0.5 text-muted-foreground flex-shrink-0" />
+                ) : result.type === "PUBLICATION" ? (
+                  <BookOpen className="w-5 h-5 mt-0.5 text-muted-foreground flex-shrink-0" />
                 ) : (
                   <FileText className="w-5 h-5 mt-0.5 text-muted-foreground flex-shrink-0" />
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="font-medium truncate">{getTitle(result)}</div>
+                  {result.type === "PUBLICATION" && result.authors && (
+                    <div className="text-xs text-muted-foreground truncate mt-0.5">
+                      {result.authors}
+                    </div>
+                  )}
                   {getExcerpt(result) && (
                     <div
                       className="text-sm text-muted-foreground line-clamp-2 mt-1"
@@ -192,7 +219,13 @@ export function SearchModal({ locale }: SearchModalProps) {
                   )}
                 </div>
                 <span className="text-xs text-muted-foreground flex-shrink-0">
-                  {result.type === "NOTE" ? "笔记" : "博客"}
+                  {result.type === "NOTE"
+                    ? "笔记"
+                    : result.type === "PROJECT"
+                    ? "项目"
+                    : result.type === "PUBLICATION"
+                    ? "出版物"
+                    : "博客"}
                 </span>
               </button>
             ))}

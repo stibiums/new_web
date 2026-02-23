@@ -2,116 +2,238 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Document } from "flexsearch";
 
-interface SearchablePost {
+/** Unified document shape stored in FlexSearch */
+interface SearchableDocument {
   id: string;
   slug: string;
   title: string;
-  titleEn: string | null;
-  excerpt: string | null;
-  excerptEn: string | null;
+  titleEn: string;
+  excerpt: string;
+  excerptEn: string;
   content: string;
-  contentEn: string | null;
-  tags: string | null;
-  type: string;
+  contentEn: string;
+  tags: string;
+  description: string;
+  descriptionEn: string;
+  abstract: string;
+  authors: string;
+  type: string; // BLOG | NOTE | PROJECT | PUBLICATION
 }
 
 /**
- * Extract plain text from Yoopta JSON content (or raw HTML/text).
- * Yoopta content is Record<string, YooptaBlockData>, each block has a `value` array of Slate nodes.
+ * Extract plain text from Yoopta JSON, Markdown, or raw HTML.
+ * Yoopta: Record<blockId, { value: SlateNode[] }>
  */
 function extractPlainText(raw: string): string {
   if (!raw) return "";
   try {
     const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === "object") {
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
       const texts: string[] = [];
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const extractFromNode = (node: any) => {
+      const walk = (node: any) => {
         if (typeof node === "string") {
           texts.push(node);
         } else if (node && typeof node === "object") {
-          if (node.text && typeof node.text === "string") {
-            texts.push(node.text);
-          }
-          if (Array.isArray(node.children)) {
-            for (const child of node.children) {
-              extractFromNode(child);
-            }
-          }
+          if (typeof node.text === "string") texts.push(node.text);
+          if (Array.isArray(node.children)) node.children.forEach(walk);
         }
       };
-      // Iterate over each block
       for (const key of Object.keys(parsed)) {
         const block = parsed[key];
-        if (block && Array.isArray(block.value)) {
-          for (const node of block.value) {
-            extractFromNode(node);
-          }
-        }
+        if (block && Array.isArray(block.value)) block.value.forEach(walk);
       }
-      return texts.join(" ");
+      return texts.join(" ").replace(/\s+/g, " ").trim();
     }
   } catch {
-    // Not JSON — return raw content (might be old HTML or plain text)
+    // Not JSON — strip tags and return
   }
-  return raw.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  // Strip HTML / Markdown syntax for plain text
+  return raw
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`[^`]*`/g, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/[#*_~[\]()!]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-// In-memory search index (rebuilds on server start)
+/**
+ * Extract a snippet around the first occurrence of `query` in `text`.
+ * Returns up to `maxLen` characters with ellipsis markers.
+ */
+function extractSnippet(text: string, query: string, maxLen = 160): string {
+  if (!text) return "";
+  if (!query) return text.slice(0, maxLen);
+  const lower = text.toLowerCase();
+  const lowerQ = query.toLowerCase();
+  const idx = lower.indexOf(lowerQ);
+  if (idx === -1) return text.slice(0, maxLen) + (text.length > maxLen ? "…" : "");
+  const half = Math.floor((maxLen - lowerQ.length) / 2);
+  const start = Math.max(0, idx - half);
+  const end = Math.min(text.length, idx + lowerQ.length + half);
+  let snippet = text.slice(start, end);
+  if (start > 0) snippet = "…" + snippet;
+  if (end < text.length) snippet += "…";
+  return snippet;
+}
+
+// ── In-memory state ──────────────────────────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let searchIndex: Document | null = null;
-let postsCache: SearchablePost[] = [];
+/** Maps document id → extracted plain-text content (for snippet generation) */
+const contentCache = new Map<string, { text: string; textEn: string }>();
 
 async function buildSearchIndex() {
-  const posts = await prisma.post.findMany({
-    where: { published: true },
-    select: {
-      id: true,
-      slug: true,
-      title: true,
-      titleEn: true,
-      excerpt: true,
-      excerptEn: true,
-      content: true,
-      contentEn: true,
-      tags: true,
-      type: true,
-    },
-  });
+  // Parallel DB queries for best performance
+  const [posts, projects, publications] = await Promise.all([
+    prisma.post.findMany({
+      where: { published: true },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        titleEn: true,
+        excerpt: true,
+        excerptEn: true,
+        content: true,
+        contentEn: true,
+        tags: true,
+        type: true,
+      },
+    }),
+    prisma.project.findMany({
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        titleEn: true,
+        description: true,
+        descriptionEn: true,
+        content: true,
+        contentEn: true,
+        techStack: true,
+      },
+    }),
+    prisma.publication.findMany({
+      select: {
+        id: true,
+        title: true,
+        authors: true,
+        venue: true,
+        year: true,
+        abstract: true,
+      },
+    }),
+  ]);
 
-  postsCache = posts;
-
-  // Create FlexSearch index
+  // Build new index
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  searchIndex = new Document({
+  const idx = new Document({
     document: {
       id: "id",
-      index: ["title", "titleEn", "excerpt", "excerptEn", "content", "contentEn", "tags"],
-      store: ["id", "slug", "title", "titleEn", "excerpt", "excerptEn", "type"],
+      index: [
+        "title", "titleEn",
+        "excerpt", "excerptEn",
+        "content", "contentEn",
+        "tags",
+        "description", "descriptionEn",
+        "abstract", "authors",
+      ],
+      store: [
+        "id", "slug", "title", "titleEn",
+        "excerpt", "excerptEn",
+        "type", "description", "descriptionEn",
+        "abstract", "authors",
+      ],
     },
     tokenize: "forward",
     context: true,
   });
 
-  // Add documents to index — extract plain text from Yoopta JSON
+  contentCache.clear();
+
+  // ── Posts & Notes ──────────────────────────────────────────────────────────
   for (const post of posts) {
-    searchIndex.add({
-      ...post,
-      content: extractPlainText(post.content),
-      contentEn: extractPlainText(post.contentEn || ""),
+    const text = extractPlainText(post.content);
+    const textEn = extractPlainText(post.contentEn || "");
+    contentCache.set(post.id, { text, textEn });
+    idx.add({
+      id: post.id,
+      slug: post.slug,
+      title: post.title,
       titleEn: post.titleEn || "",
+      excerpt: post.excerpt || "",
       excerptEn: post.excerptEn || "",
+      content: text,
+      contentEn: textEn,
+      tags: post.tags || "",
+      description: "",
+      descriptionEn: "",
+      abstract: "",
+      authors: "",
+      type: post.type,
     });
   }
+
+  // ── Projects ───────────────────────────────────────────────────────────────
+  for (const project of projects) {
+    const text = extractPlainText(project.content || "");
+    const textEn = extractPlainText(project.contentEn || "");
+    contentCache.set(project.id, { text, textEn });
+    idx.add({
+      id: project.id,
+      slug: project.slug,
+      title: project.title,
+      titleEn: project.titleEn || "",
+      excerpt: project.description || "",
+      excerptEn: project.descriptionEn || "",
+      content: text,
+      contentEn: textEn,
+      tags: project.techStack || "",
+      description: project.description || "",
+      descriptionEn: project.descriptionEn || "",
+      abstract: "",
+      authors: "",
+      type: "PROJECT",
+    });
+  }
+
+  // ── Publications ───────────────────────────────────────────────────────────
+  for (const pub of publications) {
+    const text = [pub.title, pub.authors, pub.abstract, pub.venue]
+      .filter(Boolean)
+      .join(" ");
+    contentCache.set(pub.id, { text, textEn: text });
+    idx.add({
+      id: pub.id,
+      slug: pub.id, // Publications have no slug — use id for anchor #pub-{id}
+      title: pub.title,
+      titleEn: "",
+      excerpt: pub.abstract || "",
+      excerptEn: "",
+      content: text,
+      contentEn: "",
+      tags: "",
+      description: pub.abstract || "",
+      descriptionEn: "",
+      abstract: pub.abstract || "",
+      authors: pub.authors,
+      type: "PUBLICATION",
+    });
+  }
+
+  searchIndex = idx;
 }
 
+// ── GET /api/search?q=xxx[&type=xxx] ─────────────────────────────────────────
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q") || "";
     const type = searchParams.get("type") || "";
 
-    if (!searchIndex || postsCache.length === 0) {
+    if (!searchIndex || contentCache.size === 0) {
       await buildSearchIndex();
     }
 
@@ -119,39 +241,38 @@ export async function GET(request: Request) {
       return NextResponse.json({ data: [] });
     }
 
-    // Search in FlexSearch
-    const results = searchIndex!.search(query, {
-      limit: 20,
-      enrich: true,
-    });
+    const results = searchIndex!.search(query, { limit: 30, enrich: true });
 
-    // Flatten and deduplicate results
+    // Flatten + deduplicate
     const seen = new Set<string>();
-    const hits: SearchablePost[] = [];
-
+    const hits: SearchableDocument[] = [];
     for (const field of results) {
       for (const result of field.result) {
-        const doc = result.doc as unknown as SearchablePost;
-        if (!seen.has(doc.id)) {
+        const doc = result.doc as unknown as SearchableDocument;
+        if (!seen.has(doc.id) && (!type || doc.type === type)) {
           seen.add(doc.id);
-          // Filter by type if specified
-          if (!type || doc.type === type) {
-            hits.push(doc);
-          }
+          hits.push(doc);
         }
       }
     }
 
-    // Format response with locale support
-    const formatted = hits.map((post) => ({
-      id: post.id,
-      slug: post.slug,
-      title: post.title,
-      titleEn: post.titleEn,
-      excerpt: post.excerpt,
-      excerptEn: post.excerptEn,
-      type: post.type,
-    }));
+    // Format — attach content snippets from cache
+    const formatted = hits.map((doc) => {
+      const cache = contentCache.get(doc.id);
+      return {
+        id: doc.id,
+        slug: doc.slug,
+        title: doc.title,
+        titleEn: doc.titleEn || null,
+        excerpt: doc.excerpt || null,
+        excerptEn: doc.excerptEn || null,
+        type: doc.type,
+        authors: doc.authors || null,
+        contentSnippet: cache ? extractSnippet(cache.text, query) : null,
+        contentSnippetEn:
+          cache?.textEn ? extractSnippet(cache.textEn, query) : null,
+      };
+    });
 
     return NextResponse.json({ data: formatted });
   } catch (error) {
@@ -160,11 +281,11 @@ export async function GET(request: Request) {
   }
 }
 
-// Rebuild index endpoint (for admin)
+// ── POST /api/search — rebuild index (admin) ─────────────────────────────────
 export async function POST() {
   try {
     await buildSearchIndex();
-    return NextResponse.json({ success: true, count: postsCache.length });
+    return NextResponse.json({ success: true, count: contentCache.size });
   } catch (error) {
     console.error("Failed to rebuild index:", error);
     return NextResponse.json({ error: "重建索引失败" }, { status: 500 });

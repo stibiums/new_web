@@ -85,7 +85,8 @@ export default function PublicationsPage() {
           {publications.map((pub) => (
             <article
               key={pub.id}
-              className="p-6 rounded-lg border border-border"
+              id={`pub-${pub.id}`}
+              className="p-6 rounded-lg border border-border scroll-mt-20"
             >
               <h2 className="text-lg font-semibold mb-2">{pub.title}</h2>
 

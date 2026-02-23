@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Github, ExternalLink } from "lucide-react";
 
@@ -25,6 +25,7 @@ interface Project {
 export default function ProjectsPage() {
   const t = useTranslations("projects");
   const params = useParams();
+  const router = useRouter();
   const locale = params.locale as string;
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,7 +90,7 @@ export default function ProjectsPage() {
           {projects.map((project) => (
             <div
               key={project.id}
-              onClick={() => { window.location.href = `/${locale}/projects/${project.slug}`; }}
+              onClick={() => { router.push(`/${locale}/projects/${project.slug}`); }}
               className="p-6 rounded-lg border border-border hover:border-primary/50 transition-colors flex flex-col cursor-pointer"
             >
               <h2 className="text-lg font-semibold mb-2">{getTitle(project)}</h2>
