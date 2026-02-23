@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ArrowRight, Github, Mail, ExternalLink, Calendar, Eye, Linkedin, Youtube, Tv } from "lucide-react";
+import { ArrowRight, ExternalLink, Calendar, Eye } from "lucide-react";
+import { SocialIcon } from "@/components/ui/SocialIcon";
 
 interface Post {
   id: string;
@@ -91,6 +92,17 @@ export default function Home() {
     return project.techStack.split(",").map((tech) => tech.trim());
   };
 
+  // Parse social links
+  let socialLinks: { platform: string; url: string; showOnHome: boolean }[] = [];
+  try {
+    if (siteConfig.social_links) {
+      socialLinks = JSON.parse(siteConfig.social_links);
+    }
+  } catch (e) {
+    console.error("Failed to parse social links", e);
+  }
+  const homeSocialLinks = socialLinks.filter(link => link.showOnHome);
+
   // Skills - could also come from settings API in the future
   const skills = ['TypeScript', 'React', 'Next.js', 'Node.js', 'Python', 'PostgreSQL', 'Docker', 'AWS'];
 
@@ -115,73 +127,20 @@ export default function Home() {
           </p>
 
           {/* Social Links - 5.4 */}
-          <div className="flex justify-center gap-4 pt-4">
-            {(siteConfig.github_url || "https://github.com/stibiums") && (
+          <div className="flex justify-center gap-4 pt-4 flex-wrap">
+            {homeSocialLinks.map((link, index) => (
               <a
-                href={siteConfig.github_url || "https://github.com/stibiums"}
+                key={index}
+                href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-                aria-label="GitHub"
+                aria-label={link.platform}
+                title={link.platform}
               >
-                <Github className="w-5 h-5" />
+                <SocialIcon platform={link.platform} className="w-5 h-5" />
               </a>
-            )}
-            {siteConfig.linkedin_url && (
-              <a
-                href={siteConfig.linkedin_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="w-5 h-5" />
-              </a>
-            )}
-            {siteConfig.youtube_url && (
-              <a
-                href={siteConfig.youtube_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-                aria-label="YouTube"
-              >
-                <Youtube className="w-5 h-5" />
-              </a>
-            )}
-            {siteConfig.bilibili_url && (
-              <a
-                href={siteConfig.bilibili_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-                aria-label="Bilibili"
-              >
-                <Tv className="w-5 h-5" />
-              </a>
-            )}
-            {(siteConfig.twitter_url) && (
-              <a
-                href={siteConfig.twitter_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-                aria-label="Twitter"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
-              </a>
-            )}
-            {(siteConfig.email || "contact@stibiums.top") && (
-              <a
-                href={`mailto:${siteConfig.email || "contact@stibiums.top"}`}
-                className="p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-                aria-label="Email"
-              >
-                <Mail className="w-5 h-5" />
-              </a>
-            )}
+            ))}
           </div>
         </div>
       </section>

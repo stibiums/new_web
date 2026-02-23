@@ -172,7 +172,18 @@ export async function gitCommit(message: string): Promise<string | null> {
  */
 export async function gitPush(): Promise<boolean> {
   try {
-    await git.push();
+    const gitRemoteUrlConfig = await prisma.siteConfig.findUnique({ where: { key: 'git_remote_url' } });
+    const remoteUrl = gitRemoteUrlConfig?.value;
+
+    if (remoteUrl) {
+      // 如果配置了远程地址，则推送到该地址
+      // 获取当前分支名
+      const branch = await git.revparse(['--abbrev-ref', 'HEAD']);
+      await git.push(remoteUrl, branch.trim());
+    } else {
+      // 否则使用默认配置推送
+      await git.push();
+    }
     return true;
   } catch (error) {
     console.error('[Git] Failed to push', error);

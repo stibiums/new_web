@@ -10,9 +10,6 @@ const ALLOWED_KEYS = [
   "site_description_en",
   "site_logo",
   "site_favicon",
-  "github_url",
-  "twitter_url",
-  "email",
   "google_analytics_id",
   "custom_head",
   "custom_footer",
@@ -21,11 +18,11 @@ const ALLOWED_KEYS = [
   "home_welcome_en",
   "footer_copyright",
   "footer_copyright_en",
-  "linkedin_url",
-  "youtube_url",
-  "bilibili_url",
   "git_name",
   "git_email",
+  "git_remote_url",
+  "social_links",
+  "resume_data",
 ];
 
 export async function GET() {

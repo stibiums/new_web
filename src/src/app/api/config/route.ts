@@ -3,7 +3,15 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const configs = await prisma.siteConfig.findMany();
+    const configs = await prisma.siteConfig.findMany({
+      where: {
+        NOT: {
+          key: {
+            startsWith: "git_",
+          },
+        },
+      },
+    });
 
     const settings: Record<string, string> = {};
     configs.forEach((config) => {

@@ -1,73 +1,57 @@
-"use client";
-
-import { useParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { Download, Mail, Github, GraduationCap, Briefcase, Code } from "lucide-react";
+import { prisma } from "@/lib/prisma";
+import { SocialIcon } from "@/components/ui/SocialIcon";
 
-export default function ResumePage() {
-  const t = useTranslations("resume");
-  const tHome = useTranslations("home");
-  const params = useParams();
-  const locale = params.locale as string;
+export default async function ResumePage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations("resume");
+  const tHome = await getTranslations("home");
 
-  // Placeholder data - would come from a resume API or CMS in production
-  const education = [
-    {
-      period: "2022 - 2025",
-      degree: "M.S. in Computer Science",
-      school: "University Name",
-      location: "City, Country",
-    },
-    {
-      period: "2018 - 2022",
-      degree: "B.S. in Computer Science",
-      school: "University Name",
-      location: "City, Country",
-    },
-  ];
+  // Fetch resume data from SiteConfig
+  let resumeData = {
+    education: [] as any[],
+    experience: [] as any[],
+    skills: [] as string[],
+  };
+  
+  let siteConfig: Record<string, string> = {};
 
-  const experience = [
-    {
-      period: "2023 - Present",
-      role: "Research Assistant",
-      company: "Lab Name",
-      location: "City, Country",
-      description: "Research description goes here.",
-    },
-    {
-      period: "2021 - 2023",
-      role: "Full Stack Developer",
-      company: "Company Name",
-      location: "City, Country",
-      description: "Work description goes here.",
-    },
-  ];
+  try {
+    const configs = await prisma.siteConfig.findMany();
+    configs.forEach((c) => {
+      siteConfig[c.key] = c.value;
+    });
 
-  const skills = [
-    "TypeScript",
-    "React",
-    "Next.js",
-    "Node.js",
-    "Python",
-    "PostgreSQL",
-    "Docker",
-    "AWS",
-    "Git",
-    "Linux",
-  ];
+    if (siteConfig.resume_data) {
+      resumeData = JSON.parse(siteConfig.resume_data);
+    }
+  } catch (error) {
+    console.error("Failed to fetch resume data:", error);
+  }
 
-  const contact = [
-    { label: "Email", value: "contact@stibiums.top", href: "mailto:contact@stibiums.top" },
-    { label: "GitHub", value: "github.com/stibiums", href: "https://github.com/stibiums" },
-  ];
+  const { education, experience, skills } = resumeData;
+
+  // Parse social links for contact section
+  let socialLinks: { platform: string; url: string; showOnHome: boolean }[] = [];
+  try {
+    if (siteConfig.social_links) {
+      socialLinks = JSON.parse(siteConfig.social_links);
+    }
+  } catch (e) {
+    console.error("Failed to parse social links", e);
+  }
+
+  const siteTitle = locale === "en" && siteConfig.site_title_en ? siteConfig.site_title_en : siteConfig.site_title;
+  const siteSubtitle = locale === "en" && siteConfig.home_welcome_en ? siteConfig.home_welcome_en : siteConfig.home_welcome;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-12">
         <div>
-          <h1 className="text-3xl font-bold mb-2">{tHome("title")}</h1>
-          <p className="text-muted-foreground">{tHome("subtitle")}</p>
+          <h1 className="text-3xl font-bold mb-2">{siteTitle || tHome("title")}</h1>
+          <p className="text-muted-foreground whitespace-pre-wrap">{siteSubtitle || tHome("subtitle")}</p>
         </div>
 
         <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary-hover transition-colors self-start">
@@ -82,22 +66,21 @@ export default function ResumePage() {
           {t("contact")}
         </h2>
         <div className="flex flex-wrap gap-6">
-          {contact.map((item) => (
+          {socialLinks.map((item, index) => (
             <a
-              key={item.label}
-              href={item.href}
+              key={index}
+              href={item.url}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
             >
-              {item.label === "Email" ? (
-                <Mail className="w-4 h-4" />
-              ) : (
-                <Github className="w-4 h-4" />
-              )}
-              {item.value}
+              <SocialIcon platform={item.platform} className="w-4 h-4" />
+              {item.platform}
             </a>
           ))}
+          {socialLinks.length === 0 && (
+            <span className="text-muted-foreground text-sm">暂无联系方式</span>
+          )}
         </div>
       </section>
 

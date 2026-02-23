@@ -14,6 +14,12 @@ import {
 } from "@/components/ui/Card";
 import { THEME_PRESETS } from "@/lib/themes";
 
+interface SocialLink {
+  platform: string;
+  url: string;
+  showOnHome: boolean;
+}
+
 interface Settings {
   site_title: string;
   site_title_en: string;
@@ -21,14 +27,10 @@ interface Settings {
   site_description_en: string;
   site_logo: string;
   site_favicon: string;
-  github_url: string;
-  twitter_url: string;
-  email: string;
-  linkedin_url: string;
-  youtube_url: string;
-  bilibili_url: string;
   git_name: string;
   git_email: string;
+  git_remote_url: string;
+  social_links: string;
   google_analytics_id: string;
   custom_head: string;
   custom_footer: string;
@@ -46,14 +48,10 @@ const defaultSettings: Settings = {
   site_description_en: "",
   site_logo: "",
   site_favicon: "",
-  github_url: "",
-  twitter_url: "",
-  email: "",
-  linkedin_url: "",
-  youtube_url: "",
-  bilibili_url: "",
   git_name: "",
   git_email: "",
+  git_remote_url: "",
+  social_links: "[]",
   google_analytics_id: "",
   custom_head: "",
   custom_footer: "",
@@ -72,6 +70,14 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const socialLinks: SocialLink[] = (() => {
+    try {
+      return JSON.parse(settings.social_links || "[]");
+    } catch (e) {
+      return [];
+    }
+  })();
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -380,60 +386,75 @@ export default function SettingsPage() {
           <CardDescription>在网站底部显示的社交媒体链接</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">GitHub</label>
-              <Input
-                value={settings.github_url}
-                onChange={(e) => handleChange("github_url", e.target.value)}
-                placeholder="https://github.com/username"
-              />
+          {/* 动态社交链接 */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">自定义社交链接</h3>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const newLinks = [...socialLinks, { platform: "", url: "", showOnHome: true }];
+                  handleChange("social_links", JSON.stringify(newLinks));
+                }}
+              >
+                添加链接
+              </Button>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Twitter / X</label>
-              <Input
-                value={settings.twitter_url}
-                onChange={(e) => handleChange("twitter_url", e.target.value)}
-                placeholder="https://x.com/username"
-              />
-            </div>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">LinkedIn</label>
-              <Input
-                value={settings.linkedin_url}
-                onChange={(e) => handleChange("linkedin_url", e.target.value)}
-                placeholder="https://linkedin.com/in/username"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">YouTube</label>
-              <Input
-                value={settings.youtube_url}
-                onChange={(e) => handleChange("youtube_url", e.target.value)}
-                placeholder="https://youtube.com/@username"
-              />
-            </div>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Bilibili</label>
-              <Input
-                value={settings.bilibili_url}
-                onChange={(e) => handleChange("bilibili_url", e.target.value)}
-                placeholder="https://space.bilibili.com/123456"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">邮箱</label>
-              <Input
-                type="email"
-                value={settings.email}
-                onChange={(e) => handleChange("email", e.target.value)}
-                placeholder="hello@example.com"
-              />
-            </div>
+            
+            {socialLinks.map((link, index) => (
+              <div key={index} className="flex items-center gap-4 p-4 border rounded-lg">
+                <div className="flex-1 space-y-2">
+                  <label className="text-sm font-medium">平台名称</label>
+                  <Input
+                    value={link.platform}
+                    onChange={(e) => {
+                      const newLinks = [...socialLinks];
+                      newLinks[index].platform = e.target.value;
+                      handleChange("social_links", JSON.stringify(newLinks));
+                    }}
+                    placeholder="例如: GitHub"
+                  />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <label className="text-sm font-medium">链接地址</label>
+                  <Input
+                    value={link.url}
+                    onChange={(e) => {
+                      const newLinks = [...socialLinks];
+                      newLinks[index].url = e.target.value;
+                      handleChange("social_links", JSON.stringify(newLinks));
+                    }}
+                    placeholder="https://..."
+                  />
+                </div>
+                <div className="flex items-center gap-2 mt-6">
+                  <input
+                    type="checkbox"
+                    id={`showOnHome-${index}`}
+                    checked={link.showOnHome}
+                    onChange={(e) => {
+                      const newLinks = [...socialLinks];
+                      newLinks[index].showOnHome = e.target.checked;
+                      handleChange("social_links", JSON.stringify(newLinks));
+                    }}
+                    className="w-4 h-4"
+                  />
+                  <label htmlFor={`showOnHome-${index}`} className="text-sm">
+                    在首页显示
+                  </label>
+                </div>
+                <Button
+                  variant="destructive"
+                  className="mt-6"
+                  onClick={() => {
+                    const newLinks = socialLinks.filter((_, i) => i !== index);
+                    handleChange("social_links", JSON.stringify(newLinks));
+                  }}
+                >
+                  删除
+                </Button>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -463,6 +484,14 @@ export default function SettingsPage() {
                 placeholder="contact@stibiums.top"
               />
             </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Git 远程仓库地址 (Remote URL)</label>
+            <Input
+              value={settings.git_remote_url}
+              onChange={(e) => handleChange("git_remote_url", e.target.value)}
+              placeholder="https://github.com/username/repo.git"
+            />
           </div>
         </CardContent>
       </Card>

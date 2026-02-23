@@ -40,6 +40,15 @@ export default async function LocaleLayout({
   const siteTitle = locale === "en" && siteConfig.site_title_en ? siteConfig.site_title_en : siteConfig.site_title;
   const copyright = locale === "en" && siteConfig.footer_copyright_en ? siteConfig.footer_copyright_en : siteConfig.footer_copyright;
 
+  let socialLinks = [];
+  try {
+    if (siteConfig.social_links) {
+      socialLinks = JSON.parse(siteConfig.social_links);
+    }
+  } catch (e) {
+    console.error("Failed to parse social links", e);
+  }
+
   return (
     <NextIntlClientProvider messages={messages}>
       <div className="flex flex-col min-h-screen">
@@ -49,12 +58,7 @@ export default async function LocaleLayout({
         </main>
         <Footer 
           copyright={copyright} 
-          githubUrl={siteConfig.github_url} 
-          email={siteConfig.email} 
-          linkedinUrl={siteConfig.linkedin_url}
-          youtubeUrl={siteConfig.youtube_url}
-          bilibiliUrl={siteConfig.bilibili_url}
-          twitterUrl={siteConfig.twitter_url}
+          socialLinks={socialLinks}
         />
         <SearchProvider />
       </div>
