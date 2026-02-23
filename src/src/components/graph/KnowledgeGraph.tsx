@@ -159,12 +159,16 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
     const sizeScale = d3.scaleSqrt().domain([0, maxLink]).range([5, 22]);
 
     // ── 力导向布局 ───────────────────────────────────────────────────────
+    // 必须存为独立变量：forceLink 会把 source/target 字符串 ID 就地替换为节点对象引用
+    // edgeGroups 需绑定到同一个数组，tick 时 d.source.x 才能取到坐标
+    const simLinks = edges.map((e) => ({ ...e }));
+
     const simulation = d3
       .forceSimulation(nodes as d3.SimulationNodeDatum[])
       .force(
         "link",
         d3
-          .forceLink(edges.map((e) => ({ ...e })))
+          .forceLink(simLinks)
           .id((d: any) => d.id)
           .distance((e: any) => {
             if (e.type === "CATEGORY") return 80;
@@ -241,7 +245,7 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
       .append("g")
       .attr("class", "edges")
       .selectAll("line")
-      .data(edges)
+      .data(simLinks)
       .enter()
       .append("line")
       .attr("stroke", (e) => EDGE_COLOR[e.type])
