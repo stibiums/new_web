@@ -4,9 +4,9 @@ titleEn: Test Article
 excerpt: ''
 category: ''
 tags:
-  - ''
-published: false
+  - '[""]'
 coverImage: ''
+published: false
 ---
 
 # Hello World
@@ -30,6 +30,8 @@ function hello() {
 ```
 
 ## 列表测试
+
+[[notes/cv-ch02]]
 
 1. 第一项
 2. 第二项
