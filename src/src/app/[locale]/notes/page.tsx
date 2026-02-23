@@ -98,9 +98,14 @@ export default function NotesPage() {
                     <div className="flex items-center gap-3">
                       <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                       <span className="font-medium">{getTitle(note)}</span>
+                      {note.category && (
+                        <span className="px-2 py-0.5 rounded bg-muted text-xs text-muted-foreground">
+                          {note.category}
+                        </span>
+                      )}
                     </div>
                     {note.publishedAt && (
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-muted-foreground shrink-0">
                         {new Date(note.publishedAt).toLocaleDateString()}
                       </span>
                     )}
