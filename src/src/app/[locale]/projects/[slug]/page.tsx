@@ -41,7 +41,13 @@ export default function ProjectDetailPage() {
         const res = await fetch(`/api/projects/${slug}`);
         const data = await res.json();
         if (res.ok) {
-          setProject(data.data);
+          const p = data.data;
+          // 如果 detailType 是 EXTERNAL，客户端跳转外部链接
+          if (p.detailType === "EXTERNAL" && p.externalUrl) {
+            window.location.href = p.externalUrl;
+            return;
+          }
+          setProject(p);
         } else {
           setError(true);
         }

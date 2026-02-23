@@ -15,11 +15,6 @@ export async function GET(
       return NextResponse.json({ error: "项目不存在" }, { status: 404 });
     }
 
-    // 如果 detailType 是 EXTERNAL，重定向到外部链接
-    if (project.detailType === "EXTERNAL" && project.externalUrl) {
-      return NextResponse.redirect(project.externalUrl);
-    }
-
     return NextResponse.json({ data: project });
   } catch (error) {
     console.error("Failed to fetch project:", error);

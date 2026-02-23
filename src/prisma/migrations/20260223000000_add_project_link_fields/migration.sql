@@ -1,0 +1,13 @@
+-- AlterTable: Add new fields to Project
+ALTER TABLE `Project`
+  ADD COLUMN `filePath` VARCHAR(191) NULL,
+  ADD COLUMN `gitCommit` VARCHAR(191) NULL,
+  ADD COLUMN `linkType` ENUM('DETAIL','GITHUB','DEMO','EXTERNAL') NOT NULL DEFAULT 'DETAIL',
+  ADD COLUMN `detailType` ENUM('MARKDOWN','HTML','EXTERNAL') NOT NULL DEFAULT 'MARKDOWN',
+  ADD COLUMN `externalUrl` VARCHAR(191) NULL,
+  ADD COLUMN `htmlFilePath` VARCHAR(191) NULL;
+
+-- AlterTable: Add new fields to Post
+ALTER TABLE `Post`
+  ADD COLUMN `filePath` VARCHAR(191) NULL,
+  ADD COLUMN `gitCommit` VARCHAR(191) NULL;

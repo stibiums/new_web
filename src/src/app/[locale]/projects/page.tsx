@@ -108,12 +108,17 @@ export default function ProjectsPage() {
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
-            <a
+            <div
               key={project.id}
-              href={getProjectLink(project)}
-              target={isExternalLink(project) ? "_blank" : undefined}
-              rel={isExternalLink(project) ? "noopener noreferrer" : undefined}
-              className="block p-6 rounded-lg border border-border hover:border-primary/50 transition-colors flex flex-col"
+              onClick={() => {
+                const href = getProjectLink(project);
+                if (isExternalLink(project)) {
+                  window.open(href, "_blank", "noopener,noreferrer");
+                } else {
+                  window.location.href = href;
+                }
+              }}
+              className="block p-6 rounded-lg border border-border hover:border-primary/50 transition-colors flex flex-col cursor-pointer"
             >
               {/* Cover Image */}
               {project.coverImage && (
@@ -153,6 +158,7 @@ export default function ProjectsPage() {
                     href={project.githubUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
                     className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
                   >
                     <Github className="w-4 h-4" />
@@ -164,6 +170,7 @@ export default function ProjectsPage() {
                     href={project.demoUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
                     className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
                   >
                     <ExternalLink className="w-4 h-4" />
@@ -171,7 +178,7 @@ export default function ProjectsPage() {
                   </a>
                 )}
               </div>
-            </a>
+            </div>
           ))}
         </div>
       )}

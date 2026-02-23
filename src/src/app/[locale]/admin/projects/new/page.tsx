@@ -32,6 +32,10 @@ export default function NewProjectPage() {
   const [coverImage, setCoverImage] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
   const [published, setPublished] = useState(false);
+  const [linkType, setLinkType] = useState<"DETAIL" | "GITHUB" | "DEMO" | "EXTERNAL">("DETAIL");
+  const [detailType, setDetailType] = useState<"MARKDOWN" | "HTML" | "EXTERNAL">("MARKDOWN");
+  const [externalUrl, setExternalUrl] = useState("");
+  const [htmlFilePath, setHtmlFilePath] = useState("");
 
   // 内容和标题状态
   const [title, setTitle] = useState("");
@@ -60,6 +64,10 @@ export default function NewProjectPage() {
           coverImage,
           sortOrder: Number(sortOrder),
           published,
+          linkType,
+          detailType,
+          externalUrl,
+          htmlFilePath,
         }),
       });
 
@@ -182,6 +190,63 @@ export default function NewProjectPage() {
                 placeholder="React, Node.js, PostgreSQL"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">卡片点击行为</label>
+              <select
+                value={linkType}
+                onChange={(e) => setLinkType(e.target.value as typeof linkType)}
+                className="w-full px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-foreground)]"
+              >
+                <option value="DETAIL">跳转详情页</option>
+                <option value="GITHUB">跳转 GitHub</option>
+                <option value="DEMO">跳转 Demo</option>
+                <option value="EXTERNAL">跳转外部链接</option>
+              </select>
+            </div>
+            {linkType === "EXTERNAL" && (
+              <div>
+                <label className="block text-sm font-medium mb-2">外部链接</label>
+                <Input
+                  value={externalUrl}
+                  onChange={(e) => setExternalUrl(e.target.value)}
+                  placeholder="https://example.com"
+                />
+              </div>
+            )}
+            {linkType === "DETAIL" && (
+              <div>
+                <label className="block text-sm font-medium mb-2">详情页内容类型</label>
+                <select
+                  value={detailType}
+                  onChange={(e) => setDetailType(e.target.value as typeof detailType)}
+                  className="w-full px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-foreground)]"
+                >
+                  <option value="MARKDOWN">Markdown 内容</option>
+                  <option value="HTML">HTML 文件</option>
+                  <option value="EXTERNAL">外部链接</option>
+                </select>
+              </div>
+            )}
+            {linkType === "DETAIL" && detailType === "HTML" && (
+              <div>
+                <label className="block text-sm font-medium mb-2">HTML 文件路径</label>
+                <Input
+                  value={htmlFilePath}
+                  onChange={(e) => setHtmlFilePath(e.target.value)}
+                  placeholder="/assets/html/project.html"
+                />
+              </div>
+            )}
+            {linkType === "DETAIL" && detailType === "EXTERNAL" && (
+              <div>
+                <label className="block text-sm font-medium mb-2">外部链接</label>
+                <Input
+                  value={externalUrl}
+                  onChange={(e) => setExternalUrl(e.target.value)}
+                  placeholder="https://example.com"
+                />
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium mb-2">GitHub 链接</label>
               <Input
