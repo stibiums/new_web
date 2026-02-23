@@ -51,11 +51,12 @@ model Post {
 }
 
 model PostLink {
-  id       String @id @default(cuid())
+  id       String       @id @default(cuid())
   sourceId String
   targetId String
-  source   Post   @relation("source", fields: [sourceId], references: [id], onDelete: Cascade)
-  target   Post   @relation("target", fields: [targetId], references: [id], onDelete: Cascade)
+  type     PostLinkType @default(EXPLICIT)
+  source   Post         @relation("source", fields: [sourceId], references: [id], onDelete: Cascade)
+  target   Post         @relation("target", fields: [targetId], references: [id], onDelete: Cascade)
 
   @@unique([sourceId, targetId])
   @@index([sourceId])
@@ -72,6 +73,7 @@ model Project {
   content       String?           @db.LongText
   contentEn     String?           @db.LongText
   techStack     String?
+  tags          String?
   githubUrl     String?
   demoUrl       String?
   coverImage    String?
@@ -146,6 +148,12 @@ enum ProjectLinkType {
   GITHUB
   DEMO
   EXTERNAL
+}
+
+enum PostLinkType {
+  EXPLICIT
+  FRONT_MATTER
+  WIKI_LINK
 }
 
 enum ProjectDetailType {

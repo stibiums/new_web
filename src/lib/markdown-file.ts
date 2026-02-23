@@ -12,6 +12,8 @@ export interface FrontMatter {
   excerptEn?: string;
   category?: string;
   tags?: string[];
+  /** 显式声明的内链 slug 列表（front matter 链接）*/
+  links?: string[];
   coverImage?: string;
   published?: boolean;
   publishedAt?: string;

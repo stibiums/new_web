@@ -3,6 +3,79 @@ import { readMarkdownFile, listMarkdownFiles, getPublishedAt, FrontMatter } from
 import { getCurrentCommit } from './git';
 
 /**
+ * 从 Markdown 正文中提取所有 [[slug]] Wiki 链接中的 slug 列表
+ */
+function extractWikiLinks(content: string): string[] {
+  const matches = content.matchAll(/\[\[([^\]]+)\]\]/g);
+  const slugs: string[] = [];
+  for (const match of matches) {
+    const slug = match[1].trim();
+    if (slug) slugs.push(slug);
+  }
+  return [...new Set(slugs)]; // 去重
+}
+
+/**
+ * 同步某篇文章/笔记的链接关系到 PostLink 表
+ * 包括：WIKI_LINK（正文 [[slug]]）和 FRONT_MATTER（front matter links:）
+ */
+async function syncPostLinks(postId: string, content: string, frontMatterLinks: string[] = []) {
+  // 1. 从正文提取 wiki 链接 slug
+  const wikiSlugs = extractWikiLinks(content);
+
+  // 2. 将 slug 转换为 Post.id 的映射（只处理已存在的数据库记录）
+  const allSlugs = [...new Set([...wikiSlugs, ...frontMatterLinks])];
+  if (allSlugs.length === 0) {
+    // 清理所有旧的 WIKI_LINK / FRONT_MATTER 类型链接
+    await prisma.postLink.deleteMany({
+      where: {
+        sourceId: postId,
+        type: { in: ['WIKI_LINK', 'FRONT_MATTER'] as any },
+      },
+    });
+    return;
+  }
+
+  const targetPosts = await prisma.post.findMany({
+    where: { slug: { in: allSlugs } },
+    select: { id: true, slug: true },
+  });
+  const slugToId = new Map(targetPosts.map((p) => [p.slug, p.id]));
+
+  // 3. 构建期望的链接记录
+  const wikiLinks = wikiSlugs
+    .map((slug) => slugToId.get(slug))
+    .filter((id): id is string => !!id && id !== postId)
+    .map((targetId) => ({ sourceId: postId, targetId, type: 'WIKI_LINK' as const }));
+
+  const fmLinks = frontMatterLinks
+    .map((slug) => slugToId.get(slug))
+    .filter((id): id is string => !!id && id !== postId)
+    .map((targetId) => ({ sourceId: postId, targetId, type: 'FRONT_MATTER' as const }));
+
+  const desiredLinks = [...wikiLinks, ...fmLinks];
+
+  // 4. 删除已不存在的 WIKI_LINK / FRONT_MATTER 链接
+  const desiredTargetIds = desiredLinks.map((l) => l.targetId);
+  await prisma.postLink.deleteMany({
+    where: {
+      sourceId: postId,
+      type: { in: ['WIKI_LINK', 'FRONT_MATTER'] as any },
+      ...(desiredTargetIds.length > 0 ? { targetId: { notIn: desiredTargetIds } } : {}),
+    },
+  });
+
+  // 5. Upsert 新的链接（忽略已存在的相同 sourceId+targetId 记录，避免类型冲突时强制更新）
+  for (const link of desiredLinks) {
+    await prisma.postLink.upsert({
+      where: { sourceId_targetId: { sourceId: link.sourceId, targetId: link.targetId } },
+      update: { type: link.type },
+      create: link,
+    });
+  }
+}
+
+/**
  * 同步文章到数据库
  */
 export async function syncPostToDatabase(slug: string, commit = true): Promise<any | null> {
@@ -59,6 +132,9 @@ export async function syncPostToDatabase(slug: string, commit = true): Promise<a
       create: data,
     });
 
+    // 同步 Wiki 链接和 Front Matter 链接
+    await syncPostLinks(post.id, content, frontMatter.links || []);
+
     console.log(`[Sync] Post synced: ${slug}`);
     return post;
   } catch (error) {
@@ -111,6 +187,9 @@ export async function syncNoteToDatabase(slug: string, commit = true): Promise<a
       update: data,
       create: data,
     });
+
+    // 同步 Wiki 链接和 Front Matter 链接
+    await syncPostLinks(note.id, content, frontMatter.links || []);
 
     console.log(`[Sync] Note synced: ${slug}`);
     return note;

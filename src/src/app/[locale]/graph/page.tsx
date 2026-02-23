@@ -14,7 +14,7 @@ export default function GraphPage() {
   const locale = params.locale as string;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12">
+    <div className="max-w-7xl mx-auto px-4 py-12">
       <Link
         href={`/${locale}/notes`}
         className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary mb-8"
@@ -33,19 +33,8 @@ export default function GraphPage() {
         <p className="text-muted-foreground">{t("description")}</p>
       </div>
 
-      <div className="bg-card rounded-xl border border-border overflow-hidden">
+      <div className="bg-card rounded-xl border border-border overflow-hidden" style={{ height: "75vh", minHeight: 600 }}>
         <KnowledgeGraph locale={locale} />
-      </div>
-
-      <div className="mt-6 flex items-center gap-6 text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-blue-500" />
-          <span>{t("note")}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-emerald-500" />
-          <span>{t("blog")}</span>
-        </div>
       </div>
     </div>
   );

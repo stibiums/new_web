@@ -5,6 +5,8 @@ export type { SplitEditorProps } from "./SplitEditor";
 export { GitHistoryDialog } from "./GitHistoryDialog";
 export { ResourcePanel } from "./ResourcePanel";
 export type { ResourcePanelProps, ContentType } from "./ResourcePanel";
+export { WikiLinkPicker } from "./WikiLinkPicker";
+export type { WikiLinkPickerItem, WikiLinkPickerProps } from "./WikiLinkPicker";
 
 // YooptaEditorWrapper 和 PLUGINS/MARKS 使用懒加载导入，不在 barrel 中导出
 // 因为 @yoopta/themes-shadcn 包含未分层的全局 CSS 重置 (button { background-color: transparent })

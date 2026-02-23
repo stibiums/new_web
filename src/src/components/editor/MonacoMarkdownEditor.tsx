@@ -2,9 +2,10 @@
 
 import Editor, { OnMount } from "@monaco-editor/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Loader2, History, Image as ImageIcon, FileText, Video, FileCode } from "lucide-react";
+import { Loader2, History, Image as ImageIcon, FileText, Video, FileCode, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { GitHistoryDialog } from "./GitHistoryDialog";
+import { WikiLinkPicker } from "./WikiLinkPicker";
 import type { ContentType } from "./ResourcePanel";
 
 export interface MonacoMarkdownEditorProps {
@@ -76,6 +77,11 @@ export function MonacoMarkdownEditor({
   const [uploading, setUploading] = useState(false);
   // 拖拽悬停状态
   const [dragOverEditor, setDragOverEditor] = useState(false);
+  // Wiki 链接 Picker 状态
+  const [showWikiPicker, setShowWikiPicker] = useState(false);
+  const [wikiPickerQuery, setWikiPickerQuery] = useState("");
+  // 触发 [[ 时的光标起始位置（用于后续替换）
+  const wikiTriggerPos = useRef<{ lineNumber: number; column: number } | null>(null);
 
   // 检测系统主题
   useEffect(() => {
@@ -132,10 +138,30 @@ export function MonacoMarkdownEditor({
         }
       );
 
-      // 监听内容变化，确保实时更新
+      // 监听内容变化，确保实时更新，同时检测 [[ 触发 Wiki 链接 Picker
       editor.onDidChangeModelContent(() => {
         const currentValue = editor.getValue();
         onChange?.(currentValue);
+
+        // 检测光标前两字符是否为 [[
+        const position = editor.getPosition();
+        if (position) {
+          const model = editor.getModel();
+          if (model) {
+            const col = position.column;
+            const line = model.getLineContent(position.lineNumber);
+            const charsBefore = line.substring(0, col - 1);
+            if (charsBefore.endsWith("[[")) {
+              // 记录触发位置（[[ 开始的位置）
+              wikiTriggerPos.current = {
+                lineNumber: position.lineNumber,
+                column: col - 2, // [[ 的起始列
+              };
+              setWikiPickerQuery("");
+              setShowWikiPicker(true);
+            }
+          }
+        }
       });
 
       // 设置 Markdown 语言特性
@@ -239,6 +265,86 @@ export function MonacoMarkdownEditor({
     [onChange]
   );
 
+  // ─── Wiki 链接 Picker ─────────────────────────────────────────────────────
+
+  /** 工具栏点击"内链"按钮时：重置触发位置，打开 Picker */
+  const handleOpenWikiPicker = useCallback(() => {
+    wikiTriggerPos.current = null; // null 表示工具栏模式（直接插入，不替换 [[）
+    setWikiPickerQuery("");
+    setShowWikiPicker(true);
+  }, []);
+
+  /**
+   * 选中某个 slug 后的插入逻辑：
+   * - 若由 [[ 自动触发：找到已输入的 [[，整体替换为 [[slug]]
+   * - 若由工具栏触发：在当前光标处直接插入 [[slug]]
+   */
+  const handleWikiSelect = useCallback((slug: string) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const insertText = `[[${slug}]]`;
+    const position = editor.getPosition();
+
+    if (wikiTriggerPos.current && position) {
+      const trigger = wikiTriggerPos.current;
+      // 替换从 trigger.column 到当前光标列（包含已输入的 [[ 和查询前缀）
+      editor.executeEdits("wiki-link", [
+        {
+          range: {
+            startLineNumber: trigger.lineNumber,
+            startColumn: trigger.column,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column,
+          },
+          text: insertText,
+        },
+      ]);
+    } else if (position) {
+      // 工具栏触发：在当前光标处插入
+      editor.executeEdits("wiki-link", [
+        {
+          range: {
+            startLineNumber: position.lineNumber,
+            startColumn: position.column,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column,
+          },
+          text: insertText,
+        },
+      ]);
+    }
+
+    wikiTriggerPos.current = null;
+    setShowWikiPicker(false);
+    editor.focus();
+  }, []);
+
+  const handleWikiClose = useCallback(() => {
+    // 若是 [[ 自动触发后关闭，撤销已输入的 [[
+    const editor = editorRef.current;
+    if (editor && wikiTriggerPos.current) {
+      const trigger = wikiTriggerPos.current;
+      const position = editor.getPosition();
+      if (position) {
+        editor.executeEdits("wiki-link-cancel", [
+          {
+            range: {
+              startLineNumber: trigger.lineNumber,
+              startColumn: trigger.column,
+              endLineNumber: position.lineNumber,
+              endColumn: position.column,
+            },
+            text: "",
+          },
+        ]);
+      }
+    }
+    wikiTriggerPos.current = null;
+    setShowWikiPicker(false);
+    editor?.focus();
+  }, []);
+
   // 拖拽上传/插入处理
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -314,6 +420,18 @@ export function MonacoMarkdownEditor({
       {!hideToolbar && (
         <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border)] bg-[var(--color-muted)]/30">
           <div className="flex items-center gap-1">
+            {/* 内链 Wiki 链接按钮 */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleOpenWikiPicker}
+              disabled={readOnly}
+              title="插入内链 [[slug]]"
+            >
+              <Link2 className="w-4 h-4" />
+              <span className="ml-1 hidden sm:inline">内链</span>
+            </Button>
+
             {/* 上传图片按钮 */}
             <Button
               variant="ghost"
@@ -446,6 +564,15 @@ export function MonacoMarkdownEditor({
           filePath={filePath}
           currentContent={value}
           onRevert={handleRevert}
+        />
+      )}
+
+      {/* Wiki 链接 Picker */}
+      {showWikiPicker && (
+        <WikiLinkPicker
+          initialQuery={wikiPickerQuery}
+          onSelect={handleWikiSelect}
+          onClose={handleWikiClose}
         />
       )}
     </div>
