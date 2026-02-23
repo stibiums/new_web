@@ -60,6 +60,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       coverImage,
       published,
       sortOrder,
+      linkType,
+      detailType,
+      externalUrl,
+      htmlFilePath,
     } = body;
 
     // Check if project exists
@@ -132,6 +136,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         sortOrder: sortOrder !== undefined ? sortOrder : existing.sortOrder,
         filePath: newContent ? filePath : existing.filePath,
         gitCommit,
+        linkType: linkType !== undefined ? linkType : existing.linkType,
+        detailType: detailType !== undefined ? detailType : existing.detailType,
+        externalUrl: externalUrl !== undefined ? externalUrl : existing.externalUrl,
+        htmlFilePath: htmlFilePath !== undefined ? htmlFilePath : existing.htmlFilePath,
       },
     });
 

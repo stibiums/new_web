@@ -74,6 +74,10 @@ export async function POST(request: NextRequest) {
       coverImage,
       published,
       sortOrder,
+      linkType,
+      detailType,
+      externalUrl,
+      htmlFilePath,
     } = body;
 
     // Validate required fields
@@ -131,6 +135,10 @@ export async function POST(request: NextRequest) {
         sortOrder: sortOrder || 0,
         filePath: content ? filePath : null,
         gitCommit,
+        linkType: linkType || "DETAIL",
+        detailType: detailType || "MARKDOWN",
+        externalUrl: externalUrl || null,
+        htmlFilePath: htmlFilePath || null,
       },
     });
 

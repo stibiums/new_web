@@ -63,24 +63,28 @@ model PostLink {
 }
 
 model Project {
-  id            String   @id @default(cuid())
-  slug          String   @unique
+  id            String            @id @default(cuid())
+  slug          String            @unique
   title         String
   titleEn       String?
-  description   String?  @db.Text
-  descriptionEn String?  @db.Text
-  content       String?  @db.LongText
-  contentEn     String?  @db.LongText
+  description   String?           @db.Text
+  descriptionEn String?           @db.Text
+  content       String?           @db.LongText
+  contentEn     String?           @db.LongText
   techStack     String?
   githubUrl     String?
   demoUrl       String?
   coverImage    String?
-  filePath      String?  // Markdown 文件路径
-  gitCommit     String?  // 最新 Git commit hash
-  published     Boolean  @default(false)
-  sortOrder     Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  filePath      String?           // Markdown 文件路径
+  gitCommit     String?           // 最新 Git commit hash
+  published     Boolean           @default(false)
+  sortOrder     Int               @default(0)
+  linkType      ProjectLinkType   @default(DETAIL)
+  detailType    ProjectDetailType @default(MARKDOWN)
+  externalUrl   String?
+  htmlFilePath  String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 }
 
 model Publication {
@@ -135,4 +139,17 @@ enum PostType {
 
 enum Role {
   ADMIN
+}
+
+enum ProjectLinkType {
+  DETAIL
+  GITHUB
+  DEMO
+  EXTERNAL
+}
+
+enum ProjectDetailType {
+  MARKDOWN
+  HTML
+  EXTERNAL
 }

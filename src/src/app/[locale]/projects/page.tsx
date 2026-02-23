@@ -17,6 +17,10 @@ interface Project {
   techStack: string | null;
   githubUrl: string | null;
   demoUrl: string | null;
+  linkType: "DETAIL" | "GITHUB" | "DEMO" | "EXTERNAL";
+  detailType: "MARKDOWN" | "HTML" | "EXTERNAL";
+  externalUrl: string | null;
+  htmlFilePath: string | null;
 }
 
 export default function ProjectsPage() {
@@ -58,6 +62,26 @@ export default function ProjectsPage() {
     return project.techStack.split(",").map((tech) => tech.trim());
   };
 
+  // 根据 linkType 获取卡片跳转链接
+  const getProjectLink = (project: Project) => {
+    switch (project.linkType) {
+      case "GITHUB":
+        return project.githubUrl || "#";
+      case "DEMO":
+        return project.demoUrl || "#";
+      case "EXTERNAL":
+        return project.externalUrl || "#";
+      case "DETAIL":
+      default:
+        return `/${locale}/projects/${project.slug}`;
+    }
+  };
+
+  // 判断是否为外部链接
+  const isExternalLink = (project: Project) => {
+    return project.linkType === "GITHUB" || project.linkType === "DEMO" || project.linkType === "EXTERNAL";
+  };
+
   if (loading) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-12">
@@ -84,9 +108,12 @@ export default function ProjectsPage() {
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
-            <div
+            <a
               key={project.id}
-              className="p-6 rounded-lg border border-border hover:border-primary/50 transition-colors flex flex-col"
+              href={getProjectLink(project)}
+              target={isExternalLink(project) ? "_blank" : undefined}
+              rel={isExternalLink(project) ? "noopener noreferrer" : undefined}
+              className="block p-6 rounded-lg border border-border hover:border-primary/50 transition-colors flex flex-col"
             >
               {/* Cover Image */}
               {project.coverImage && (
@@ -144,7 +171,7 @@ export default function ProjectsPage() {
                   </a>
                 )}
               </div>
-            </div>
+            </a>
           ))}
         </div>
       )}

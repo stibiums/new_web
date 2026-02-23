@@ -17,6 +17,10 @@ export async function GET() {
         techStack: true,
         githubUrl: true,
         demoUrl: true,
+        linkType: true,
+        detailType: true,
+        externalUrl: true,
+        htmlFilePath: true,
         createdAt: true,
       },
     });
