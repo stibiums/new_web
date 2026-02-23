@@ -12,6 +12,7 @@ interface Note {
   title: string;
   titleEn: string | null;
   category: string | null;
+  tags: string | null;
   publishedAt: string | null;
 }
 
@@ -42,6 +43,11 @@ export default function NotesPage() {
 
   const getTitle = (note: Note) => {
     return locale === "en" && note.titleEn ? note.titleEn : note.title;
+  };
+
+  const getTags = (note: Note) => {
+    if (!note.tags) return [];
+    return note.tags.split(",").map((tag) => tag.trim()).filter(Boolean);
   };
 
   // Group notes by category
@@ -93,19 +99,28 @@ export default function NotesPage() {
                   <Link
                     key={note.id}
                     href={`/${locale}/notes/${note.slug}`}
-                    className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors group"
+                    className="flex items-start justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors group"
                   >
-                    <div className="flex items-center gap-3">
-                      <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                      <span className="font-medium">{getTitle(note)}</span>
-                      {note.category && (
-                        <span className="px-2 py-0.5 rounded bg-muted text-xs text-muted-foreground">
-                          {note.category}
-                        </span>
-                      )}
+                    <div className="flex items-start gap-3 min-w-0">
+                      <ArrowRight className="w-4 h-4 mt-0.5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                      <div className="min-w-0">
+                        <span className="font-medium">{getTitle(note)}</span>
+                        {getTags(note).length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mt-1.5">
+                            {getTags(note).map((tag) => (
+                              <span
+                                key={tag}
+                                className="px-2 py-0.5 rounded bg-muted text-xs text-muted-foreground"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     {note.publishedAt && (
-                      <span className="text-sm text-muted-foreground shrink-0">
+                      <span className="text-sm text-muted-foreground shrink-0 ml-4 mt-0.5">
                         {new Date(note.publishedAt).toLocaleDateString()}
                       </span>
                     )}
