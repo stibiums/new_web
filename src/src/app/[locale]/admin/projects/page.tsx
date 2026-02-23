@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Link, usePathname } from "@/i18n/routing";
+import { Link, usePathname, useRouter } from "@/i18n/routing";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 
 interface Project {
   id: string;
@@ -27,6 +28,7 @@ interface Project {
 
 export default function ProjectsPage() {
   const pathname = usePathname();
+  const router = useRouter();
   const params = useParams();
   const locale = params.locale as string;
 
@@ -154,7 +156,8 @@ export default function ProjectsPage() {
                     {projects.map((project) => (
                       <tr
                         key={project.id}
-                        className="border-b border-[var(--color-border)] hover:bg-[var(--color-muted)]"
+                        className="border-b border-[var(--color-border)] hover:bg-[var(--color-muted)] cursor-pointer"
+                        onClick={() => router.push(`/admin/projects/${project.id}/edit`)}
                       >
                         <td className="py-3 px-4">
                           <div className="font-medium">{project.title}</div>
@@ -183,6 +186,7 @@ export default function ProjectsPage() {
                                 href={project.demoUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
                                 className="text-sm px-3 py-1 rounded hover:bg-[var(--color-muted)]"
                               >
                                 Demo
@@ -193,25 +197,19 @@ export default function ProjectsPage() {
                                 href={project.githubUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
                                 className="text-sm px-3 py-1 rounded hover:bg-[var(--color-muted)]"
                               >
                                 GitHub
                               </a>
                             )}
-                            <Link 
-                              href={`/admin/projects/${project.id}/edit`}
-                              className="inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 bg-transparent hover:bg-[var(--color-muted)] text-[var(--color-foreground)] h-8 px-3 text-sm"
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDelete(project.id); }}
+                              className="p-1.5 rounded text-[var(--color-muted-foreground)] hover:text-red-600 hover:bg-red-50 transition-colors"
+                              title="删除"
                             >
-                              编辑
-                            </Link>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(project.id)}
-                              className="text-red-500 hover:text-red-600"
-                            >
-                              删除
-                            </Button>
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         </td>
                       </tr>

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 
 interface Note {
   id: string;
@@ -151,7 +152,8 @@ export default function NotesPage() {
                     {notes.map((note) => (
                       <tr
                         key={note.id}
-                        className="border-b border-[var(--color-border)] hover:bg-[var(--color-muted)]"
+                        className="border-b border-[var(--color-border)] hover:bg-[var(--color-muted)] cursor-pointer"
+                        onClick={() => router.push(`/admin/notes/${note.id}/edit`)}
                       >
                         <td className="py-3 px-4">
                           <div className="font-medium">{note.title}</div>
@@ -172,20 +174,13 @@ export default function NotesPage() {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex justify-end gap-2">
-                            <Link 
-                              href={`/admin/notes/${note.id}/edit`}
-                              className="inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 bg-transparent hover:bg-[var(--color-muted)] text-[var(--color-foreground)] h-8 px-3 text-sm"
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDelete(note.id); }}
+                              className="p-1.5 rounded text-[var(--color-muted-foreground)] hover:text-red-600 hover:bg-red-50 transition-colors"
+                              title="删除"
                             >
-                              编辑
-                            </Link>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(note.id)}
-                              className="text-red-500 hover:text-red-600"
-                            >
-                              删除
-                            </Button>
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         </td>
                       </tr>
