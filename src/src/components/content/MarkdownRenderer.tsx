@@ -75,6 +75,17 @@ export function MarkdownRenderer({ content, className = "", enableSourceLines = 
     return <p className="text-muted-foreground">暂无内容</p>;
   }
 
+  /**
+   * 预处理 Wiki 链接：将 [[type/slug]] 转换为标准 Markdown 超链接
+   * 示例: [[notes/cv-ch02]] → [cv-ch02](/notes/cv-ch02)
+   *         [[blog/my-post]]  → [my-post](/blog/my-post)
+   * 旧格式 [[slug]] （无路径前缀）保持原样不变
+   */
+  const processedContent = content.replace(
+    /\[\[([a-z]+)\/([a-zA-Z0-9_-]+)\]\]/g,
+    (_, type, slug) => `[${slug}](/${type}/${slug})`
+  );
+
   // rehypeSourceLine 必须在 rehypeKatex 之前运行，以捕获原始 position 信息
   const rehypePluginList = [
     ...(enableSourceLines ? [rehypeSourceLine] : []),
@@ -89,6 +100,7 @@ export function MarkdownRenderer({ content, className = "", enableSourceLines = 
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={rehypePluginList}
+        children={processedContent}
         components={{
           // 1. 自定义 a 标签 (内部链接使用 next/link)
           a({ href, children, ...props }) {
@@ -255,9 +267,7 @@ export function MarkdownRenderer({ content, className = "", enableSourceLines = 
             );
           },
         }}
-      >
-        {content}
-      </ReactMarkdown>
+      />
     </div>
   );
 }

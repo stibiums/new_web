@@ -3,13 +3,15 @@ import { readMarkdownFile, listMarkdownFiles, getPublishedAt, FrontMatter } from
 import { getCurrentCommit } from './git';
 
 /**
- * 从 Markdown 正文中提取所有 [[slug]] Wiki 链接中的 slug 列表
+ * 从 Markdown 正文中提取所有 [[slug]] / [[type/slug]] Wiki 链接中的 slug 列表
  */
 function extractWikiLinks(content: string): string[] {
   const matches = content.matchAll(/\[\[([^\]]+)\]\]/g);
   const slugs: string[] = [];
   for (const match of matches) {
-    const slug = match[1].trim();
+    const raw = match[1].trim();
+    // 支持 [[type/slug]] 和 [[slug]] 两种格式
+    const slug = raw.includes('/') ? raw.split('/').pop()! : raw;
     if (slug) slugs.push(slug);
   }
   return [...new Set(slugs)]; // 去重

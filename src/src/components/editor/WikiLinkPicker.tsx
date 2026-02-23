@@ -12,8 +12,8 @@ export interface WikiLinkPickerItem {
 }
 
 export interface WikiLinkPickerProps {
-  /** 确认选择某个内容时的回调，传入 slug */
-  onSelect: (slug: string) => void;
+  /** 确认选择某个内容时的回调，传入完整 item */
+  onSelect: (item: WikiLinkPickerItem) => void;
   /** 关闭 Picker（Esc 或点击外部）*/
   onClose: () => void;
   /** 定位用的锚点位置，相对于外层容器 */
@@ -42,7 +42,6 @@ export function WikiLinkPicker({
   const [loading, setLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-  const listRef = useRef<HTMLUListElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -60,7 +59,7 @@ export function WikiLinkPicker({
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/admin/content-list?q=${encodeURIComponent(q)}&limit=15`
+        `/api/admin/content-list?q=${encodeURIComponent(q)}&limit=8`
       );
       if (!res.ok) return;
       const data = await res.json();
@@ -84,28 +83,22 @@ export function WikiLinkPicker({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
+      e.stopPropagation();
       setActiveIndex((i) => Math.min(i + 1, items.length - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
+      e.stopPropagation();
       setActiveIndex((i) => Math.max(i - 1, 0));
     } else if (e.key === "Enter") {
       e.preventDefault();
       if (items[activeIndex]) {
-        onSelect(items[activeIndex].slug);
+        onSelect(items[activeIndex]);
       }
     } else if (e.key === "Escape") {
       e.preventDefault();
       onClose();
     }
   };
-
-  // 确保激活项可见
-  useEffect(() => {
-    const list = listRef.current;
-    if (!list) return;
-    const item = list.children[activeIndex] as HTMLElement | undefined;
-    item?.scrollIntoView({ block: "nearest" });
-  }, [activeIndex]);
 
   // 点击外部关闭
   useEffect(() => {
@@ -144,8 +137,8 @@ export function WikiLinkPicker({
         {loading && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />}
       </div>
 
-      {/* 结果列表 */}
-      <ul ref={listRef} className="max-h-64 overflow-y-auto py-1">
+      {/* 结果列表 - 不滚动，全展示，删小按键切换高亮 */}
+      <ul className="py-1">
         {items.length === 0 && !loading ? (
           <li className="px-3 py-6 text-center text-sm text-muted-foreground">
             {query ? "未找到匹配内容" : "暂无内容"}
@@ -158,12 +151,15 @@ export function WikiLinkPicker({
             return (
               <li
                 key={item.id}
-                className={`flex items-center gap-2.5 px-3 py-2 cursor-pointer select-none transition-colors
-                  ${isActive ? "bg-[var(--color-muted)]" : "hover:bg-[var(--color-muted)]/60"}`}
+                className={`flex items-center gap-2.5 py-2 cursor-pointer select-none transition-colors border-l-2
+                  ${isActive
+                    ? "bg-[var(--color-muted)] border-[var(--color-primary)] pl-[calc(0.75rem-2px)]"
+                    : "border-transparent px-3 hover:bg-[var(--color-muted)]/60"
+                  }`}
                 onMouseEnter={() => setActiveIndex(i)}
                 onMouseDown={(e) => {
                   e.preventDefault(); // 防止失焦
-                  onSelect(item.slug);
+                  onSelect(item);
                 }}
               >
                 {/* 类型 Badge */}

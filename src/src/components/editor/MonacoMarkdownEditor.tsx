@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, History, Image as ImageIcon, FileText, Video, FileCode, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { GitHistoryDialog } from "./GitHistoryDialog";
-import { WikiLinkPicker } from "./WikiLinkPicker";
+import { WikiLinkPicker, type WikiLinkPickerItem } from "./WikiLinkPicker";
 import type { ContentType } from "./ResourcePanel";
 
 export interface MonacoMarkdownEditorProps {
@@ -275,15 +275,22 @@ export function MonacoMarkdownEditor({
   }, []);
 
   /**
-   * 选中某个 slug 后的插入逻辑：
-   * - 若由 [[ 自动触发：找到已输入的 [[，整体替换为 [[slug]]
-   * - 若由工具栏触发：在当前光标处直接插入 [[slug]]
+   * 选中某个 item 后的插入逻辑：
+   * - 若由 [[ 自动触发：找到已输入的 [[，整体替换为 [[type/slug]]
+   * - 若由工具栏触发：在当前光标处直接插入 [[type/slug]]
    */
-  const handleWikiSelect = useCallback((slug: string) => {
+  const handleWikiSelect = useCallback((item: WikiLinkPickerItem) => {
     const editor = editorRef.current;
     if (!editor) return;
 
-    const insertText = `[[${slug}]]`;
+    // nodeType → URL 路径前缀
+    const pathPrefixMap: Record<WikiLinkPickerItem["nodeType"], string> = {
+      NOTE: "notes",
+      BLOG: "blog",
+      PROJECT: "projects",
+    };
+    const prefix = pathPrefixMap[item.nodeType];
+    const insertText = `[[${prefix}/${item.slug}]]`;
     const position = editor.getPosition();
 
     if (wikiTriggerPos.current && position) {
