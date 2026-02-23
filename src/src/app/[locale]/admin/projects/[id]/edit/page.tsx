@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/i18n/routing";
 import { SplitEditor } from "@/components/editor/SplitEditor";
@@ -25,6 +25,7 @@ export default function EditProjectPage() {
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [htmlUploading, setHtmlUploading] = useState(false);
 
   // 元信息弹窗
   const [metaOpen, setMetaOpen] = useState(false);
@@ -144,6 +145,29 @@ export default function EditProjectPage() {
 
   const handleMetaSave = () => {
     setMetaOpen(false);
+  };
+
+  const htmlFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleHtmlUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setHtmlUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", "html");
+      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "上传失败");
+      setHtmlFilePath(data.url);
+      toast.success("HTML 文件上传成功");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "上传失败");
+    } finally {
+      setHtmlUploading(false);
+      if (htmlFileInputRef.current) htmlFileInputRef.current.value = "";
+    }
   };
 
   if (fetching) {
@@ -321,11 +345,30 @@ export default function EditProjectPage() {
             {linkType === "DETAIL" && detailType === "HTML" && (
               <div>
                 <label className="block text-sm font-medium mb-2">HTML 文件路径</label>
-                <Input
-                  value={htmlFilePath}
-                  onChange={(e) => setHtmlFilePath(e.target.value)}
-                  placeholder="/assets/html/project.html"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    value={htmlFilePath}
+                    onChange={(e) => setHtmlFilePath(e.target.value)}
+                    placeholder="/assets/html/project.html"
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    loading={htmlUploading}
+                    onClick={() => htmlFileInputRef.current?.click()}
+                  >
+                    上传
+                  </Button>
+                  <input
+                    ref={htmlFileInputRef}
+                    type="file"
+                    accept=".html,.htm"
+                    className="hidden"
+                    onChange={handleHtmlUpload}
+                  />
+                </div>
               </div>
             )}
             {linkType === "DETAIL" && detailType === "EXTERNAL" && (

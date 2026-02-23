@@ -32,6 +32,11 @@ const ASSET_TYPES: Record<string, AssetConfig> = {
     maxSize: 10 * 1024 * 1024, // 10MB
     subDir: "jupyter",
   },
+  html: {
+    allowedTypes: ["text/html", "application/xhtml+xml"],
+    maxSize: 20 * 1024 * 1024, // 20MB
+    subDir: "html",
+  },
 };
 
 type AssetType = keyof typeof ASSET_TYPES;
@@ -63,6 +68,8 @@ function getExtension(mimeType: string): string {
     "video/ogg": ".ogv",
     "application/json": ".json",
     "application/x-ipynb+json": ".ipynb",
+    "text/html": ".html",
+    "application/xhtml+xml": ".xhtml",
   };
   return extMap[mimeType] || "";
 }
