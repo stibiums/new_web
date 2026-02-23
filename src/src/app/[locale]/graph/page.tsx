@@ -4,37 +4,30 @@ import { useTranslations } from "next-intl";
 import { Network } from "lucide-react";
 import { KnowledgeGraph } from "@/components/graph/KnowledgeGraph";
 import { useParams } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 
 export default function GraphPage() {
   const t = useTranslations("graph");
-  const tCommon = useTranslations("common");
   const params = useParams();
   const locale = params.locale as string;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12">
-      <Link
-        href={`/${locale}/notes`}
-        className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary mb-8"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        {tCommon("back")}
-      </Link>
-
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Network className="w-6 h-6 text-primary" />
-          </div>
-          <h1 className="text-3xl font-bold">{t("title")}</h1>
+    <div className="flex flex-col" style={{ height: "100dvh", overflow: "hidden" }}>
+      {/* 顶部标题栏 */}
+      <div className="flex items-center gap-3 px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-background)] shrink-0">
+        <div className="p-1.5 rounded-lg bg-primary/10">
+          <Network className="w-5 h-5 text-primary" />
         </div>
-        <p className="text-muted-foreground">{t("description")}</p>
+        <div>
+          <h1 className="text-base font-semibold leading-tight">{t("title")}</h1>
+          <p className="text-xs text-muted-foreground leading-tight">{t("description")}</p>
+        </div>
       </div>
 
-      <div className="bg-card rounded-xl border border-border overflow-hidden" style={{ height: "75vh", minHeight: 600 }}>
-        <KnowledgeGraph locale={locale} />
+      {/* 图谱主体，撑满剩余高度，两侧留白 */}
+      <div className="flex-1 min-h-0 overflow-hidden px-6 py-4">
+        <div className="w-full h-full rounded-xl overflow-hidden bg-card border border-[var(--color-border)]">
+          <KnowledgeGraph locale={locale} />
+        </div>
       </div>
     </div>
   );

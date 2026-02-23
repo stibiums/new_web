@@ -93,6 +93,15 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
   // ── 图例显示 ────────────────────────────────────────────────────────────
   const [showLegend, setShowLegend] = useState(true);
 
+  // 禁止宿主页面滚动
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
   // ────────────────────────────────────────────────────────────────────────
   // 数据加载
   // ────────────────────────────────────────────────────────────────────────
@@ -249,8 +258,8 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
       .enter()
       .append("line")
       .attr("stroke", (e) => EDGE_COLOR[e.type])
-      .attr("stroke-opacity", (e) => (e.type === "TAG_NODE" || e.type === "CATEGORY" ? 0.25 : 0.55))
-      .attr("stroke-width", (e) => (e.type === "TAG_COOCCURRENCE" || e.type === "CATEGORY" ? 1 : 1.5))
+      .attr("stroke-opacity", (e) => (e.type === "TAG_NODE" || e.type === "CATEGORY" ? 0.45 : 0.75))
+      .attr("stroke-width", (e) => (e.type === "TAG_COOCCURRENCE" || e.type === "CATEGORY" ? 1.5 : 2.5))
       .attr("stroke-dasharray", (e) =>
         e.type === "TAG_NODE" ? "4 3" : e.type === "CATEGORY" ? "2 2" : null
       )
