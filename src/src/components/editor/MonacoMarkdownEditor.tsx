@@ -288,14 +288,22 @@ export function MonacoMarkdownEditor({
 
     if (wikiTriggerPos.current && position) {
       const trigger = wikiTriggerPos.current;
-      // 替换从 trigger.column 到当前光标列（包含已输入的 [[ 和查询前缀）
+      // 防御性处理：检查光标后是否存在 Monaco 自动补全插入的 ]]，若有则一并替换
+      let endColumn = position.column;
+      const model = editor.getModel();
+      if (model) {
+        const lineContent = model.getLineContent(position.lineNumber);
+        const afterCursor = lineContent.substring(position.column - 1);
+        if (afterCursor.startsWith("]")) endColumn += 1;
+        if (afterCursor.startsWith("]]")) endColumn += 1;
+      }
       editor.executeEdits("wiki-link", [
         {
           range: {
             startLineNumber: trigger.lineNumber,
             startColumn: trigger.column,
             endLineNumber: position.lineNumber,
-            endColumn: position.column,
+            endColumn,
           },
           text: insertText,
         },
@@ -551,6 +559,9 @@ export function MonacoMarkdownEditor({
           acceptSuggestionOnEnter: "off",
           tabCompletion: "off",
           wordBasedSuggestions: "off",
+          autoClosingBrackets: "never",
+          autoClosingQuotes: "never",
+          autoSurround: "never",
           // 允许拖拽
           dragAndDrop: true,
         }}

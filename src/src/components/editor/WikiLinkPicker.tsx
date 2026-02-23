@@ -139,6 +139,7 @@ export function WikiLinkPicker({
           placeholder="搜索笔记、文章、项目…"
           value={query}
           onChange={(e) => handleQueryChange(e.target.value)}
+          onKeyDown={handleKeyDown}
         />
         {loading && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />}
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Monitor, Columns, FileCode, History, FolderOpen } from "lucide-react";
+import { Monitor, Columns, FileCode, History, FolderOpen, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { MonacoMarkdownEditor } from "./MonacoMarkdownEditor";
 import { MarkdownRenderer } from "@/components/content/MarkdownRenderer";
@@ -532,6 +532,19 @@ export function SplitEditor({
   // ─── 悬浮操作按钮（资源 + 历史），绝对定位于编辑器右上角 ────────
   const floatingActions = (
     <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+      {/* 内链 Wiki 链接按钮 */}
+      <button
+        onClick={() => {
+          if (readOnly) return;
+          monacoEditorRef.current?.focus();
+          monacoEditorRef.current?.trigger("keyboard", "type", { text: "[[" });
+        }}
+        disabled={readOnly}
+        title="插入内链 [[slug]]"
+        className="w-7 h-7 flex items-center justify-center rounded-md bg-[var(--color-muted)]/80 hover:bg-[var(--color-muted)] text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors backdrop-blur-sm"
+      >
+        <Link2 className="w-3.5 h-3.5" />
+      </button>
       <button
         onClick={() => setShowResourcePanel(true)}
         disabled={readOnly}
