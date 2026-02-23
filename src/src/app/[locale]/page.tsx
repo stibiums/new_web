@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ArrowRight, ExternalLink, Calendar, Eye } from "lucide-react";
+import { ArrowRight, ExternalLink, Calendar, Eye, Github } from "lucide-react";
 import { SocialIcon } from "@/components/ui/SocialIcon";
 
 interface Post {
@@ -30,6 +30,8 @@ interface Project {
   techStack: string | null;
   githubUrl: string | null;
   demoUrl: string | null;
+  linkType: "DETAIL" | "GITHUB" | "DEMO" | "EXTERNAL";
+  externalUrl: string | null;
 }
 
 export default function Home() {
@@ -248,10 +250,25 @@ export default function Home() {
           <p className="text-muted-foreground">暂无项目</p>
         ) : (
           <div className="grid md:grid-cols-2 gap-4">
-            {recentProjects.map((project) => (
+            {recentProjects.map((project) => {
+              const getProjectHref = () => {
+                switch (project.linkType) {
+                  case "GITHUB": return project.githubUrl || "#";
+                  case "DEMO": return project.demoUrl || "#";
+                  case "EXTERNAL": return project.externalUrl || "#";
+                  default: return `/${locale}/projects/${project.slug}`;
+                }
+              };
+              const isExternal = project.linkType !== "DETAIL";
+              return (
               <div
                 key={project.id}
-                className="p-6 rounded-lg border border-border hover:border-primary/50 transition-colors flex flex-col"
+                onClick={() => {
+                  const href = getProjectHref();
+                  if (isExternal) window.open(href, "_blank", "noopener,noreferrer");
+                  else window.location.href = href;
+                }}
+                className="p-6 rounded-lg border border-border hover:border-primary/50 transition-colors flex flex-col cursor-pointer"
               >
                 <h3 className="text-lg font-semibold mb-2">{getTitle(project)}</h3>
 
@@ -280,6 +297,7 @@ export default function Home() {
                       href={project.githubUrl}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
                       className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
                     >
                       <Github className="w-4 h-4" />
@@ -291,6 +309,7 @@ export default function Home() {
                       href={project.demoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
                       className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
                     >
                       <ExternalLink className="w-4 h-4" />
@@ -299,7 +318,8 @@ export default function Home() {
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

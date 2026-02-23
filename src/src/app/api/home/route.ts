@@ -46,6 +46,10 @@ export async function GET() {
           descriptionEn: true,
           coverImage: true,
           techStack: true,
+          githubUrl: true,
+          demoUrl: true,
+          linkType: true,
+          externalUrl: true,
         },
       }),
     ]);
