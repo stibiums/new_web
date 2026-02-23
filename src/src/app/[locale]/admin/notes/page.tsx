@@ -16,6 +16,7 @@ interface Note {
   title: string;
   titleEn: string | null;
   type: string;
+  category: string | null;
   published: boolean;
   views: number;
   createdAt: string;
@@ -142,6 +143,7 @@ export default function NotesPage() {
                   <thead>
                     <tr className="border-b border-[var(--color-border)]">
                       <th className="text-left py-3 px-4 font-medium">标题</th>
+                      <th className="text-left py-3 px-4 font-medium">分类</th>
                       <th className="text-left py-3 px-4 font-medium">状态</th>
                       <th className="text-left py-3 px-4 font-medium">浏览量</th>
                       <th className="text-left py-3 px-4 font-medium">创建时间</th>
@@ -162,6 +164,9 @@ export default function NotesPage() {
                               {note.titleEn}
                             </div>
                           )}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-[var(--color-muted-foreground)]">
+                          {note.category || <span className="text-[var(--color-muted-foreground)]/50">—</span>}
                         </td>
                         <td className="py-3 px-4">
                           <Badge variant={note.published ? "success" : "outline"}>
