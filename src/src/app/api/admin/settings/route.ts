@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { invalidateGitConfigCache } from "@/lib/git";
 
 // 预定义的配置项
 const ALLOWED_KEYS = [
@@ -123,6 +124,11 @@ export async function PATCH(request: Request) {
     });
 
     await Promise.all(updates.filter(Boolean));
+
+    // 清除 Git 配置缓存（git_name/git_email/git_remote_url 可能已变更）
+    if ('git_name' in settings || 'git_email' in settings || 'git_remote_url' in settings) {
+      invalidateGitConfigCache();
+    }
 
     // 返回更新后的所有设置
     const configs = await prisma.siteConfig.findMany({

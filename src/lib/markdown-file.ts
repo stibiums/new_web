@@ -1,4 +1,5 @@
 import fs from 'fs';
+import fsPromises from 'fs/promises';
 import path from 'path';
 import matter from 'gray-matter';
 
@@ -68,42 +69,40 @@ export function fileExists(type: 'posts' | 'notes' | 'projects', slug: string): 
 /**
  * 读取 Markdown 文件
  */
-export function readMarkdownFile(type: 'posts' | 'notes' | 'projects', slug: string): MarkdownFile | null {
+export async function readMarkdownFile(type: 'posts' | 'notes' | 'projects', slug: string): Promise<MarkdownFile | null> {
   const filePath = getFilePath(type, slug);
 
-  if (!fs.existsSync(filePath)) {
+  try {
+    const raw = await fsPromises.readFile(filePath, 'utf-8');
+    const { frontMatter, content } = parseFrontMatter(raw);
+
+    return {
+      content,
+      frontMatter,
+      raw,
+    };
+  } catch {
     return null;
   }
-
-  const raw = fs.readFileSync(filePath, 'utf-8');
-  const { frontMatter, content } = parseFrontMatter(raw);
-
-  return {
-    content,
-    frontMatter,
-    raw,
-  };
 }
 
 /**
  * 写入 Markdown 文件
  */
-export function writeMarkdownFile(
+export async function writeMarkdownFile(
   type: 'posts' | 'notes' | 'projects',
   slug: string,
   frontMatter: FrontMatter,
   content: string
-): boolean {
+): Promise<boolean> {
   const filePath = getFilePath(type, slug);
   const dir = path.dirname(filePath);
 
   // 确保目录存在
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+  await fsPromises.mkdir(dir, { recursive: true });
 
   const raw = buildFrontMatter(frontMatter, content);
-  fs.writeFileSync(filePath, raw, 'utf-8');
+  await fsPromises.writeFile(filePath, raw, 'utf-8');
 
   return true;
 }
@@ -111,15 +110,15 @@ export function writeMarkdownFile(
 /**
  * 删除 Markdown 文件
  */
-export function deleteMarkdownFile(type: 'posts' | 'notes' | 'projects', slug: string): boolean {
+export async function deleteMarkdownFile(type: 'posts' | 'notes' | 'projects', slug: string): Promise<boolean> {
   const filePath = getFilePath(type, slug);
 
-  if (!fs.existsSync(filePath)) {
+  try {
+    await fsPromises.unlink(filePath);
+    return true;
+  } catch {
     return false;
   }
-
-  fs.unlinkSync(filePath);
-  return true;
 }
 
 /**

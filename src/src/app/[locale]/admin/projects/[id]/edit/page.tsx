@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/i18n/routing";
 import { SplitEditor } from "@/components/editor/SplitEditor";
@@ -51,6 +51,13 @@ export default function EditProjectPage() {
   const [gitCommit, setGitCommit] = useState<string | null>(null);
   // 保存状态
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
+  // Memoized onSave 回调
+  const handleEditorSave = useCallback(async (value: string) => {
+    setContent(value);
+    const form = document.getElementById("edit-form") as HTMLFormElement | null;
+    if (form) form.requestSubmit();
+  }, []);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -262,11 +269,7 @@ export default function EditProjectPage() {
           <SplitEditor
             value={content}
             onChange={setContent}
-            onSave={async (value) => {
-              setContent(value);
-              const form = document.getElementById("edit-form") as HTMLFormElement | null;
-              if (form) form.requestSubmit();
-            }}
+            onSave={handleEditorSave}
             filePath={filePath}
             currentCommit={gitCommit}
             contentType="projects"

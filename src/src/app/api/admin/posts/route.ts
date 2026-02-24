@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
       published: published || false,
     };
 
-    writeMarkdownFile(contentDir as "posts" | "notes" | "projects", slug, frontMatter, content);
+    await writeMarkdownFile(contentDir as "posts" | "notes" | "projects", slug, frontMatter, content);
 
     // 2. Git 自动提交
     const gitCommit = await autoCommit(filePath);

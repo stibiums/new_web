@@ -70,7 +70,7 @@ async function syncPostLinks(postId: string, content: string) {
  * 同步文章到数据库
  */
 export async function syncPostToDatabase(slug: string, commit = true): Promise<any | null> {
-  const file = readMarkdownFile('posts', slug);
+  const file = await readMarkdownFile('posts', slug);
 
   if (!file) {
     console.error(`[Sync] Post not found: ${slug}`);
@@ -138,7 +138,7 @@ export async function syncPostToDatabase(slug: string, commit = true): Promise<a
  * 同步笔记到数据库
  */
 export async function syncNoteToDatabase(slug: string, commit = true): Promise<any | null> {
-  const file = readMarkdownFile('notes', slug);
+  const file = await readMarkdownFile('notes', slug);
 
   if (!file) {
     console.error(`[Sync] Note not found: ${slug}`);
@@ -194,7 +194,7 @@ export async function syncNoteToDatabase(slug: string, commit = true): Promise<a
  * 同步项目到数据库
  */
 export async function syncProjectToDatabase(slug: string, commit = true): Promise<any | null> {
-  const file = readMarkdownFile('projects', slug);
+  const file = await readMarkdownFile('projects', slug);
 
   if (!file) {
     console.error(`[Sync] Project not found: ${slug}`);

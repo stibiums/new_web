@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/i18n/routing";
 import { SplitEditor, type ViewMode } from "@/components/editor/SplitEditor";
@@ -46,6 +46,13 @@ export default function EditNotePage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   // 视图模式（受控，提升到页面层以便在工具栏显示切换按钮）
   const [viewMode, setViewMode] = useState<ViewMode>('split');
+
+  // Memoized onSave 回调
+  const handleEditorSave = useCallback(async (value: string) => {
+    setContent(value);
+    const form = document.getElementById("edit-form") as HTMLFormElement | null;
+    if (form) form.requestSubmit();
+  }, []);
 
   useEffect(() => {
     const fetchNote = async () => {
@@ -230,11 +237,7 @@ export default function EditNotePage() {
           <SplitEditor
             value={content}
             onChange={setContent}
-            onSave={async (value) => {
-              setContent(value);
-              const form = document.getElementById("edit-form") as HTMLFormElement | null;
-              if (form) form.requestSubmit();
-            }}
+            onSave={handleEditorSave}
             filePath={filePath}
             currentCommit={gitCommit}
             contentType="notes"

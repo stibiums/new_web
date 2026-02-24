@@ -40,7 +40,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       const match = post.filePath.match(/content\/(posts|notes|projects)\/(.+)\.md$/);
       if (match) {
         const [, contentDir, slug] = match;
-        const fileData = readMarkdownFile(contentDir as "posts" | "notes" | "projects", slug);
+        const fileData = await readMarkdownFile(contentDir as "posts" | "notes" | "projects", slug);
         if (fileData) {
           fileContent = fileData.content;
           frontMatter = fileData.frontMatter;

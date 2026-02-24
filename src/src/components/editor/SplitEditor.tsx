@@ -171,6 +171,19 @@ export function SplitEditor({
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
 
+  // 预览内容 debounce（300ms 延迟更新，避免每次按键都重新解析 Markdown）
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedValue(value);
+    }, 300);
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, [value]);
+
   // 资源面板 / 历史版本弹窗
   const [showResourcePanel, setShowResourcePanel] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -198,6 +211,8 @@ export function SplitEditor({
       if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
       // 清理锚点重建计时器
       if (buildAnchorsTimerRef.current) clearTimeout(buildAnchorsTimerRef.current);
+      // 清理预览 debounce 计时器
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
   }, []);
 
@@ -301,7 +316,7 @@ export function SplitEditor({
     return () => {
       if (buildAnchorsTimerRef.current) clearTimeout(buildAnchorsTimerRef.current);
     };
-  }, [value, buildAnchors]);
+  }, [debouncedValue, buildAnchors]);
 
   // 高亮防抖计时器
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -655,7 +670,7 @@ export function SplitEditor({
               onMouseUp={handlePreviewSelection}
             >
               <div className="p-4">
-                <MarkdownRenderer content={value} enableSourceLines />
+                <MarkdownRenderer content={debouncedValue} enableSourceLines />
               </div>
             </div>
           </div>
@@ -684,7 +699,7 @@ export function SplitEditor({
             onMouseUp={handlePreviewSelection}
           >
             <div className="p-4">
-              <MarkdownRenderer content={value} enableSourceLines />
+              <MarkdownRenderer content={debouncedValue} enableSourceLines />
             </div>
           </div>
         )}

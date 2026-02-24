@@ -57,6 +57,13 @@ export default function EditPostPage() {
   // 视图模式
   const [viewMode, setViewMode] = useState<ViewMode>('split');
 
+  // Memoized onSave 回调（避免每次渲染创建新函数导致 SplitEditor 重渲染）
+  const handleEditorSave = useCallback(async (value: string) => {
+    setContent(value);
+    const form = document.getElementById("edit-form") as HTMLFormElement | null;
+    if (form) form.requestSubmit();
+  }, []);
+
   useEffect(() => {
     const fetchPost = async () => {
       try {
@@ -143,6 +150,10 @@ export default function EditPostPage() {
     } catch {}
   };
 
+  // 使用 ref 持有 explicitLinks 的最新值，避免 handleSearch 频繁重建
+  const explicitLinksRef = useRef(explicitLinks);
+  explicitLinksRef.current = explicitLinks;
+
   const handleSearch = useCallback((q: string) => {
     setSearchQuery(q);
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
@@ -156,7 +167,7 @@ export default function EditPostPage() {
         const res = await fetch(`/api/admin/posts?search=${encodeURIComponent(q)}&limit=8`);
         const data = await res.json();
         if (res.ok) {
-          const linked = new Set(explicitLinks.map((l) => l.target.id));
+          const linked = new Set(explicitLinksRef.current.map((l) => l.target.id));
           setSearchResults(
             (data.data as any[]).filter((p) => p.id !== postId && !linked.has(p.id))
           );
@@ -164,7 +175,7 @@ export default function EditPostPage() {
       } catch {}
       finally { setSearching(false); }
     }, 300);
-  }, [explicitLinks, postId]);
+  }, [postId]);
 
   const handleAddLink = async (target: { id: string; slug: string; title: string; type: string }) => {
     setLinkLoading(true);
@@ -309,12 +320,7 @@ export default function EditPostPage() {
           <SplitEditor
             value={content}
             onChange={setContent}
-            onSave={async (value) => {
-              setContent(value);
-              // Ctrl+S 触发保存
-              const form = document.getElementById("edit-form") as HTMLFormElement | null;
-              if (form) form.requestSubmit();
-            }}
+            onSave={handleEditorSave}
             filePath={filePath}
             currentCommit={gitCommit}
             contentType="posts"

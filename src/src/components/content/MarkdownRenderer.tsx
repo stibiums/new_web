@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, memo } from "react";
 import ReactMarkdown from "react-markdown";
 import Link from "next/link";
 import Zoom from "react-medium-image-zoom";
@@ -75,7 +75,7 @@ interface MarkdownRendererProps {
   slugToPath?: Record<string, string>;
 }
 
-export function MarkdownRenderer({ content, className = "", enableSourceLines = false, slugToPath = {} }: MarkdownRendererProps) {
+export const MarkdownRenderer = memo(function MarkdownRenderer({ content, className = "", enableSourceLines = false, slugToPath = {} }: MarkdownRendererProps) {
   if (!content) {
     return <p className="text-muted-foreground">暂无内容</p>;
   }
@@ -282,6 +282,6 @@ export function MarkdownRenderer({ content, className = "", enableSourceLines = 
       />
     </div>
   );
-}
+});
 
 export default MarkdownRenderer;

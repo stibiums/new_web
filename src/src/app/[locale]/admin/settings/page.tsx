@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -65,6 +66,7 @@ const defaultSettings: Settings = {
 export default function SettingsPage() {
   const params = useParams();
   const locale = params.locale as string;
+  const router = useRouter();
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -111,7 +113,7 @@ export default function SettingsPage() {
       if (res.ok) {
         setMessage({ type: "success", text: "设置已保存，页面即将刷新..." });
         setTimeout(() => {
-          window.location.reload();
+          router.refresh();
         }, 1000);
       } else {
         const data = await res.json();

@@ -73,7 +73,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
       // slug 变更：删除旧文件
       const oldContentDir = existing.type === "NOTE" ? "notes" : "posts";
-      deleteMarkdownFile(oldContentDir as "posts" | "notes" | "projects", existing.slug);
+      await deleteMarkdownFile(oldContentDir as "posts" | "notes" | "projects", existing.slug);
     }
 
     // 1. 写入 Markdown 文件
@@ -91,7 +91,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     };
 
     const newContent = content !== undefined ? content : existing.content;
-    writeMarkdownFile(contentDir as "posts" | "notes" | "projects", newSlug, frontMatter, newContent);
+    await writeMarkdownFile(contentDir as "posts" | "notes" | "projects", newSlug, frontMatter, newContent);
 
     // 2. Git 自动提交
     const gitCommit = await autoCommit(filePath);
@@ -146,7 +146,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // 1. 删除 Markdown 文件（如果存在）
     const contentDir = existing.type === "NOTE" ? "notes" : "posts";
-    deleteMarkdownFile(contentDir as "posts" | "notes" | "projects", existing.slug);
+    await deleteMarkdownFile(contentDir as "posts" | "notes" | "projects", existing.slug);
 
     // 2. Git 追踪删除（文件已从磁盘删除，用 autoRemove 代替 autoCommit）
     if (existing.filePath) {

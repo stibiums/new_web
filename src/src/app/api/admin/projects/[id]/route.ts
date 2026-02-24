@@ -89,7 +89,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
       // slug 变更：删除旧文件
       if (existing.filePath) {
-        deleteMarkdownFile("projects", existing.slug);
+        await deleteMarkdownFile("projects", existing.slug);
       }
     }
 
@@ -111,7 +111,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         published: published !== undefined ? published : existing.published,
       };
 
-      writeMarkdownFile("projects", newSlug, frontMatter, newContent);
+      await writeMarkdownFile("projects", newSlug, frontMatter, newContent);
 
       // 2. Git 自动提交
       gitCommit = await autoCommit(filePath);
@@ -171,7 +171,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // 1. 删除 Markdown 文件（如果存在）
     if (existing.filePath) {
-      deleteMarkdownFile("projects", existing.slug);
+      await deleteMarkdownFile("projects", existing.slug);
 
       // 2. Git 自动提交（删除文件）
       await autoCommit(existing.filePath);

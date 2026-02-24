@@ -16,6 +16,44 @@ const git: SimpleGit = simpleGit({
   timeout: { block: 10000 }, // 10 秒超时，防止 push 等操作挂起
 });
 
+// ─── Git 配置缓存（TTL = 5 分钟）──────────────────────────────────
+interface CachedConfig {
+  value: string;
+  expiresAt: number;
+}
+
+const CONFIG_CACHE_TTL = 5 * 60 * 1000; // 5 分钟
+const gitConfigCache = new Map<string, CachedConfig>();
+
+/**
+ * 从缓存或数据库获取 Git 配置
+ */
+async function getCachedGitConfig(key: string, defaultValue: string): Promise<string> {
+  const now = Date.now();
+  const cached = gitConfigCache.get(key);
+  if (cached && cached.expiresAt > now) {
+    return cached.value;
+  }
+
+  try {
+    const config = await prisma.siteConfig.findUnique({ where: { key } });
+    const value = config?.value || defaultValue;
+    gitConfigCache.set(key, { value, expiresAt: now + CONFIG_CACHE_TTL });
+    return value;
+  } catch (error) {
+    console.error(`[Git] Failed to fetch config: ${key}`, error);
+    return defaultValue;
+  }
+}
+
+/**
+ * 清除 Git 配置缓存（设置页面修改配置后调用）
+ */
+export function invalidateGitConfigCache(): void {
+  gitConfigCache.clear();
+  console.log('[Git] Config cache invalidated');
+}
+
 /**
  * 从 Markdown 内容中提取资源文件路径（/assets/... 引用）
  */
@@ -146,11 +184,8 @@ export async function autoRemove(
  */
 export async function gitCommit(message: string): Promise<string | null> {
   try {
-    const gitNameConfig = await prisma.siteConfig.findUnique({ where: { key: 'git_name' } });
-    const gitEmailConfig = await prisma.siteConfig.findUnique({ where: { key: 'git_email' } });
-    
-    const gitName = gitNameConfig?.value || 'Admin';
-    const gitEmail = gitEmailConfig?.value || 'admin@stibiums.top';
+    const gitName = await getCachedGitConfig('git_name', 'Admin');
+    const gitEmail = await getCachedGitConfig('git_email', 'admin@stibiums.top');
     
     const options = {
       '--author': `"${gitName} <${gitEmail}>"`
@@ -172,8 +207,7 @@ export async function gitCommit(message: string): Promise<string | null> {
  */
 export async function gitPush(): Promise<boolean> {
   try {
-    const gitRemoteUrlConfig = await prisma.siteConfig.findUnique({ where: { key: 'git_remote_url' } });
-    const remoteUrl = gitRemoteUrlConfig?.value;
+    const remoteUrl = await getCachedGitConfig('git_remote_url', '');
 
     if (remoteUrl) {
       // 如果配置了远程地址，则推送到该地址
@@ -248,21 +282,9 @@ export async function autoCommit(
     `feat(content): 更新 ${fileTypeLabel} - ${fileName}`;
 
   try {
-    // 1. git add - 使用完整路径
-    const fullPath = path.join(PROJECT_ROOT, filePath);
-    console.log(`[Git] autoCommit adding: ${fullPath}`);
-
-    // 检查文件是否已经 staged（已跟踪的文件 add 会返回空结果）
-    const status = await git.status();
-    const isAlreadyStaged = status.staged.includes(filePath) ||
-                           status.staged.some(f => f.endsWith(filePath.split('/').pop() || ''));
-
-    if (isAlreadyStaged) {
-      console.log(`[Git] File already staged, skipping add: ${filePath}`);
-    } else {
-      const addResult = await git.add(filePath);
-      console.log(`[Git] after await git.add(), result:`, addResult);
-    }
+    // 1. git add（幂等操作，无需先检查 status）
+    console.log(`[Git] autoCommit adding: ${filePath}`);
+    await git.add(filePath);
 
     // 2. git commit
     const commitHash = await gitCommit(commitMessage);

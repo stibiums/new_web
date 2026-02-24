@@ -17,6 +17,9 @@ const DialogContainerCtx = createContext<{
   setContainerClass: React.Dispatch<React.SetStateAction<string>>;
 } | null>(null);
 
+/** 用于 DialogClose 获取关闭弹窗的回调 */
+const DialogCloseCtx = createContext<(() => void) | null>(null);
+
 export interface DialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -71,24 +74,30 @@ function DialogRoot({
   // DialogContent 可通过 context 动态覆盖容器尺寸类
   const [containerClass, setContainerClass] = useState("max-w-lg");
 
+  const closeDialog = useCallback(() => {
+    onOpenChange?.(false);
+  }, [onOpenChange]);
+
   if (!open) return null;
 
   return createPortal(
-    <DialogContainerCtx.Provider value={{ setContainerClass }}>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        {/* 背景遮罩 */}
-        <div
-          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-          onClick={() => onOpenChange?.(false)}
-        />
-        {/* 弹窗内容 */}
-        <div
-          className={`relative z-10 w-full mx-auto bg-[var(--color-background)] rounded-xl shadow-2xl border border-[var(--color-border)] animate-in fade-in zoom-in-95 duration-200 ${containerClass}`}
-        >
-          {children}
+    <DialogCloseCtx.Provider value={closeDialog}>
+      <DialogContainerCtx.Provider value={{ setContainerClass }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* 背景遮罩 */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={closeDialog}
+          />
+          {/* 弹窗内容 */}
+          <div
+            className={`relative z-10 w-full mx-auto bg-[var(--color-background)] rounded-xl shadow-2xl border border-[var(--color-border)] animate-in fade-in zoom-in-95 duration-200 ${containerClass}`}
+          >
+            {children}
+          </div>
         </div>
-      </div>
-    </DialogContainerCtx.Provider>,
+      </DialogContainerCtx.Provider>
+    </DialogCloseCtx.Provider>,
     document.body
   );
 }
@@ -191,15 +200,22 @@ export interface DialogCloseProps {
 }
 
 export function DialogClose({ children, onClick, className = "", asChild }: DialogCloseProps) {
+  const closeDialog = useContext(DialogCloseCtx);
+
+  const handleClick = useCallback(() => {
+    onClick?.();
+    closeDialog?.();
+  }, [onClick, closeDialog]);
+
   if (asChild && children) {
     // 使用 cloneElement 让子元素作为按钮
     return React.cloneElement(children as ReactElement<any>, {
-      onClick,
+      onClick: handleClick,
     });
   }
   return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
       className={`text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors ${className}`}
       type="button"
     >
