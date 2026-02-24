@@ -32,13 +32,15 @@ export async function POST(
 ) {
   try {
     const { slug } = await params;
+    const url = new URL(request.url);
+    const type = url.searchParams.get("type") || "blog";
 
     // 获取客户端 IP
     const forwarded = request.headers.get("x-forwarded-for");
     const ip = forwarded ? forwarded.split(",")[0].trim() : "unknown";
 
-    // 查找或创建页面浏览记录
-    const path = `/blog/${slug}`;
+    // 根据类型构建路径
+    const path = `/${type}/${slug}`;
 
     // 简单起见，每小时同一 IP 只记录一次浏览
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);

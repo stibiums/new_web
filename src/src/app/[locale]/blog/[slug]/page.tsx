@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Calendar, Eye, Heart, ArrowLeft, Share2 } from "lucide-react";
+import { Calendar, Eye, Heart, ArrowLeft } from "lucide-react";
 import { MarkdownRenderer, TableOfContents } from "@/components/content";
 import { Giscus } from "@/components/ui/Giscus";
 
@@ -44,14 +44,20 @@ export default function BlogPostPage() {
 
   // Record view on page load
   useEffect(() => {
-    const recordView = async () => {
-      try {
-        await fetch(`/api/views/${slug}`, { method: "POST" });
-      } catch (err) {
-        console.error("Failed to record view:", err);
-      }
-    };
-    recordView();
+    fetch(`/api/views/${slug}`, { method: "POST" }).catch(() => {});
+  }, [slug]);
+
+  // 恢复点赞状态（当前 IP 是否已点赞）
+  useEffect(() => {
+    fetch(`/api/likes/${slug}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.data) {
+          setLiked(data.data.liked);
+          setPost((prev) => prev ? { ...prev, likes: data.data.likes } : prev);
+        }
+      })
+      .catch(() => {});
   }, [slug]);
 
   useEffect(() => {
@@ -109,21 +115,6 @@ export default function BlogPostPage() {
   const getTags = (p: Post) => {
     if (!p.tags) return [];
     return p.tags.split(",").map((tag) => tag.trim());
-  };
-
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: post ? getTitle(post) : "",
-          url: window.location.href,
-        });
-      } catch (err) {
-        console.log("Share cancelled");
-      }
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-    }
   };
 
   if (loading) {
@@ -194,18 +185,6 @@ export default function BlogPostPage() {
                 {post.views}
               </span>
             )}
-            <button
-              onClick={handleLike}
-              disabled={likeLoading}
-              className={`flex items-center gap-1 hover:text-red-500 transition-colors ${
-                liked ? "text-red-500" : ""
-              }`}
-            >
-              <Heart
-                className={`w-4 h-4 ${liked ? "fill-current animate-pulse" : ""}`}
-              />
-              {post.likes}
-            </button>
           </div>
 
           {getTags(post).length > 0 && (
@@ -245,14 +224,25 @@ export default function BlogPostPage() {
           ])}
         />
 
-        {/* Share */}
-        <div className="flex justify-end gap-4 mt-8 pt-8 border-t border-border">
+        {/* Like */}
+        <div className="flex justify-end mt-8">
           <button
-            onClick={handleShare}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+            onClick={handleLike}
+            disabled={likeLoading}
+            className={`group flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-200 text-sm select-none
+              ${
+                liked
+                  ? "border-red-400 bg-red-50 dark:bg-red-950/30 text-red-500"
+                  : "border-border hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20 text-muted-foreground hover:text-red-500"
+              } ${likeLoading ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
           >
-            <Share2 className="w-4 h-4" />
-            分享
+            <Heart
+              className={`w-4 h-4 transition-transform duration-200 ${
+                liked ? "fill-current scale-110" : "group-hover:scale-110"
+              }`}
+            />
+            <span>{liked ? "已点赞" : "点赞"}</span>
+            {post.likes > 0 && <span className="opacity-60">{post.likes}</span>}
           </button>
         </div>
 

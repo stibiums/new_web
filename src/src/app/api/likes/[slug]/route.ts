@@ -7,16 +7,25 @@ export async function GET(
 ) {
   try {
     const { slug } = await params;
+
+    // 获取客户端 IP，用于返回当前访客是否已点赞
+    const forwarded = request.headers.get("x-forwarded-for");
+    const ip = forwarded ? forwarded.split(",")[0].trim() : "unknown";
+
     const post = await prisma.post.findUnique({
       where: { slug },
-      select: { likes: true },
+      select: { id: true, likes: true },
     });
 
     if (!post) {
       return NextResponse.json({ error: "文章不存在" }, { status: 404 });
     }
 
-    return NextResponse.json({ data: { likes: post.likes } });
+    const existingReaction = await prisma.reaction.findUnique({
+      where: { postId_ip_type: { postId: post.id, ip, type: "like" } },
+    });
+
+    return NextResponse.json({ data: { likes: post.likes, liked: !!existingReaction } });
   } catch (error) {
     console.error("Failed to fetch likes:", error);
     return NextResponse.json(

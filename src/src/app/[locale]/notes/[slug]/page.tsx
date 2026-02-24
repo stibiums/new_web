@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Calendar, ArrowLeft, ArrowRight } from "lucide-react";
+import { Calendar, Eye, Heart, ArrowLeft, ArrowRight } from "lucide-react";
 import { MarkdownRenderer, TableOfContents } from "@/components/content";
 import { Giscus } from "@/components/ui/Giscus";
 
@@ -18,6 +18,8 @@ interface Note {
   category: string | null;
   published: boolean;
   publishedAt: string | null;
+  views: number;
+  likes: number;
   createdAt: string;
   updatedAt: string;
   links: { target: { id: string; slug: string; title: string; titleEn: string | null; type: string } }[];
@@ -33,6 +35,49 @@ export default function NotePage() {
   const [note, setNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [likeLoading, setLikeLoading] = useState(false);
+
+  // 记录浏览量（笔记类型）
+  useEffect(() => {
+    fetch(`/api/views/${slug}?type=note`, { method: "POST" }).catch(() => {});
+  }, [slug]);
+
+  // 获取点赞状态（含当前 IP 是否已点赞）
+  useEffect(() => {
+    fetch(`/api/likes/${slug}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.data) {
+          setLiked(data.data.liked);
+          // 同步 note 中的 likes 数（若已加载完毕可直接更新）
+          setNote((prev) => prev ? { ...prev, likes: data.data.likes } : prev);
+        }
+      })
+      .catch(() => {});
+  }, [slug]);
+
+  const handleLike = async () => {
+    if (likeLoading) return;
+    setLikeLoading(true);
+    try {
+      const action = liked ? "unlike" : "like";
+      const res = await fetch(`/api/likes/${slug}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const data = await res.json();
+      if (res.ok && note) {
+        setNote({ ...note, likes: data.data.likes });
+        setLiked(data.data.liked);
+      }
+    } catch (err) {
+      console.error("Failed to like:", err);
+    } finally {
+      setLikeLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchNote = async () => {
@@ -126,12 +171,20 @@ export default function NotePage() {
         <header className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-4">{getTitle(note)}</h1>
 
-          {note.publishedAt && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="w-4 h-4" />
-              {new Date(note.publishedAt).toLocaleDateString()}
-            </div>
-          )}
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            {note.publishedAt && (
+              <span className="flex items-center gap-1">
+                <Calendar className="w-4 h-4" />
+                {new Date(note.publishedAt).toLocaleDateString()}
+              </span>
+            )}
+            {note.views > 0 && (
+              <span className="flex items-center gap-1">
+                <Eye className="w-4 h-4" />
+                {note.views}
+              </span>
+            )}
+          </div>
         </header>
 
         {/* Content */}
@@ -197,6 +250,28 @@ export default function NotePage() {
             </div>
           </div>
         )}
+
+        {/* 点赞按钮（评论区上方右对齐） */}
+        <div className="flex justify-end mt-8 mb-8">
+          <button
+            onClick={handleLike}
+            disabled={likeLoading}
+            className={`group flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-200 text-sm select-none
+              ${
+                liked
+                  ? "border-red-400 bg-red-50 dark:bg-red-950/30 text-red-500"
+                  : "border-border hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/20 text-muted-foreground hover:text-red-500"
+              } ${likeLoading ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+          >
+            <Heart
+              className={`w-4 h-4 transition-transform duration-200 ${
+                liked ? "fill-current scale-110" : "group-hover:scale-110"
+              }`}
+            />
+            <span>{liked ? "已点赞" : "点赞"}</span>
+            {note.likes > 0 && <span className="opacity-60">{note.likes}</span>}
+          </button>
+        </div>
 
         {/* Giscus Comments */}
         <Giscus />
