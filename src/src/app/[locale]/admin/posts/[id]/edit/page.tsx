@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/i18n/routing";
 import { SplitEditor, type ViewMode } from "@/components/editor/SplitEditor";
-import { Monitor, Columns, FileCode } from "lucide-react";
+import { Monitor, Columns, FileCode, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import {
@@ -35,6 +35,12 @@ export default function EditPostPage() {
   const [tags, setTags] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [published, setPublished] = useState(false);
+
+  // 链接管理状态
+  const [linksOpen, setLinksOpen] = useState(false);
+  const [explicitLinks, setExplicitLinks] = useState<{ id: string; target: { id: string; slug: string; title: string; type: string } }[]>([]);
+  const [linkInput, setLinkInput] = useState("");
+  const [linkLoading, setLinkLoading] = useState(false);
 
   // 内容和标题状态
   const [title, setTitle] = useState("");
@@ -125,6 +131,50 @@ export default function EditPostPage() {
     }
   };
 
+  const fetchLinks = async () => {
+    try {
+      const res = await fetch(`/api/admin/posts/${postId}/links`);
+      const data = await res.json();
+      if (res.ok) setExplicitLinks(data.data);
+    } catch {}
+  };
+
+  const handleAddLink = async () => {
+    if (!linkInput.trim()) return;
+    setLinkLoading(true);
+    try {
+      const res = await fetch(`/api/admin/posts/${postId}/links`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetSlug: linkInput.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "添加失败");
+      setExplicitLinks((prev) => [...prev, data.data]);
+      setLinkInput("");
+      toast.success("链接已添加");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "添加失败");
+    } finally {
+      setLinkLoading(false);
+    }
+  };
+
+  const handleRemoveLink = async (targetId: string) => {
+    try {
+      const res = await fetch(`/api/admin/posts/${postId}/links`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetId }),
+      });
+      if (!res.ok) throw new Error("删除失败");
+      setExplicitLinks((prev) => prev.filter((l) => l.target.id !== targetId));
+      toast.success("链接已删除");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "删除失败");
+    }
+  };
+
   const handleMetaSave = () => {
     setMetaOpen(false);
   };
@@ -197,6 +247,10 @@ export default function EditPostPage() {
               )}
             </div>
           )}
+          <Button variant="ghost" size="sm" onClick={() => { setLinksOpen(true); fetchLinks(); }}>
+            <Link2 className="w-4 h-4" />
+            <span className="ml-1 hidden sm:inline">链接</span>
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => setMetaOpen(true)}>
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -247,6 +301,61 @@ export default function EditPostPage() {
         {/* 隐藏的表单，用于提交保存 */}
         <form id="edit-form" onSubmit={handleSubmit} style={{ display: 'none' }} />
       </main>
+
+      {/* 链接管理弹窗 */}
+      <Dialog open={linksOpen} onOpenChange={setLinksOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>手工链接管理</DialogTitle>
+            <DialogDescription>
+              管理此文章的 EXPLICIT 显式链接（用于知识图谱）
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-6 py-4 space-y-4">
+            {/* 添加链接 */}
+            <div className="flex gap-2">
+              <Input
+                value={linkInput}
+                onChange={(e) => setLinkInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddLink()}
+                placeholder="输入目标文章的 slug"
+                className="flex-1"
+              />
+              <Button size="sm" onClick={handleAddLink} loading={linkLoading}>
+                添加
+              </Button>
+            </div>
+            {/* 已有链接列表 */}
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {explicitLinks.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">暂无手工链接</p>
+              )}
+              {explicitLinks.map((link) => (
+                <div key={link.target.id} className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                  <div>
+                    <span className="font-medium">{link.target.title}</span>
+                    <span className="ml-2 text-muted-foreground font-mono text-xs">{link.target.slug}</span>
+                    <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-muted">{link.target.type}</span>
+                  </div>
+                  <button
+                    onClick={() => handleRemoveLink(link.target.id)}
+                    className="text-muted-foreground hover:text-destructive transition-colors ml-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">关闭</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 属性设置弹窗 */}
       <Dialog open={metaOpen} onOpenChange={setMetaOpen}>

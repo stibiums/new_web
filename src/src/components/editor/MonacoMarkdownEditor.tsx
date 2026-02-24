@@ -82,6 +82,8 @@ export function MonacoMarkdownEditor({
   const [wikiPickerQuery, setWikiPickerQuery] = useState("");
   // 触发 [[ 时的光标起始位置（用于后续替换）
   const wikiTriggerPos = useRef<{ lineNumber: number; column: number } | null>(null);
+  // 正在执行 wiki 链接插入时置为 true，防止 onDidChangeModelContent 重复触发 picker
+  const isInsertingWikiLink = useRef(false);
 
   // 检测系统主题
   useEffect(() => {
@@ -143,22 +145,24 @@ export function MonacoMarkdownEditor({
         const currentValue = editor.getValue();
         onChange?.(currentValue);
 
-        // 检测光标前两字符是否为 [[
-        const position = editor.getPosition();
-        if (position) {
-          const model = editor.getModel();
-          if (model) {
-            const col = position.column;
-            const line = model.getLineContent(position.lineNumber);
-            const charsBefore = line.substring(0, col - 1);
-            if (charsBefore.endsWith("[[")) {
-              // 记录触发位置（[[ 开始的位置）
-              wikiTriggerPos.current = {
-                lineNumber: position.lineNumber,
-                column: col - 2, // [[ 的起始列
-              };
-              setWikiPickerQuery("");
-              setShowWikiPicker(true);
+        // 检测光标前两字符是否为 [[（守卫：wiki 链接插入过程中不触发）
+        if (!isInsertingWikiLink.current) {
+          const position = editor.getPosition();
+          if (position) {
+            const model = editor.getModel();
+            if (model) {
+              const col = position.column;
+              const line = model.getLineContent(position.lineNumber);
+              const charsBefore = line.substring(0, col - 1);
+              if (charsBefore.endsWith("[[")) {
+                // 记录触发位置（[[ 开始的位置）
+                wikiTriggerPos.current = {
+                  lineNumber: position.lineNumber,
+                  column: col - 2, // [[ 的起始列
+                };
+                setWikiPickerQuery("");
+                setShowWikiPicker(true);
+              }
             }
           }
         }
@@ -293,6 +297,7 @@ export function MonacoMarkdownEditor({
     const insertText = `[[${prefix}/${item.slug}]]`;
     const position = editor.getPosition();
 
+    isInsertingWikiLink.current = true;
     if (wikiTriggerPos.current && position) {
       const trigger = wikiTriggerPos.current;
       // 防御性处理：检查光标后是否存在 Monaco 自动补全插入的 ]]，若有则一并替换
@@ -330,6 +335,7 @@ export function MonacoMarkdownEditor({
       ]);
     }
 
+    isInsertingWikiLink.current = false;
     wikiTriggerPos.current = null;
     setShowWikiPicker(false);
     editor.focus();

@@ -26,6 +26,8 @@ interface Post {
   likes: number;
   createdAt: string;
   updatedAt: string;
+  links: { target: { id: string; slug: string; title: string; titleEn: string | null; type: string } }[];
+  backlinks: { source: { id: string; slug: string; title: string; titleEn: string | null; type: string } }[];
 }
 
 export default function BlogPostPage() {
@@ -229,7 +231,19 @@ export default function BlogPostPage() {
         )}
 
         {/* Content */}
-        <MarkdownRenderer content={getContent(post)} />
+        <MarkdownRenderer
+          content={getContent(post)}
+          slugToPath={Object.fromEntries([
+            ...post.links.map((l) => [
+              l.target.slug,
+              `/${l.target.type === "NOTE" ? "notes" : "blog"}/${l.target.slug}`,
+            ]),
+            ...post.backlinks.map((l) => [
+              l.source.slug,
+              `/${l.source.type === "NOTE" ? "notes" : "blog"}/${l.source.slug}`,
+            ]),
+          ])}
+        />
 
         {/* Share */}
         <div className="flex justify-end gap-4 mt-8 pt-8 border-t border-border">

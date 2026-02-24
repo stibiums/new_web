@@ -11,7 +11,6 @@ export type EdgeType =
   | "EXPLICIT"         // 手工录入的 PostLink
   | "FRONT_MATTER"     // front matter links: [] 声明
   | "WIKI_LINK"        // 正文 [[slug]] wiki 链接
-  | "TAG_COOCCURRENCE" // 共享相同 tag 的节点对
   | "CATEGORY"         // 同 category 的 NOTE 节点对
   | "TAG_NODE"         // 内容节点 → Tag 节点的连线
   | "CATEGORY_NODE";   // NOTE 节点 → Category 节点的连线
@@ -51,6 +50,7 @@ export async function GET() {
         category: true,
         tags: true,
         excerpt: true,
+        content: true,   // 用于扫描 [[projects/slug]] 跨实体 wiki 链接
         links: { select: { targetId: true, type: true } },
         backlinks: { select: { sourceId: true } },
       },
@@ -66,6 +66,7 @@ export async function GET() {
         titleEn: true,
         tags: true,
         description: true,
+        content: true,   // 用于扫描 [[type/slug]] 跨实体 wiki 链接
       },
     });
 
@@ -182,6 +183,43 @@ export async function GET() {
       }
     }
 
+    // (A1) 全量内容扫描 wiki 链接（覆盖所有跨类型方向）
+    //
+    // PostLink 表的 sourceId/targetId 均为 Post.id 外键，无法记录跨实体链接。
+    // 因此对所有内容（Post + Project）正文扫描 [[type/slug]] 模式，
+    // 直接生成 WIKI_LINK 边，edgeSet 去重保证与 (A) 不会重复。
+    //
+    // 支持的 type 前缀：
+    //   notes/   → Note 类型的 Post
+    //   blog/    → Blog 类型的 Post
+    //   posts/   → Blog 类型的 Post（兼容旧写法）
+    //   projects/ → Project
+    //
+    const wikiSlugMap = new Map<string, string>(); // "type/slug" → nodeId
+    for (const p of posts) {
+      const prefix = p.type === "NOTE" ? "notes" : "blog";
+      wikiSlugMap.set(`${prefix}/${p.slug}`, p.id);
+      if (p.type !== "NOTE") wikiSlugMap.set(`posts/${p.slug}`, p.id); // 兼容 posts/ 前缀
+    }
+    for (const p of projects) {
+      wikiSlugMap.set(`projects/${p.slug}`, p.id);
+    }
+
+    const WIKI_LINK_RE = /\[\[([a-z]+\/[a-zA-Z0-9_-]+)\]\]/g;
+
+    const scanContent = (sourceId: string, content: string | null) => {
+      if (!content) return;
+      for (const m of content.matchAll(WIKI_LINK_RE)) {
+        const targetId = wikiSlugMap.get(m[1]);
+        if (targetId && nodeIdSet.has(targetId) && targetId !== sourceId) {
+          addEdge(sourceId, targetId, "WIKI_LINK");
+        }
+      }
+    };
+
+    for (const post of posts)    scanContent(post.id,    post.content);
+    for (const proj of projects) scanContent(proj.id,    proj.content);
+
     // (B) TAG_NODE 边（内容节点 → Tag 虚拟节点）
     for (const node of [...nodes]) {
       if (node.nodeType === "TAG" || node.nodeType === "CATEGORY") continue;
@@ -196,31 +234,6 @@ export async function GET() {
       if (node.nodeType !== "NOTE" || !node.category) continue;
       const catId = categoryNodeMap.get(node.category);
       if (catId) addEdge(node.id, catId, "CATEGORY_NODE");
-    }
-
-    // (C) TAG_COOCCURRENCE 边（共享相同 tag 的非 TAG 节点对）
-    const tagToNodes = new Map<string, string[]>();
-    for (const node of nodes) {
-      if (node.nodeType === "TAG") continue;
-      for (const tag of node.tags) {
-        if (!tagToNodes.has(tag)) tagToNodes.set(tag, []);
-        tagToNodes.get(tag)!.push(node.id);
-      }
-    }
-    for (const [, members] of tagToNodes) {
-      if (members.length < 2) continue;
-      for (let i = 0; i < members.length; i++) {
-        for (let j = i + 1; j < members.length; j++) {
-          const fwd = `${members[i]}→${members[j]}`;
-          const bwd = `${members[j]}→${members[i]}`;
-          const alreadyLinked = [...edgeSet].some(
-            (k) => k.startsWith(fwd) || k.startsWith(bwd)
-          );
-          if (!alreadyLinked) {
-            addEdge(members[i], members[j], "TAG_COOCCURRENCE");
-          }
-        }
-      }
     }
 
     // (D) CATEGORY 边（同 category 的 NOTE 节点对）
@@ -247,7 +260,8 @@ export async function GET() {
       }
     }
 
-    // ── 更新节点 linkCount（纳入所有边，TAG_NODE 除外）──────────────────────
+    // ── 更新节点 linkCount（以图谱实际边为准，避免与初始值重复累加）──────────
+    // TAG_NODE / CATEGORY_NODE 类型边不计入大小（避免标签节点虚胀）
     const linkCountMap = new Map<string, number>();
     for (const edge of edges) {
       if (edge.type === "TAG_NODE" || edge.type === "CATEGORY_NODE") continue;
@@ -255,12 +269,8 @@ export async function GET() {
       linkCountMap.set(edge.target, (linkCountMap.get(edge.target) || 0) + 1);
     }
     for (const node of nodes) {
-      const extra = linkCountMap.get(node.id) || 0;
-      if (node.nodeType !== "NOTE" && node.nodeType !== "BLOG") {
-        node.linkCount = extra; // Project / TAG 节点的 linkCount 只计入动态边
-      } else {
-        node.linkCount += extra;
-      }
+      // 所有节点统一用图谱实际连边数，不再叠加初始 DB 值（否则 PostLink 边会被计算两次）
+      node.linkCount = linkCountMap.get(node.id) || 0;
     }
 
     return NextResponse.json({ nodes, edges });

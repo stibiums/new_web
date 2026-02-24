@@ -68,22 +68,34 @@ interface MarkdownRendererProps {
    * 默认 false，仅在 SplitEditor 中启用，避免污染前台页面 DOM
    */
   enableSourceLines?: boolean;
+  /**
+   * slug → 完整路径 映射，用于解析无类型前缀的 [[slug]] wiki 链接
+   * 例如：{ "cv-ch02": "/notes/cv-ch02", "hello-world": "/blog/hello-world" }
+   */
+  slugToPath?: Record<string, string>;
 }
 
-export function MarkdownRenderer({ content, className = "", enableSourceLines = false }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content, className = "", enableSourceLines = false, slugToPath = {} }: MarkdownRendererProps) {
   if (!content) {
     return <p className="text-muted-foreground">暂无内容</p>;
   }
 
   /**
-   * 预处理 Wiki 链接：将 [[type/slug]] 转换为标准 Markdown 超链接
-   * 示例: [[notes/cv-ch02]] → [cv-ch02](/notes/cv-ch02)
-   *         [[blog/my-post]]  → [my-post](/blog/my-post)
-   * 旧格式 [[slug]] （无路径前缀）保持原样不变
+   * 预处理 Wiki 链接：
+   * 1. [[type/slug]] → [slug](/type/slug)  （有类型前缀，直接转换）
+   * 2. [[slug]]      → [slug](path)        （无前缀，通过 slugToPath 解析；找不到则显示为 #） 
    */
-  const processedContent = content.replace(
+  let processedContent = content.replace(
     /\[\[([a-z]+)\/([a-zA-Z0-9_-]+)\]\]/g,
     (_, type, slug) => `[${slug}](/${type}/${slug})`
+  );
+  // 处理无前缀格式 [[slug]]（已经被上面处理过的 [[type/slug]] 此时已转换，不会被此正则匹配）
+  processedContent = processedContent.replace(
+    /\[\[([a-zA-Z0-9_-]+)\]\]/g,
+    (_, slug) => {
+      const path = slugToPath[slug];
+      return path ? `[${slug}](${path})` : `\`[[${slug}]]\``;
+    }
   );
 
   // rehypeSourceLine 必须在 rehypeKatex 之前运行，以捕获原始 position 信息

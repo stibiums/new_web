@@ -20,8 +20,8 @@ interface Note {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
-  links: { target: { id: string; slug: string; title: string; titleEn: string | null } }[];
-  backlinks: { source: { id: string; slug: string; title: string; titleEn: string | null } }[];
+  links: { target: { id: string; slug: string; title: string; titleEn: string | null; type: string } }[];
+  backlinks: { source: { id: string; slug: string; title: string; titleEn: string | null; type: string } }[];
 }
 
 export default function NotePage() {
@@ -136,7 +136,19 @@ export default function NotePage() {
 
         {/* Content */}
         <div className="mb-12">
-          <MarkdownRenderer content={getContent(note)} />
+          <MarkdownRenderer
+            content={getContent(note)}
+            slugToPath={Object.fromEntries([
+              ...note.links.map((l) => [
+                l.target.slug,
+                `/${l.target.type === "NOTE" ? "notes" : "blog"}/${l.target.slug}`,
+              ]),
+              ...note.backlinks.map((l) => [
+                l.source.slug,
+                `/${l.source.type === "NOTE" ? "notes" : "blog"}/${l.source.slug}`,
+              ]),
+            ])}
+          />
         </div>
 
         {/* Related Notes - 5.10 */}

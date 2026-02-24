@@ -30,7 +30,6 @@ const EDGE_COLOR: Record<EdgeType, string> = {
   EXPLICIT: "#94a3b8",
   FRONT_MATTER: "#c084fc",
   WIKI_LINK: "#fbbf24",
-  TAG_COOCCURRENCE: "#f97316",
   CATEGORY: "#475569",
   TAG_NODE: "#f59e0b",
   CATEGORY_NODE: "#ef4444",
@@ -40,7 +39,6 @@ const EDGE_LABEL: Record<EdgeType, string> = {
   EXPLICIT: "手工链接",
   FRONT_MATTER: "声明链接",
   WIKI_LINK: "Wiki 链接",
-  TAG_COOCCURRENCE: "共享标签",
   CATEGORY: "同分类",
   TAG_NODE: "标签关联",
   CATEGORY_NODE: "分类归属",
@@ -51,7 +49,6 @@ const ALL_EDGE_TYPES: EdgeType[] = [
   "EXPLICIT",
   "FRONT_MATTER",
   "WIKI_LINK",
-  "TAG_COOCCURRENCE",
   "CATEGORY",
   "TAG_NODE",
   "CATEGORY_NODE",
@@ -171,9 +168,9 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
     svg.call(zoom as any);
     zoomRef.current = zoom;
 
-    // 尺寸比例
-    const maxLink = d3.max(nodes, (d) => d.linkCount) || 1;
-    const sizeScale = d3.scaleSqrt().domain([0, maxLink]).range([5, 22]);
+    // 尺寸比例：设置 domain 下限为 8，避免稀疏图中单个连接就跳到最大值
+    const maxLink = Math.max(d3.max(nodes, (d) => d.linkCount) || 0, 8);
+    const sizeScale = d3.scaleSqrt().domain([0, maxLink]).range([6, 20]);
 
     // ── 力导向布局 ───────────────────────────────────────────────────────
     // 必须存为独立变量：forceLink 会把 source/target 字符串 ID 就地替换为节点对象引用
@@ -270,7 +267,7 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
       .append("line")
       .attr("stroke", (e) => EDGE_COLOR[e.type])
       .attr("stroke-opacity", (e) => (e.type === "TAG_NODE" || e.type === "CATEGORY_NODE" || e.type === "CATEGORY" ? 0.45 : 0.75))
-      .attr("stroke-width", (e) => (e.type === "TAG_COOCCURRENCE" || e.type === "CATEGORY" ? 1.5 : 2.5))
+      .attr("stroke-width", (e) => (e.type === "CATEGORY" ? 1.5 : 2.5))
       .attr("stroke-dasharray", (e) =>
         e.type === "TAG_NODE" || e.type === "CATEGORY_NODE" ? "4 3" : e.type === "CATEGORY" ? "2 2" : null
       )
@@ -387,6 +384,7 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
         BLOG: "blog",
         PROJECT: "projects",
         TAG: "",
+        CATEGORY: "",
       };
       const path = pathMap[d.nodeType as NodeType];
       if (path) router.push(`/${locale}/${path}/${d.slug}`);
@@ -464,7 +462,7 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
 
   const navigateTo = (node: GraphNode) => {
     if (node.nodeType === "TAG") return;
-    const pathMap: Record<NodeType, string> = { NOTE: "notes", BLOG: "blog", PROJECT: "projects", TAG: "" };
+    const pathMap: Record<NodeType, string> = { NOTE: "notes", BLOG: "blog", PROJECT: "projects", TAG: "", CATEGORY: "" };
     const path = pathMap[node.nodeType];
     if (path) router.push(`/${locale}/${path}/${node.slug}`);
   };
