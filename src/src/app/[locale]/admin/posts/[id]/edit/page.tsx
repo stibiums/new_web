@@ -26,6 +26,7 @@ export default function EditPostPage() {
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [coverUploading, setCoverUploading] = useState(false);
 
   // 元信息状态
   const [metaOpen, setMetaOpen] = useState(false);
@@ -45,6 +46,28 @@ export default function EditPostPage() {
   const [searchResults, setSearchResults] = useState<{ id: string; slug: string; title: string; type: string }[]>([]);
   const [searching, setSearching] = useState(false);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const coverImageInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("type", "img");
+      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "上传失败");
+      setCoverImage(data.url);
+      toast.success("封面图上传成功");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "上传失败");
+    } finally {
+      setCoverUploading(false);
+      if (coverImageInputRef.current) coverImageInputRef.current.value = "";
+    }
+  };
 
   // 内容和标题状态
   const [title, setTitle] = useState("");
@@ -474,11 +497,30 @@ export default function EditPostPage() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">封面图</label>
-              <Input
-                value={coverImage}
-                onChange={(e) => setCoverImage(e.target.value)}
-                placeholder="封面图 URL"
-              />
+              <div className="flex gap-2">
+                <Input
+                  value={coverImage}
+                  onChange={(e) => setCoverImage(e.target.value)}
+                  placeholder="封面图 URL"
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  loading={coverUploading}
+                  onClick={() => coverImageInputRef.current?.click()}
+                >
+                  上传
+                </Button>
+                <input
+                  ref={coverImageInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
+                  className="hidden"
+                  onChange={handleCoverUpload}
+                />
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <input
