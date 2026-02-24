@@ -8,10 +8,8 @@ import { prisma } from "@/lib/prisma";
 export type NodeType = "NOTE" | "BLOG" | "PROJECT" | "TAG" | "CATEGORY";
 
 export type EdgeType =
-  | "EXPLICIT"         // 手工录入的 PostLink
-  | "FRONT_MATTER"     // front matter links: [] 声明
+  | "EXPLICIT"         // 关联链接（后台手动添加）
   | "WIKI_LINK"        // 正文 [[slug]] wiki 链接
-  | "CATEGORY"         // 同 category 的 NOTE 节点对
   | "TAG_NODE"         // 内容节点 → Tag 节点的连线
   | "CATEGORY_NODE";   // NOTE 节点 → Category 节点的连线
 
@@ -174,7 +172,7 @@ export async function GET() {
       }
     };
 
-    // (A) PostLink 表（EXPLICIT / FRONT_MATTER / WIKI_LINK）
+    // (A) PostLink 表（EXPLICIT / WIKI_LINK）
     for (const post of posts) {
       for (const link of post.links) {
         if (nodeIdSet.has(link.targetId)) {
@@ -236,32 +234,7 @@ export async function GET() {
       if (catId) addEdge(node.id, catId, "CATEGORY_NODE");
     }
 
-    // (D) CATEGORY 边（同 category 的 NOTE 节点对）
-    const categoryToNotes = new Map<string, string[]>();
-    for (const node of nodes) {
-      if (node.nodeType === "NOTE" && node.category) {
-        if (!categoryToNotes.has(node.category)) categoryToNotes.set(node.category, []);
-        categoryToNotes.get(node.category)!.push(node.id);
-      }
-    }
-    for (const [, members] of categoryToNotes) {
-      if (members.length < 2) continue;
-      for (let i = 0; i < members.length; i++) {
-        for (let j = i + 1; j < members.length; j++) {
-          const fwd = `${members[i]}→${members[j]}`;
-          const bwd = `${members[j]}→${members[i]}`;
-          const alreadyLinked = [...edgeSet].some(
-            (k) => k.startsWith(fwd) || k.startsWith(bwd)
-          );
-          if (!alreadyLinked) {
-            addEdge(members[i], members[j], "CATEGORY");
-          }
-        }
-      }
-    }
-
-    // ── 更新节点 linkCount（以图谱实际边为准，避免与初始值重复累加）──────────
-    // TAG_NODE / CATEGORY_NODE 类型边不计入大小（避免标签节点虚胀）
+    // ── 更新节点 linkCount（以图谱实际边为准，TAG_NODE 不计入大小）──────────
     const linkCountMap = new Map<string, number>();
     for (const edge of edges) {
       if (edge.type === "TAG_NODE" || edge.type === "CATEGORY_NODE") continue;

@@ -8,7 +8,7 @@ interface RouteParams {
 
 /**
  * GET /api/admin/posts/[id]/links
- * 获取文章的所有 EXPLICIT 手工链接
+ * 获取文章的所有 EXPLICIT 关联链接
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   const session = await auth();
@@ -34,8 +34,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 /**
  * POST /api/admin/posts/[id]/links
- * 添加一条 EXPLICIT 手工链接
- * body: { targetSlug: string }
+ * 添加一条 EXPLICIT 关联链接
+ * body: { targetId: string }（直接传 Post ID，无需 slug 查询）
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   const session = await auth();
@@ -44,23 +44,23 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    const { targetSlug } = await request.json();
+    const { targetId } = await request.json();
 
-    if (!targetSlug) {
-      return NextResponse.json({ error: "targetSlug is required" }, { status: 400 });
+    if (!targetId) {
+      return NextResponse.json({ error: "targetId is required" }, { status: 400 });
+    }
+
+    if (targetId === id) {
+      return NextResponse.json({ error: "不能链接到自身" }, { status: 400 });
     }
 
     const target = await prisma.post.findUnique({
-      where: { slug: targetSlug },
+      where: { id: targetId },
       select: { id: true, slug: true, title: true, type: true },
     });
 
     if (!target) {
-      return NextResponse.json({ error: `文章 "${targetSlug}" 不存在` }, { status: 404 });
-    }
-
-    if (target.id === id) {
-      return NextResponse.json({ error: "不能链接到自身" }, { status: 400 });
+      return NextResponse.json({ error: "目标文章不存在" }, { status: 404 });
     }
 
     const link = await prisma.postLink.upsert({
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
 /**
  * DELETE /api/admin/posts/[id]/links
- * 删除一条 EXPLICIT 手工链接
+ * 删除一条 EXPLICIT 关联链接
  * body: { targetId: string }
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {

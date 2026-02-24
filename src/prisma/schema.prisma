@@ -152,7 +152,6 @@ enum ProjectLinkType {
 
 enum PostLinkType {
   EXPLICIT
-  FRONT_MATTER
   WIKI_LINK
 }
 

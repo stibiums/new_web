@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/i18n/routing";
 import { SplitEditor, type ViewMode } from "@/components/editor/SplitEditor";
-import { Monitor, Columns, FileCode, Link2 } from "lucide-react";
+import { Monitor, Columns, FileCode, Link2, Search, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import {
@@ -39,8 +39,12 @@ export default function EditPostPage() {
   // 链接管理状态
   const [linksOpen, setLinksOpen] = useState(false);
   const [explicitLinks, setExplicitLinks] = useState<{ id: string; target: { id: string; slug: string; title: string; type: string } }[]>([]);
-  const [linkInput, setLinkInput] = useState("");
   const [linkLoading, setLinkLoading] = useState(false);
+  // 搜索状态
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<{ id: string; slug: string; title: string; type: string }[]>([]);
+  const [searching, setSearching] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 内容和标题状态
   const [title, setTitle] = useState("");
@@ -139,20 +143,43 @@ export default function EditPostPage() {
     } catch {}
   };
 
-  const handleAddLink = async () => {
-    if (!linkInput.trim()) return;
+  const handleSearch = useCallback((q: string) => {
+    setSearchQuery(q);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    if (!q.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    searchTimerRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await fetch(`/api/admin/posts?search=${encodeURIComponent(q)}&limit=8`);
+        const data = await res.json();
+        if (res.ok) {
+          const linked = new Set(explicitLinks.map((l) => l.target.id));
+          setSearchResults(
+            (data.data as any[]).filter((p) => p.id !== postId && !linked.has(p.id))
+          );
+        }
+      } catch {}
+      finally { setSearching(false); }
+    }, 300);
+  }, [explicitLinks, postId]);
+
+  const handleAddLink = async (target: { id: string; slug: string; title: string; type: string }) => {
     setLinkLoading(true);
     try {
       const res = await fetch(`/api/admin/posts/${postId}/links`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetSlug: linkInput.trim() }),
+        body: JSON.stringify({ targetId: target.id }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "添加失败");
       setExplicitLinks((prev) => [...prev, data.data]);
-      setLinkInput("");
-      toast.success("链接已添加");
+      // 从搜索结果中移除已添加的
+      setSearchResults((prev) => prev.filter((p) => p.id !== target.id));
+      toast.success(`已关联「${target.title}」`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "添加失败");
     } finally {
@@ -302,51 +329,90 @@ export default function EditPostPage() {
         <form id="edit-form" onSubmit={handleSubmit} style={{ display: 'none' }} />
       </main>
 
-      {/* 链接管理弹窗 */}
-      <Dialog open={linksOpen} onOpenChange={setLinksOpen}>
-        <DialogContent>
+      {/* 关联链接弹窗 */}
+      <Dialog open={linksOpen} onOpenChange={(open) => { setLinksOpen(open); if (!open) { setSearchQuery(""); setSearchResults([]); } }}>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>手工链接管理</DialogTitle>
+            <DialogTitle>关联链接</DialogTitle>
             <DialogDescription>
-              管理此文章的 EXPLICIT 显式链接（用于知识图谱）
+              搜索并关联其他文章/笔记，关联关系将显示在知识图谱中
             </DialogDescription>
           </DialogHeader>
           <div className="px-6 py-4 space-y-4">
-            {/* 添加链接 */}
-            <div className="flex gap-2">
+            {/* 搜索框 */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                value={linkInput}
-                onChange={(e) => setLinkInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddLink()}
-                placeholder="输入目标文章的 slug"
-                className="flex-1"
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                placeholder="搜索文章或笔记标题…"
+                className="pl-9 pr-9"
+                autoFocus
               />
-              <Button size="sm" onClick={handleAddLink} loading={linkLoading}>
-                添加
-              </Button>
-            </div>
-            {/* 已有链接列表 */}
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {explicitLinks.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">暂无手工链接</p>
+              {searchQuery && (
+                <button
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => { setSearchQuery(""); setSearchResults([]); }}
+                >
+                  <X className="w-4 h-4" />
+                </button>
               )}
-              {explicitLinks.map((link) => (
-                <div key={link.target.id} className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
-                  <div>
-                    <span className="font-medium">{link.target.title}</span>
-                    <span className="ml-2 text-muted-foreground font-mono text-xs">{link.target.slug}</span>
-                    <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-muted">{link.target.type}</span>
-                  </div>
+            </div>
+
+            {/* 搜索结果 */}
+            {searchQuery && (
+              <div className="rounded-md border border-border overflow-hidden">
+                {searching && (
+                  <div className="text-sm text-muted-foreground text-center py-4">搜索中…</div>
+                )}
+                {!searching && searchResults.length === 0 && (
+                  <div className="text-sm text-muted-foreground text-center py-4">无匹配结果</div>
+                )}
+                {!searching && searchResults.map((post) => (
                   <button
-                    onClick={() => handleRemoveLink(link.target.id)}
-                    className="text-muted-foreground hover:text-destructive transition-colors ml-2"
+                    key={post.id}
+                    onClick={() => handleAddLink(post)}
+                    disabled={linkLoading}
+                    className="w-full flex items-center justify-between px-3 py-2.5 text-sm hover:bg-muted transition-colors border-b border-border last:border-0 text-left"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <div className="min-w-0">
+                      <span className="font-medium truncate block">{post.title}</span>
+                      <span className="text-xs text-muted-foreground font-mono">{post.slug}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-muted">{post.type}</span>
+                      <Plus className="w-4 h-4 text-muted-foreground" />
+                    </div>
                   </button>
-                </div>
-              ))}
+                ))}
+              </div>
+            )}
+
+            {/* 已关联列表 */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                已关联 ({explicitLinks.length})
+              </p>
+              <div className="space-y-1.5 max-h-52 overflow-y-auto">
+                {explicitLinks.length === 0 && (
+                  <p className="text-sm text-muted-foreground py-2">暂无关联链接</p>
+                )}
+                {explicitLinks.map((link) => (
+                  <div key={link.target.id} className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm group">
+                    <div className="min-w-0">
+                      <span className="font-medium">{link.target.title}</span>
+                      <span className="ml-2 text-muted-foreground font-mono text-xs">{link.target.slug}</span>
+                      <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-muted">{link.target.type}</span>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveLink(link.target.id)}
+                      className="shrink-0 ml-2 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
           <DialogFooter>

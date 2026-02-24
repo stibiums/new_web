@@ -28,18 +28,14 @@ const NODE_LABEL: Record<NodeType, string> = {
 
 const EDGE_COLOR: Record<EdgeType, string> = {
   EXPLICIT: "#94a3b8",
-  FRONT_MATTER: "#c084fc",
   WIKI_LINK: "#fbbf24",
-  CATEGORY: "#475569",
   TAG_NODE: "#f59e0b",
   CATEGORY_NODE: "#ef4444",
 };
 
 const EDGE_LABEL: Record<EdgeType, string> = {
-  EXPLICIT: "手工链接",
-  FRONT_MATTER: "声明链接",
+  EXPLICIT: "关联链接",
   WIKI_LINK: "Wiki 链接",
-  CATEGORY: "同分类",
   TAG_NODE: "标签关联",
   CATEGORY_NODE: "分类归属",
 };
@@ -47,9 +43,7 @@ const EDGE_LABEL: Record<EdgeType, string> = {
 const ALL_NODE_TYPES: NodeType[] = ["NOTE", "BLOG", "PROJECT", "TAG", "CATEGORY"];
 const ALL_EDGE_TYPES: EdgeType[] = [
   "EXPLICIT",
-  "FRONT_MATTER",
   "WIKI_LINK",
-  "CATEGORY",
   "TAG_NODE",
   "CATEGORY_NODE",
 ];
@@ -185,14 +179,11 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
           .forceLink(simLinks)
           .id((d: any) => d.id)
           .distance((e: any) => {
-            if (e.type === "CATEGORY") return 80;
             if (e.type === "TAG_NODE") return 70;
             if (e.type === "CATEGORY_NODE") return 70;
-            if (e.type === "TAG_COOCCURRENCE") return 120;
             return 100;
           })
           .strength((e: any) => {
-            if (e.type === "CATEGORY") return 0.4;
             if (e.type === "TAG_NODE") return 0.3;
             if (e.type === "CATEGORY_NODE") return 0.3;
             return 0.6;
@@ -240,7 +231,7 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
 
     // ── 箭头标记（有类型的边）────────────────────────────────────────────
     const defs = svg.append("defs");
-    const linkTypes: EdgeType[] = ["WIKI_LINK", "FRONT_MATTER", "EXPLICIT"];
+    const linkTypes: EdgeType[] = ["WIKI_LINK", "EXPLICIT"];
     for (const et of linkTypes) {
       defs
         .append("marker")
@@ -266,10 +257,10 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
       .enter()
       .append("line")
       .attr("stroke", (e) => EDGE_COLOR[e.type])
-      .attr("stroke-opacity", (e) => (e.type === "TAG_NODE" || e.type === "CATEGORY_NODE" || e.type === "CATEGORY" ? 0.45 : 0.75))
-      .attr("stroke-width", (e) => (e.type === "CATEGORY" ? 1.5 : 2.5))
+      .attr("stroke-opacity", (e) => (e.type === "TAG_NODE" || e.type === "CATEGORY_NODE" ? 0.45 : 0.75))
+      .attr("stroke-width", 2.5)
       .attr("stroke-dasharray", (e) =>
-        e.type === "TAG_NODE" || e.type === "CATEGORY_NODE" ? "4 3" : e.type === "CATEGORY" ? "2 2" : null
+        e.type === "TAG_NODE" || e.type === "CATEGORY_NODE" ? "4 3" : null
       )
       .attr("marker-end", (e) =>
         linkTypes.includes(e.type) ? `url(#arrow-${e.type})` : null
@@ -378,7 +369,7 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
     // 双击跳转
     nodeGroups.on("dblclick", (event, d) => {
       event.stopPropagation();
-      if (d.nodeType === "TAG") return;
+      if (d.nodeType === "TAG" || d.nodeType === "CATEGORY") return;
       const pathMap: Record<NodeType, string> = {
         NOTE: "notes",
         BLOG: "blog",
@@ -453,10 +444,10 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
 
   // ── 侧边面板数据 ────────────────────────────────────────────────────────
   const selectedOutLinks = selectedNode
-    ? allEdges.filter((e) => e.source === selectedNode.id && e.type !== "TAG_NODE")
+    ? allEdges.filter((e) => e.source === selectedNode.id && e.type !== "TAG_NODE" && e.type !== "CATEGORY_NODE")
     : [];
   const selectedInLinks = selectedNode
-    ? allEdges.filter((e) => e.target === selectedNode.id && e.type !== "TAG_NODE")
+    ? allEdges.filter((e) => e.target === selectedNode.id && e.type !== "TAG_NODE" && e.type !== "CATEGORY_NODE")
     : [];
   const nodeMap = new Map(allNodes.map((n) => [n.id, n]));
 
