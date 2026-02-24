@@ -189,9 +189,9 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
             return 0.6;
           })
       )
-      .force("charge", d3.forceManyBody().strength(-250))
+      .force("charge", d3.forceManyBody().strength(-350).distanceMax(400))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide<any>().radius((d) => sizeScale(d.linkCount) + 8));
+      .force("collision", d3.forceCollide<any>().radius((d) => sizeScale(d.linkCount) + 18).strength(0.9));
 
     // Cluster 模式：按 nodeType 分区
     if (viewMode === "cluster") {
@@ -320,27 +320,148 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
       .attr("font-family", "system-ui")
       .attr("pointer-events", "none");
 
-    // 点击事件：选中节点并平滑居中
+    // 点击事件：将节点固定到画布中心（考虑侧边面板偏移）并触发全局重排动画
     nodeGroups.on("click", (event, d) => {
       event.stopPropagation();
+      // 判断点击后面板是打开还是关闭
+      const panelWillOpen = selectedNodeRef.current?.id !== (d as any).id;
       setSelectedNode((prev) => (prev?.id === d.id ? null : d));
-      // 平滑将节点移动到画布中心
-      if (svgRef.current && zoomRef.current && (d as any).x != null) {
-        const containerEl = containerRef.current;
-        if (containerEl) {
-          const w = containerEl.clientWidth;
-          const h = containerEl.clientHeight;
-          const currentK = d3.zoomTransform(svgRef.current).k;
-          const newTransform = d3.zoomIdentity
-            .translate(w / 2, h / 2)
-            .scale(currentK)
-            .translate(-(d as any).x, -(d as any).y);
-          d3.select(svgRef.current)
-            .transition()
-            .duration(600)
-            .call(zoomRef.current.transform as any, newTransform);
-        }
+
+      const sim = simulationRef.current;
+      const containerEl = containerRef.current;
+      if (!sim || !containerEl || !svgRef.current || !zoomRef.current) return;
+
+      const w = containerEl.clientWidth;
+      const h = containerEl.clientHeight;
+      // 侧边面板宽度 w-72 = 288px，打开时画布可用区域向左移
+      const PANEL_W = panelWillOpen ? 288 : 0;
+      const cx = (w - PANEL_W) / 2;
+      const cy = h / 2;
+      const currentK = d3.zoomTransform(svgRef.current).k;
+
+      // 1. 释放所有节点的旧固定位置
+      const simNodes = sim.nodes() as any[];
+      simNodes.forEach((n: any) => { n.fx = null; n.fy = null; });
+
+      // 如果是反选（取消选中），恢复 forceCenter 到画布中心并轻重排
+      if (!panelWillOpen) {
+        sim.force("center", d3.forceCenter(w / 2, h / 2));
+        sim.alpha(0.3).alphaDecay(0.03).restart();
+        return;
       }
+
+      // 2. 把点击节点固定到可用区域中心
+      const clickedNode = simNodes.find((n: any) => n.id === (d as any).id);
+      if (!clickedNode) return;
+      clickedNode.fx = cx;
+      clickedNode.fy = cy;
+
+      // 3. BFS 分层，构建邻接表（无向）
+      const linkForce = sim.force("link") as d3.ForceLink<any, any>;
+      const simLinks = linkForce ? linkForce.links() : [];
+      const adjacency = new Map<string, Set<string>>();
+      simLinks.forEach((e: any) => {
+        const s = e.source.id; const t = e.target.id;
+        if (!adjacency.has(s)) adjacency.set(s, new Set());
+        if (!adjacency.has(t)) adjacency.set(t, new Set());
+        adjacency.get(s)!.add(t); adjacency.get(t)!.add(s);
+      });
+
+      // BFS：计算每个节点的层级 + 记录父节点
+      const levels = new Map<string, number>([[( d as any).id, 0]]);
+      const parentOf = new Map<string, string>();
+      const bfsQ: string[] = [(d as any).id];
+      while (bfsQ.length) {
+        const cur = bfsQ.shift()!;
+        adjacency.get(cur)?.forEach(nb => {
+          if (!levels.has(nb)) {
+            levels.set(nb, levels.get(cur)! + 1);
+            parentOf.set(nb, cur);
+            bfsQ.push(nb);
+          }
+        });
+      }
+
+      // 4. BFS 分层径向布局（减少交叉）
+      // 原理：每层按父节点的角度排序，子节点分配到父节点角度附近的扇区内
+      const RADII = [0, 165, 310, 440, 560];   // 各层半径，0=中心
+      const angleOf = new Map<string, number>([[(d as any).id, -Math.PI / 2]]);
+
+      // 按层分组
+      const byLevel = new Map<number, string[]>();
+      levels.forEach((lv, id) => {
+        if (lv === 0) return;
+        if (!byLevel.has(lv)) byLevel.set(lv, []);
+        byLevel.get(lv)!.push(id);
+      });
+
+      // 逐层按父节点角度排序后均匀分配角度
+      byLevel.forEach((ids, lv) => {
+        const r = RADII[Math.min(lv, RADII.length - 1)];
+        // 按父节点已分配角度升序排序，使同父节点的子节点聚在一起
+        ids.sort((a, b) => {
+          const pa = parentOf.get(a); const pb = parentOf.get(b);
+          const aa = angleOf.get(pa ?? "") ?? 0;
+          const ab = angleOf.get(pb ?? "") ?? 0;
+          return aa - ab;
+        });
+        ids.forEach((id, i) => {
+          const angle = ((i / Math.max(ids.length, 1)) * 2 * Math.PI) - Math.PI / 2;
+          angleOf.set(id, angle);
+          const node = simNodes.find((n: any) => n.id === id);
+          if (node) {
+            node.x = cx + Math.cos(angle) * r;
+            node.y = cy + Math.sin(angle) * r;
+            node.vx = 0; node.vy = 0;
+          }
+        });
+      });
+
+      // 不在连通分量内的节点拨散到外围，避免与主图重叠
+      simNodes.forEach((n: any) => {
+        if (!levels.has(n.id)) {
+          // 已有位置，只是推远一点
+          const dx = (n.x || 0) - cx;
+          const dy = (n.y || 0) - cy;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          const targetR = 600;
+          if (dist < targetR) {
+            n.x = cx + (dx / dist) * targetR;
+            n.y = cy + (dy / dist) * targetR;
+            n.vx = 0; n.vy = 0;
+          }
+        }
+      });
+
+      // 连通分量 ID 集合（供视觉效果 effect 使用，通过重新触发 selectedNode 已足够）
+      // （此处不需要额外暴露，effect 会在 selectedNode 变化后自行计算）
+
+      // 5. 更新 forceCenter 到新中心，避免与 fx/fy 冲突
+      sim.force("center", d3.forceCenter(cx, cy));
+
+      // 6. 平滑移动视图，将 (cx, cy) 对齐屏幕可用区域中心
+      //    变换公式: screenX = nodeX * k + tx  →  tx = screenCx - cx*k
+      const screenCx = (w - PANEL_W) / 2;
+      const screenCy = h / 2;
+      const newTransform = d3.zoomIdentity
+        .translate(screenCx - cx * currentK, screenCy - cy * currentK)
+        .scale(currentK);
+      d3.select(svgRef.current)
+        .transition().duration(700).ease(d3.easeCubicInOut)
+        .call(zoomRef.current.transform as any, newTransform);
+
+      // 7. 重启模拟，带动画均匀分布
+      sim.alpha(0.65).alphaDecay(0.018).restart();
+
+      // 7. 稳定后释放固定
+      const releaseTimer = setTimeout(() => {
+        const currentSim = simulationRef.current;
+        if (currentSim) {
+          const target = (currentSim.nodes() as any[]).find((n: any) => n.id === (d as any).id);
+          if (target) { target.fx = null; target.fy = null; }
+        }
+      }, 3000);
+      return () => clearTimeout(releaseTimer);
     });
 
     // 悬浮提示
@@ -396,33 +517,84 @@ export function KnowledgeGraph({ locale }: KnowledgeGraphProps) {
     });
   }, [allNodes, allEdges, activeNodeTypes, activeEdgeTypes, viewMode, locale, router]);
 
-  // 搜索高亮（覆盖在已渲染的 DOM 上，不触发重渲染）
-  useEffect(() => {
-    if (!svgRef.current) return;
-    const q = searchQuery.toLowerCase();
-    d3.select(svgRef.current)
-      .selectAll<SVGGElement, GraphNode>(".nodes g")
-      .attr("opacity", (d) => {
-        if (!q) return 1;
-        const t = d.title.toLowerCase();
-        const te = (d.titleEn || "").toLowerCase();
-        return t.includes(q) || te.includes(q) || d.slug.includes(q) ? 1 : 0.1;
-      });
-  }, [searchQuery]);
-
   // 重渲染触发
   useEffect(() => {
     if (!loading) renderGraph();
   }, [renderGraph, loading]);
 
-  // 将 selectedNode 同步到 ref，并更新节点高亮样式（不触发图重建）
+  // 统一视觉状态：选中高亮 + 连通分量模糊 + 搜索过滤（合并避免相互覆盖）
   useEffect(() => {
     selectedNodeRef.current = selectedNode;
     if (!svgRef.current) return;
+
+    // 选中节点描边
     d3.select(svgRef.current)
       .selectAll<SVGCircleElement, GraphNode>(".nodes g circle")
-      .attr("stroke-width", (d: any) => (selectedNode?.id === d.id ? 3 : 1.5));
-  }, [selectedNode]);
+      .attr("stroke-width", (d: any) => (selectedNode?.id === d.id ? 3.5 : 1.5))
+      .attr("stroke", (d: any) => (selectedNode?.id === d.id ? "#fff" : "#fff"));
+
+    // 构建连通分量
+    let componentIds: Set<string> | null = null;
+    if (selectedNode && simulationRef.current) {
+      const linkForce = simulationRef.current.force("link") as d3.ForceLink<any, any>;
+      const simLinks = linkForce ? linkForce.links() : [];
+      const adj = new Map<string, Set<string>>();
+      simLinks.forEach((e: any) => {
+        const s = e.source.id; const t = e.target.id;
+        if (!adj.has(s)) adj.set(s, new Set());
+        if (!adj.has(t)) adj.set(t, new Set());
+        adj.get(s)!.add(t); adj.get(t)!.add(s);
+      });
+      componentIds = new Set<string>();
+      const q2 = [selectedNode.id];
+      while (q2.length) {
+        const cur = q2.shift()!;
+        if (componentIds.has(cur)) continue;
+        componentIds.add(cur);
+        adj.get(cur)?.forEach(nb => { if (!componentIds!.has(nb)) q2.push(nb); });
+      }
+    }
+
+    const q = searchQuery.toLowerCase();
+
+    // 节点透明度 + 模糊
+    d3.select(svgRef.current)
+      .selectAll<SVGGElement, GraphNode>(".nodes g")
+      .attr("opacity", (d: any) => {
+        const inComp = !componentIds || componentIds.has(d.id);
+        if (!inComp) return 0.12;
+        if (q) {
+          const match = d.title.toLowerCase().includes(q) ||
+            (d.titleEn || "").toLowerCase().includes(q) || d.slug.includes(q);
+          if (!match) return 0.1;
+        }
+        return 1;
+      })
+      .style("filter", (d: any) =>
+        componentIds && !componentIds.has(d.id) ? "blur(0.5px)" : null
+      );
+
+    // 边透明度 + 箭头标记（箭头是独立 SVG defs，必须也隐藏否则会浮现）
+    const linkTypes: EdgeType[] = ["WIKI_LINK", "EXPLICIT"];
+    d3.select(svgRef.current)
+      .selectAll<SVGLineElement, any>(".edges line")
+      .attr("stroke-opacity", (e: any) => {
+        if (!componentIds) {
+          return e.type === "TAG_NODE" || e.type === "CATEGORY_NODE" ? 0.45 : 0.75;
+        }
+        const inComp = componentIds.has(e.source.id) && componentIds.has(e.target.id);
+        if (!inComp) return 0;
+        return e.type === "TAG_NODE" || e.type === "CATEGORY_NODE" ? 0.45 : 0.75;
+      })
+      .attr("marker-end", (e: any) => {
+        if (!componentIds) {
+          return linkTypes.includes(e.type) ? `url(#arrow-${e.type})` : null;
+        }
+        const inComp = componentIds.has(e.source.id) && componentIds.has(e.target.id);
+        if (!inComp) return null;
+        return linkTypes.includes(e.type) ? `url(#arrow-${e.type})` : null;
+      });
+  }, [selectedNode, searchQuery]);
 
   // ── 工具函数 ────────────────────────────────────────────────────────────
 
