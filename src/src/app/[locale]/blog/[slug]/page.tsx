@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { Calendar, Eye, Heart, ArrowLeft } from "lucide-react";
+import { Calendar, Eye, Heart } from "lucide-react";
 import { MarkdownRenderer, TableOfContents } from "@/components/content";
 import { Giscus } from "@/components/ui/Giscus";
 
@@ -31,8 +29,6 @@ interface Post {
 }
 
 export default function BlogPostPage() {
-  const t = useTranslations("blog");
-  const tCommon = useTranslations("common");
   const params = useParams();
   const locale = params.locale as string;
   const slug = params.slug as string;
@@ -120,13 +116,6 @@ export default function BlogPostPage() {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12">
-        <Link
-          href={`/${locale}/blog`}
-          className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary mb-8"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {tCommon("back")}
-        </Link>
         <div className="space-y-4">
           <div className="h-10 w-3/4 bg-muted rounded animate-pulse" />
           <div className="flex gap-4 text-muted-foreground">
@@ -143,9 +132,6 @@ export default function BlogPostPage() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12 text-center">
         <h1 className="text-2xl font-bold mb-4">文章不存在</h1>
-        <Link href={`/${locale}/blog`} className="text-primary hover:underline">
-          返回博客列表
-        </Link>
       </div>
     );
   }
@@ -159,15 +145,6 @@ export default function BlogPostPage() {
 
       {/* Main Content (Centered) */}
       <article className="flex-1 min-w-0 w-full max-w-3xl mx-auto">
-        {/* Back link */}
-        <Link
-          href={`/${locale}/blog`}
-          className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary mb-8"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {tCommon("back")}
-        </Link>
-
         {/* Header */}
         <header className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-4">{getTitle(post)}</h1>

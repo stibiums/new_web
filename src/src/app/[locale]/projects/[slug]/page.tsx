@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, Github, ExternalLink } from "lucide-react";
+import { Github, ExternalLink } from "lucide-react";
 import { MarkdownRenderer } from "@/components/content";
 
 interface Project {
@@ -85,14 +85,7 @@ export default function ProjectDetailPage() {
     return (
       <div className="h-screen flex flex-col">
         {/* 顶部导航栏 */}
-        <div className="shrink-0 border-b border-border bg-background px-4 py-2 flex items-center justify-between">
-          <Link
-            href={`/${locale}/projects`}
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            返回项目列表
-          </Link>
+        <div className="shrink-0 border-b border-border bg-background px-4 py-2 flex items-center justify-end">
           <div className="flex items-center gap-2">
             {project.githubUrl && (
               <a
@@ -129,13 +122,6 @@ export default function ProjectDetailPage() {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12">
-        <Link
-          href={`/${locale}/projects`}
-          className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary mb-8"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          返回项目列表
-        </Link>
         <div className="space-y-4">
           <div className="h-10 w-3/4 bg-muted rounded animate-pulse" />
           <div className="h-4 w-full bg-muted rounded animate-pulse" />
@@ -149,24 +135,12 @@ export default function ProjectDetailPage() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12 text-center">
         <h1 className="text-2xl font-bold mb-4">项目不存在</h1>
-        <Link href={`/${locale}/projects`} className="text-primary hover:underline">
-          返回项目列表
-        </Link>
       </div>
     );
   }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
-      {/* Back link */}
-      <Link
-        href={`/${locale}/projects`}
-        className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary mb-8"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        返回项目列表
-      </Link>
-
       {/* Header */}
       <header className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold mb-4">{getTitle(project)}</h1>

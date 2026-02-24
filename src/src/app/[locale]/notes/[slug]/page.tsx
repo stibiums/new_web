@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Calendar, Eye, Heart, ArrowLeft, ArrowRight } from "lucide-react";
+import { Calendar, Eye, Heart, ArrowRight } from "lucide-react";
 import { MarkdownRenderer, TableOfContents } from "@/components/content";
 import { Giscus } from "@/components/ui/Giscus";
 
@@ -28,7 +28,6 @@ interface Note {
 
 export default function NotePage() {
   const t = useTranslations("notes");
-  const tCommon = useTranslations("common");
   const params = useParams();
   const locale = params.locale as string;
   const slug = params.slug as string;
@@ -115,13 +114,6 @@ export default function NotePage() {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12">
-        <Link
-          href={`/${locale}/notes`}
-          className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary mb-8"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {tCommon("back")}
-        </Link>
         <div className="space-y-4">
           <div className="h-10 w-3/4 bg-muted rounded animate-pulse" />
           <div className="h-4 w-24 bg-muted rounded animate-pulse" />
@@ -135,9 +127,6 @@ export default function NotePage() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12 text-center">
         <h1 className="text-2xl font-bold mb-4">笔记不存在</h1>
-        <Link href={`/${locale}/notes`} className="text-primary hover:underline">
-          返回笔记列表
-        </Link>
       </div>
     );
   }
@@ -151,15 +140,6 @@ export default function NotePage() {
 
       {/* Main Content (Centered) */}
       <article className="flex-1 min-w-0 w-full max-w-3xl mx-auto">
-        {/* Back link */}
-        <Link
-          href={`/${locale}/notes`}
-          className="inline-flex items-center gap-1 text-muted-foreground hover:text-primary mb-8"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {tCommon("back")}
-        </Link>
-
         {/* Breadcrumb */}
         {note.category && (
           <div className="text-sm text-muted-foreground mb-4">
